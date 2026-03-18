@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>申盾智能安全平台 - 申通快递</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-area">
+          <div class="logo-icon">
+            <svg viewBox="0 0 40 40" width="36" height="36">
+              <rect x="2" y="2" width="36" height="36" rx="8" fill="#1a5cff"/>
+              <path d="M12 14h16v3H12zM12 20h12v3H12zM12 26h8v3H12z" fill="#fff"/>
+            </svg>
+          </div>
+          <div class="logo-text">
+            <span class="logo-title">申盾智能</span>
+            <span class="logo-sub">安全管理平台</span>
+          </div>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebarNav">
+        <div class="nav-group">
+          <a class="nav-item active" data-page="dashboard">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+            </svg>
+            <span class="nav-label">工作台</span>
+          </a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-title">核心业务</div>
+          <a class="nav-item" data-page="dual-prevention">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+            <span class="nav-label">双重预防机制</span>
+          </a>
+          <a class="nav-item" data-page="accident-emergency">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span class="nav-label">事故与应急管理</span>
+          </a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-title">基础要素</div>
+          <a class="nav-item" data-page="personnel">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+              <path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+            <span class="nav-label">人员安全管理</span>
+          </a>
+          <a class="nav-item" data-page="facility">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="1" y="6" width="22" height="16" rx="2"/>
+              <path d="M1 10h22"/>
+              <path d="M6 6V2M18 6V2M12 14v4M8 16h8"/>
+            </svg>
+            <span class="nav-label">场地与设施管理</span>
+          </a>
+          <a class="nav-item" data-page="park">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="9" width="7" height="12" rx="1"/>
+              <rect x="14" y="4" width="7" height="17" rx="1"/>
+              <path d="M3 13h7M14 9h7M14 14h7"/>
+            </svg>
+            <span class="nav-label">园区综合管理</span>
+          </a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-title">专项安全</div>
+          <a class="nav-item" data-page="delivery-safety">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="M2 8h20M8 4v16"/>
+              <path d="M13 13l2 2 3-3"/>
+            </svg>
+            <span class="nav-label">寄递安全管理</span>
+          </a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-title">培训与文化</div>
+          <a class="nav-item" data-page="training">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+            </svg>
+            <span class="nav-label">培训与宣教</span>
+          </a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-title">辅助运营</div>
+          <a class="nav-item" data-page="data-center">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M18 20V10"/>
+              <path d="M12 20V4"/>
+              <path d="M6 20v-6"/>
+            </svg>
+            <span class="nav-label">数据与分析中心</span>
+          </a>
+          <a class="nav-item" data-page="document">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <line x1="10" y1="9" x2="8" y2="9"/>
+            </svg>
+            <span class="nav-label">制度与文档管理</span>
+          </a>
+          <a class="nav-item" data-page="system">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
+            <span class="nav-label">系统与权限管理</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">管</div>
+          <div class="user-detail">
+            <span class="user-name">管理员</span>
+            <span class="user-role">超级管理员</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <div class="main-wrapper">
+      <!-- 顶部栏 -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12h18M3 6h18M3 18h18"/>
+            </svg>
+          </button>
+          <div class="breadcrumb" id="breadcrumb">
+            <span class="breadcrumb-item">首页</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item active">工作台</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-search">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="搜索功能模块..." class="search-input">
+          </div>
+          <div class="topbar-actions">
+            <button class="action-btn" title="通知">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 01-3.46 0"/>
+              </svg>
+              <span class="badge">3</span>
+            </button>
+            <button class="action-btn" title="全屏" id="fullscreenBtn">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- 页面内容区域 -->
+      <main class="main-content" id="mainContent">
+        <!-- 由 JS 动态渲染 -->
+      </main>
+    </div>
+  </div>
+
+  <!-- 遮罩层（移动端） -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
