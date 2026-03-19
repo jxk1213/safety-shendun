@@ -713,6 +713,11 @@ input {
   color: var(--primary);
 }
 
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
 /* 数据表格 */
 .data-table-wrapper {
   background: var(--bg-card);
@@ -1000,6 +1005,11 @@ input {
   font-size: 13px;
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: var(--danger);
 }
 
 .form-field input,
