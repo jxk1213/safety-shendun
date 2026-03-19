@@ -521,9 +521,9 @@
                 '</div>' +
               '</div>' +
               '<table class="data-table">' +
-                '<thead><tr><th style="width:50px;">序号</th><th>隐患类别</th><th>二级描述</th><th>具体问题描述</th><th>发生地点</th><th style="width:72px;">整改前</th><th style="width:72px;">整改后</th><th style="width:80px;">状态</th><th style="width:72px;">是否闭环</th><th style="width:100px;">发现时间</th><th style="width:100px;">操作</th></tr></thead>' +
+                '<thead><tr><th style="width:100px;">上报时间</th><th style="width:80px;">所属片区</th><th style="width:100px;">所属省区</th><th style="width:100px;">所属中心</th><th style="width:90px;">隐患类别</th><th style="width:90px;">隐患内容</th><th style="width:72px;">隐患附件</th><th>具体问题描述</th><th style="width:100px;">整改时间</th><th style="width:90px;">整改内容</th><th style="width:90px;">整改描述</th><th style="width:90px;">整改状态</th><th style="width:80px;">整改人</th><th style="width:100px;">操作</th><th style="width:72px;">是否闭环</th></tr></thead>' +
                 '<tbody id="hazardReportTbody">' +
-                  '<tr><td colspan="11" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>' +
+                  '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>' +
                 '</tbody>' +
               '</table>' +
             '</div>' +
@@ -793,18 +793,37 @@
     function renderHazardRows() {
       if (!tbody) return;
       if (!hazardReportList.length) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>';
         return;
       }
-      var html = hazardReportList.map(function (r, i) {
+      var html = hazardReportList.map(function (r) {
         var beforeList = r.imageBefore || [];
         var afterList = r.imageAfter || [];
         var closed = !!r.closedLoop;
-        var beforeHtml = beforeList.length ? ('<div class="hazard-cell-imgs">' + beforeList.slice(0, 2).map(function (src) { return '<img src="' + src + '" alt="整改前" class="hazard-thumb"/>'; }).join('') + (beforeList.length > 2 ? '<span class="hazard-thumb-more">+' + (beforeList.length - 2) + '</span>' : '') + '</div>') : '-';
-        var afterHtml = afterList.length ? ('<div class="hazard-cell-imgs">' + afterList.slice(0, 2).map(function (src) { return '<img src="' + src + '" alt="整改后" class="hazard-thumb"/>'; }).join('') + (afterList.length > 2 ? '<span class="hazard-thumb-more">+' + (afterList.length - 2) + '</span>' : '') + '</div>') : '<span class="text-muted">未上传</span>';
+        var regionParts = (r.region || '').split(/\s*\/\s*/);
+        var area = regionParts[0] || '-';
+        var province = regionParts[1] || '-';
+        var center = regionParts[2] || '-';
+        var attachHtml = beforeList.length ? ('<div class="hazard-cell-imgs">' + beforeList.slice(0, 2).map(function (src) { return '<img src="' + src + '" alt="隐患附件" class="hazard-thumb"/>'; }).join('') + (beforeList.length > 2 ? '<span class="hazard-thumb-more">+' + (beforeList.length - 2) + '</span>' : '') + '</div>') : '-';
         var closedText = closed ? '<span class="risk-badge success">是</span>' : '<span class="risk-badge gray">否</span>';
         var opLabel = closed ? '查看' : '处理';
-        return '<tr data-id="' + r.id + '"><td>' + (i + 1) + '</td><td>' + (r.category || '-') + '</td><td>' + (r.second === '其他' ? r.otherDesc : (r.second || '-')) + '</td><td>' + (r.desc ? r.desc.substring(0, 36) + (r.desc.length > 36 ? '…' : '') : '-') + '</td><td>' + (r.region || '-') + '</td><td>' + beforeHtml + '</td><td>' + afterHtml + '</td><td><span class="risk-badge ' + (closed ? 'green' : 'orange') + '">' + (r.status || '待稽核') + '</span></td><td>' + closedText + '</td><td>' + (r.time ? r.time.replace('T', ' ') : '-') + '</td><td><button type="button" class="btn btn-outline btn-sm hazard-op-btn" data-id="' + r.id + '">' + opLabel + '</button></td></tr>';
+        var descShort = r.desc ? (r.desc.length > 40 ? r.desc.substring(0, 40) + '…' : r.desc) : '-';
+        var rectifyTime = r.rectifyTime || '-';
+        var rectifyContent = r.rectifyContent || '-';
+        var rectifyDesc = r.rectifyDesc || '-';
+        var rectifyPerson = r.rectifyPerson || '-';
+        return '<tr data-id="' + r.id + '">' +
+          '<td>' + (r.time ? r.time.replace('T', ' ') : '-') + '</td>' +
+          '<td>' + area + '</td><td>' + province + '</td><td>' + center + '</td>' +
+          '<td>' + (r.category || '-') + '</td>' +
+          '<td>' + (r.second === '其他' ? (r.otherDesc || '-') : (r.second || '-')) + '</td>' +
+          '<td>' + attachHtml + '</td>' +
+          '<td>' + descShort + '</td>' +
+          '<td>' + rectifyTime + '</td><td>' + rectifyContent + '</td><td>' + rectifyDesc + '</td>' +
+          '<td><span class="risk-badge ' + (closed ? 'green' : 'orange') + '">' + (r.status || '待稽核') + '</span></td>' +
+          '<td>' + rectifyPerson + '</td>' +
+          '<td><button type="button" class="btn btn-outline btn-sm hazard-op-btn" data-id="' + r.id + '">' + opLabel + '</button></td>' +
+          '<td>' + closedText + '</td></tr>';
       }).join('');
       tbody.innerHTML = html;
     }
