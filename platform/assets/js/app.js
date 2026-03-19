@@ -505,19 +505,24 @@
             '<div class="tab-item" data-hazard-sub="remind">提醒推送</div>' +
           '</div>' +
           '<div id="hazardSubPanelReport" class="hazard-sub-panel">' +
-            '<div class="section-title">隐患上报列表</div>' +
+            '<div class="hazard-list-header">' +
+              '<div class="section-title">隐患上报列表</div>' +
+              '<button class="btn btn-primary" id="hazardReportAddBtn">' +
+                '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg> 新增隐患上报' +
+              '</button>' +
+            '</div>' +
             '<div class="data-table-wrapper">' +
-              '<div class="table-toolbar">' +
-                '<div class="table-toolbar-left">' +
-                  '<button class="btn btn-primary" id="hazardReportAddBtn">' +
-                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg> 新增隐患上报' +
-                  '</button>' +
-                  '<div class="table-filter"><span>隐患类别：</span><select id="hazardFilterCategory"><option value="">全部</option><option>人员安全</option><option>场地安全</option><option>消防安全</option><option>用电安全</option><option>交通安全</option><option>设备安全</option><option>操作安全</option></select></div>' +
-                  '<div class="table-filter"><span>状态：</span><select id="hazardFilterStatus"><option value="">全部</option><option>待稽核</option><option>稽核通过</option><option>稽核不通过-待修正</option><option>待再次稽核</option><option>整改中</option><option>待验收</option><option>验收通过-关闭</option></select></div>' +
-                '</div>' +
-                '<div class="table-search">' +
-                  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
-                  '<input id="hazardSearchInput" type="text" placeholder="搜索问题描述/地点..." style="min-width:200px;">' +
+              '<div class="table-toolbar hazard-report-toolbar">' +
+                '<div class="hazard-toolbar-row hazard-toolbar-row--filters">' +
+                  '<div class="hazard-filter-item"><label>隐患类别</label><select id="hazardFilterCategory"><option value="">全部</option><option>人员安全</option><option>场地安全</option><option>消防安全</option><option>用电安全</option><option>交通安全</option><option>设备安全</option><option>操作安全</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>状态</label><select id="hazardFilterStatus"><option value="">全部</option><option>待稽核</option><option>稽核通过</option><option>稽核不通过-待修正</option><option>待再次稽核</option><option>整改中</option><option>待验收</option><option>验收通过-关闭</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属片区</label><select id="hazardFilterArea"><option value="">全部</option><option value="北部">北部</option><option value="南部">南部</option><option value="中部">中部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属省区</label><select id="hazardFilterProvince"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属中心</label><select id="hazardFilterCenter"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-toolbar-search hazard-toolbar-search--inline">' +
+                    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+                    '<input id="hazardSearchInput" type="text" placeholder="搜索问题描述/地点...">' +
+                  '</div>' +
                 '</div>' +
               '</div>' +
               '<div class="data-table-scroll">' +
@@ -736,10 +741,33 @@
       });
     }
 
+    function fillFilterLocationOptions() {
+      var provSel = document.getElementById('hazardFilterProvince');
+      var centerSel = document.getElementById('hazardFilterCenter');
+      if (provSel && provincesData.length) {
+        provSel.innerHTML = '<option value="">全部</option>';
+        provincesData.forEach(function (p) {
+          var opt = document.createElement('option');
+          opt.value = p.name;
+          opt.textContent = p.name;
+          provSel.appendChild(opt);
+        });
+      }
+      if (centerSel && centersData.length) {
+        centerSel.innerHTML = '<option value="">全部</option>';
+        centersData.forEach(function (c) {
+          var opt = document.createElement('option');
+          opt.value = c.shortName || c.name;
+          opt.textContent = c.shortName || c.name;
+          centerSel.appendChild(opt);
+        });
+      }
+    }
     (function loadLocationData() {
       if (typeof window.LOCATION_PROVINCES !== 'undefined' && typeof window.LOCATION_CENTERS !== 'undefined') {
         provincesData = window.LOCATION_PROVINCES;
         centersData = window.LOCATION_CENTERS;
+        fillFilterLocationOptions();
         return;
       }
       Promise.all([
@@ -748,6 +776,7 @@
       ]).then(function (arr) {
         provincesData = arr[0] || [];
         centersData = arr[1] || [];
+        fillFilterLocationOptions();
       });
     })();
 
@@ -780,10 +809,16 @@
     var searchInput = document.getElementById('hazardSearchInput');
     var filterCategory = document.getElementById('hazardFilterCategory');
     var filterStatus = document.getElementById('hazardFilterStatus');
+    var filterArea = document.getElementById('hazardFilterArea');
+    var filterProvince = document.getElementById('hazardFilterProvince');
+    var filterCenter = document.getElementById('hazardFilterCenter');
     function applyHazardFilters() { renderHazardRows(); }
     if (searchInput) searchInput.addEventListener('input', applyHazardFilters);
     if (filterCategory) filterCategory.addEventListener('change', applyHazardFilters);
     if (filterStatus) filterStatus.addEventListener('change', applyHazardFilters);
+    if (filterArea) filterArea.addEventListener('change', applyHazardFilters);
+    if (filterProvince) filterProvince.addEventListener('change', applyHazardFilters);
+    if (filterCenter) filterCenter.addEventListener('change', applyHazardFilters);
 
     function readFilesAsDataUrls(files, callback) {
       var list = [];
@@ -804,12 +839,25 @@
       var searchEl = document.getElementById('hazardSearchInput');
       var categoryFilterEl = document.getElementById('hazardFilterCategory');
       var statusFilterEl = document.getElementById('hazardFilterStatus');
+      var areaFilterEl = document.getElementById('hazardFilterArea');
+      var provinceFilterEl = document.getElementById('hazardFilterProvince');
+      var centerFilterEl = document.getElementById('hazardFilterCenter');
       var keyword = (searchEl && searchEl.value ? searchEl.value.trim() : '').toLowerCase();
       var categoryVal = categoryFilterEl ? categoryFilterEl.value.trim() : '';
       var statusVal = statusFilterEl ? statusFilterEl.value.trim() : '';
+      var areaVal = areaFilterEl ? areaFilterEl.value.trim() : '';
+      var provinceVal = provinceFilterEl ? provinceFilterEl.value.trim() : '';
+      var centerVal = centerFilterEl ? centerFilterEl.value.trim() : '';
       return hazardReportList.filter(function (r) {
         if (categoryVal && r.category !== categoryVal) return false;
         if (statusVal && (r.status || '待稽核') !== statusVal) return false;
+        var regionParts = (r.region || '').split(/\s*\/\s*/);
+        var area = (regionParts[0] || '').trim();
+        var province = (regionParts[1] || '').trim();
+        var center = (regionParts[2] || '').trim();
+        if (areaVal && area !== areaVal) return false;
+        if (provinceVal && province !== provinceVal) return false;
+        if (centerVal && center !== centerVal) return false;
         if (!keyword) return true;
         var region = (r.region || '').toLowerCase();
         var desc = (r.desc || '').toLowerCase();
