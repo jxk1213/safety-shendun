@@ -521,9 +521,9 @@
                 '</div>' +
               '</div>' +
               '<table class="data-table">' +
-                '<thead><tr><th style="width:50px;">序号</th><th>隐患类别</th><th>二级描述</th><th>具体问题描述</th><th>发生地点</th><th>状态</th><th style="width:100px;">发现时间</th><th style="width:80px;">操作</th></tr></thead>' +
+                '<thead><tr><th style="width:50px;">序号</th><th>隐患类别</th><th>二级描述</th><th>具体问题描述</th><th>发生地点</th><th style="width:72px;">整改前</th><th style="width:72px;">整改后</th><th style="width:80px;">状态</th><th style="width:72px;">是否闭环</th><th style="width:100px;">发现时间</th><th style="width:100px;">操作</th></tr></thead>' +
                 '<tbody id="hazardReportTbody">' +
-                  '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>' +
+                  '<tr><td colspan="11" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>' +
                 '</tbody>' +
               '</table>' +
             '</div>' +
@@ -581,6 +581,24 @@
               '<div class="modal-footer">' +
                 '<button class="btn btn-outline" id="hazardReportModalCancel" type="button">取消</button>' +
                 '<button class="btn btn-primary" id="hazardReportSubmitBtn" type="button">提交上报</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="modal-overlay" id="hazardDetailModalOverlay" style="display:none;">' +
+            '<div class="modal modal-hazard-detail" role="dialog" style="max-width:640px;">' +
+              '<div class="modal-header"><div class="modal-title">隐患处理 · 闭环治理</div><button class="modal-close" id="hazardDetailModalClose" type="button" title="关闭">×</button></div>' +
+              '<div class="modal-body">' +
+                '<div class="hazard-detail-info" id="hazardDetailInfo"></div>' +
+                '<div class="hazard-detail-images">' +
+                  '<div class="hazard-detail-section"><div class="form-label">整改前图片</div><div class="hazard-imgs-row" id="hazardDetailBeforeImgs"></div></div>' +
+                  '<div class="hazard-detail-section" id="hazardDetailAfterSection"><div class="form-label">整改后图片</div><div class="file-upload-area hazard-upload-after" id="hazardDetailAfterUpload"><input type="file" id="hazardDetailAfterFile" accept="image/*" class="file-upload-input" multiple><span class="file-upload-text" id="hazardDetailAfterFileText">点击上传整改后照片</span></div><div class="hazard-imgs-row" id="hazardDetailAfterImgs"></div></div>' +
+                '</div>' +
+                '<div class="modal-hint" id="hazardDetailFormHint" style="margin-top:8px;color:var(--danger);font-size:13px;"></div>' +
+              '</div>' +
+              '<div class="modal-footer">' +
+                '<button class="btn btn-outline" id="hazardDetailModalCancel" type="button">取消</button>' +
+                '<button class="btn btn-primary" id="hazardDetailCloseLoopBtn" type="button">确认闭环</button>' +
+                '<button class="btn btn-outline" id="hazardDetailOnlyCloseBtn" type="button" style="display:none;">关闭</button>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -757,6 +775,40 @@
       });
     }
 
+    function readFilesAsDataUrls(files, callback) {
+      var list = [];
+      var n = files ? files.length : 0;
+      if (n === 0) { callback(list); return; }
+      var done = 0;
+      for (var i = 0; i < n; i++) {
+        (function (file) {
+          if (!file.type || file.type.indexOf('image/') !== 0) { done++; if (done === n) callback(list); return; }
+          var fr = new FileReader();
+          fr.onload = function () { list.push(fr.result); done++; if (done === n) callback(list); };
+          fr.readAsDataURL(file);
+        })(files[i]);
+      }
+    }
+
+    function renderHazardRows() {
+      if (!tbody) return;
+      if (!hazardReportList.length) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>';
+        return;
+      }
+      var html = hazardReportList.map(function (r, i) {
+        var beforeList = r.imageBefore || [];
+        var afterList = r.imageAfter || [];
+        var closed = !!r.closedLoop;
+        var beforeHtml = beforeList.length ? ('<div class="hazard-cell-imgs">' + beforeList.slice(0, 2).map(function (src) { return '<img src="' + src + '" alt="整改前" class="hazard-thumb"/>'; }).join('') + (beforeList.length > 2 ? '<span class="hazard-thumb-more">+' + (beforeList.length - 2) + '</span>' : '') + '</div>') : '-';
+        var afterHtml = afterList.length ? ('<div class="hazard-cell-imgs">' + afterList.slice(0, 2).map(function (src) { return '<img src="' + src + '" alt="整改后" class="hazard-thumb"/>'; }).join('') + (afterList.length > 2 ? '<span class="hazard-thumb-more">+' + (afterList.length - 2) + '</span>' : '') + '</div>') : '<span class="text-muted">未上传</span>';
+        var closedText = closed ? '<span class="risk-badge success">是</span>' : '<span class="risk-badge gray">否</span>';
+        var opLabel = closed ? '查看' : '处理';
+        return '<tr data-id="' + r.id + '"><td>' + (i + 1) + '</td><td>' + (r.category || '-') + '</td><td>' + (r.second === '其他' ? r.otherDesc : (r.second || '-')) + '</td><td>' + (r.desc ? r.desc.substring(0, 36) + (r.desc.length > 36 ? '…' : '') : '-') + '</td><td>' + (r.region || '-') + '</td><td>' + beforeHtml + '</td><td>' + afterHtml + '</td><td><span class="risk-badge ' + (closed ? 'green' : 'orange') + '">' + (r.status || '待稽核') + '</span></td><td>' + closedText + '</td><td>' + (r.time ? r.time.replace('T', ' ') : '-') + '</td><td><button type="button" class="btn btn-outline btn-sm hazard-op-btn" data-id="' + r.id + '">' + opLabel + '</button></td></tr>';
+      }).join('');
+      tbody.innerHTML = html;
+    }
+
     if (submitBtn && tbody) {
       submitBtn.addEventListener('click', function () {
         var category = categoryEl ? categoryEl.value.trim() : '';
@@ -774,25 +826,121 @@
         var centerText = centerEl && centerEl.options[centerEl.selectedIndex] ? centerEl.options[centerEl.selectedIndex].dataset.shortName || centerEl.options[centerEl.selectedIndex].text : '';
         var regionParts = [nsText, provText, centerText].filter(Boolean);
         var region = regionParts.length ? regionParts.join(' / ') : '';
-        showHint('');
-        hazardIndex += 1;
-        hazardReportList.push({
-          id: hazardIndex,
-          category: category,
-          second: second,
-          otherDesc: otherDesc,
-          desc: desc,
-          region: region,
-          time: document.getElementById('hazardFormTime') ? document.getElementById('hazardFormTime').value || new Date().toISOString().slice(0, 16) : '',
-          status: '待稽核'
+        var fileInput = document.getElementById('hazardFormFile');
+        var files = fileInput && fileInput.files ? fileInput.files : [];
+        readFilesAsDataUrls(files, function (imageBefore) {
+          showHint('');
+          hazardIndex += 1;
+          hazardReportList.push({
+            id: hazardIndex,
+            category: category,
+            second: second,
+            otherDesc: otherDesc,
+            desc: desc,
+            region: region,
+            time: document.getElementById('hazardFormTime') ? document.getElementById('hazardFormTime').value || new Date().toISOString().slice(0, 16) : '',
+            status: '待稽核',
+            imageBefore: imageBefore || [],
+            imageAfter: [],
+            closedLoop: false
+          });
+          renderHazardRows();
+          closeModal();
         });
-        var rows = hazardReportList.map(function (r, i) {
-          return '<tr><td>' + (i + 1) + '</td><td>' + (r.category || '-') + '</td><td>' + (r.second === '其他' ? r.otherDesc : (r.second || '-')) + '</td><td>' + (r.desc ? r.desc.substring(0, 40) + (r.desc.length > 40 ? '…' : '') : '-') + '</td><td>' + (r.region || '-') + '</td><td><span class="risk-badge orange">' + r.status + '</span></td><td>' + (r.time ? r.time.replace('T', ' ') : '-') + '</td><td><button type="button" class="btn btn-outline btn-sm">查看</button></td></tr>';
-        }).join('');
-        tbody.innerHTML = rows || '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据</td></tr>';
-        closeModal();
       });
     }
+
+    var detailOverlay = document.getElementById('hazardDetailModalOverlay');
+    var detailCloseBtn = document.getElementById('hazardDetailModalClose');
+    var detailCancelBtn = document.getElementById('hazardDetailModalCancel');
+    var detailCloseLoopBtn = document.getElementById('hazardDetailCloseLoopBtn');
+    var detailInfoEl = document.getElementById('hazardDetailInfo');
+    var detailBeforeImgs = document.getElementById('hazardDetailBeforeImgs');
+    var detailAfterImgs = document.getElementById('hazardDetailAfterImgs');
+    var detailAfterUpload = document.getElementById('hazardDetailAfterUpload');
+    var detailAfterFile = document.getElementById('hazardDetailAfterFile');
+    var detailAfterFileText = document.getElementById('hazardDetailAfterFileText');
+    var detailHintEl = document.getElementById('hazardDetailFormHint');
+    var currentDetailId = null;
+    var pendingAfterUrls = [];
+
+    var detailOnlyCloseBtn = document.getElementById('hazardDetailOnlyCloseBtn');
+    var detailAfterSection = document.getElementById('hazardDetailAfterSection');
+
+    function openDetailModal(id) {
+      var r = hazardReportList.filter(function (x) { return x.id === id; })[0];
+      if (!r) return;
+      currentDetailId = id;
+      pendingAfterUrls = (r.imageAfter && r.imageAfter.length) ? r.imageAfter.slice() : [];
+      if (detailInfoEl) {
+        detailInfoEl.innerHTML = '<div class="hazard-detail-row"><span class="label">隐患类别</span><span>' + (r.category || '-') + '</span></div>' +
+          '<div class="hazard-detail-row"><span class="label">具体问题描述</span><span>' + (r.desc || '-') + '</span></div>' +
+          '<div class="hazard-detail-row"><span class="label">发生地点</span><span>' + (r.region || '-') + '</span></div>' +
+          '<div class="hazard-detail-row"><span class="label">状态</span><span>' + r.status + '</span></div>';
+      }
+      if (detailBeforeImgs) {
+        if (r.imageBefore && r.imageBefore.length) {
+          detailBeforeImgs.innerHTML = r.imageBefore.map(function (src) { return '<img src="' + src + '" alt="整改前" class="hazard-detail-img"/>'; }).join('');
+        } else { detailBeforeImgs.innerHTML = '<span class="text-muted">暂无</span>'; }
+      }
+      if (detailAfterImgs) detailAfterImgs.innerHTML = pendingAfterUrls.map(function (src) { return '<img src="' + src + '" alt="整改后" class="hazard-detail-img"/>'; }).join('');
+      if (detailAfterFile) detailAfterFile.value = '';
+      if (detailAfterFileText) detailAfterFileText.textContent = pendingAfterUrls.length ? '已选 ' + pendingAfterUrls.length + ' 张，可继续添加' : '点击上传整改后照片';
+      if (detailHintEl) detailHintEl.textContent = '';
+      if (detailCloseLoopBtn) detailCloseLoopBtn.style.display = r.closedLoop ? 'none' : '';
+      if (detailOnlyCloseBtn) detailOnlyCloseBtn.style.display = r.closedLoop ? '' : 'none';
+      if (detailAfterUpload) detailAfterUpload.style.display = r.closedLoop ? 'none' : 'flex';
+      if (detailOverlay) detailOverlay.style.display = 'flex';
+    }
+
+    function closeDetailModal() {
+      currentDetailId = null;
+      pendingAfterUrls = [];
+      if (detailOverlay) detailOverlay.style.display = 'none';
+    }
+
+    if (detailAfterUpload && detailAfterFile) {
+      detailAfterUpload.addEventListener('click', function () { detailAfterFile.click(); });
+      detailAfterFile.addEventListener('change', function () {
+        var files = this.files;
+        if (!files || !files.length) return;
+        readFilesAsDataUrls(files, function (urls) {
+          pendingAfterUrls = pendingAfterUrls.concat(urls);
+          if (detailAfterImgs) detailAfterImgs.innerHTML = pendingAfterUrls.map(function (src) { return '<img src="' + src + '" alt="整改后" class="hazard-detail-img"/>'; }).join('');
+          if (detailAfterFileText) detailAfterFileText.textContent = '已选 ' + pendingAfterUrls.length + ' 张';
+        });
+      });
+    }
+
+    if (detailCloseLoopBtn) {
+      detailCloseLoopBtn.addEventListener('click', function () {
+        if (!currentDetailId) return;
+        var r = hazardReportList.filter(function (x) { return x.id === currentDetailId; })[0];
+        if (!r) return;
+        if (!r.closedLoop && (!pendingAfterUrls || !pendingAfterUrls.length)) {
+          if (detailHintEl) detailHintEl.textContent = '请上传整改后照片后再确认闭环';
+          return;
+        }
+        r.imageAfter = pendingAfterUrls.slice();
+        r.closedLoop = true;
+        r.status = '验收通过-关闭';
+        if (detailHintEl) detailHintEl.textContent = '';
+        renderHazardRows();
+        closeDetailModal();
+      });
+    }
+
+    if (detailCloseBtn) detailCloseBtn.addEventListener('click', closeDetailModal);
+    if (detailCancelBtn) detailCancelBtn.addEventListener('click', closeDetailModal);
+    if (detailOnlyCloseBtn) detailOnlyCloseBtn.addEventListener('click', closeDetailModal);
+    if (detailOverlay) detailOverlay.addEventListener('click', function (e) { if (e.target === detailOverlay) closeDetailModal(); });
+
+    tbody.addEventListener('click', function (e) {
+      var btn = e.target.closest('.hazard-op-btn');
+      if (!btn) return;
+      var id = parseInt(btn.dataset.id, 10);
+      if (id) openDetailModal(id);
+    });
   }
 
   // ============ 转运中心风险分级表：风险上报工作流（总部评审） ============

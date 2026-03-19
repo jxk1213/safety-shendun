@@ -918,6 +918,93 @@ input {
   color: #1d4ed8;
 }
 
+.risk-badge.green,
+.risk-badge.success {
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
+}
+
+.risk-badge.gray {
+  background: var(--border-light);
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+.hazard-cell-imgs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.hazard-thumb {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.hazard-thumb-more {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.modal-hazard-detail .hazard-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-body);
+  border-radius: var(--radius-md);
+}
+
+.hazard-detail-row {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.hazard-detail-row .label {
+  color: var(--text-secondary);
+  min-width: 100px;
+}
+
+.hazard-detail-section {
+  margin-bottom: 14px;
+}
+
+.hazard-detail-section .form-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.hazard-imgs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.hazard-detail-img {
+  max-width: 120px;
+  max-height: 100px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.modal-hazard-detail .file-upload-area.hazard-upload-after {
+  min-height: 64px;
+  margin-bottom: 8px;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
