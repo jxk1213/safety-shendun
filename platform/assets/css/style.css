@@ -727,6 +727,16 @@ input {
   overflow: hidden;
 }
 
+/* 表格横向滚动容器：列较多时可左右滑动查看 */
+.data-table-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+.data-table-scroll .data-table {
+  min-width: max-content;
+}
+
 .table-toolbar {
   display: flex;
   align-items: center;
