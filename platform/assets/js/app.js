@@ -152,6 +152,7 @@
         mainContent.innerHTML = renderDualPrevention();
         initDualPreventionRiskReportWorkflow();
         initDualPreventionRiskTierTablePager();
+        initDualPreventionRiskControlSimplePager();
         break;
       case 'accident-emergency': mainContent.innerHTML = renderAccidentEmergency(); break;
       case 'personnel': mainContent.innerHTML = renderPersonnel(); break;
@@ -272,13 +273,6 @@
             '<div class="page-title">双重预防机制</div>' +
             '<div class="page-desc">风险分级管控与隐患排查治理</div>' +
           '</div>' +
-          '<div class="page-actions">' +
-            '<button class="btn btn-primary">' +
-              '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
-              '新增隐患' +
-            '</button>' +
-            '<button class="btn btn-outline">导出报表</button>' +
-          '</div>' +
         '</div>' +
 
         '<div class="tab-nav">' +
@@ -311,11 +305,11 @@
               '</div>' +
             '</div>' +
             '<div class="table-search" style="flex-direction:column;align-items:flex-start;gap:8px;">' +
-              '<div style="display:flex;align-items:center;gap:6px;width:100%;">' +
+              '<div style="display:flex;align-items:center;gap:10px;width:100%;">' +
                 '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
-                '<input id="riskTierSearchInput" type="text" placeholder="搜索风险点/危险因素...">' +
+                '<input id="riskTierSearchInput" type="text" placeholder="搜索风险点/危险因素..." style="flex:1;min-width:220px;">' +
+                '<button class="btn btn-outline" id="riskTierExportBtn" type="button">导出报表</button>' +
               '</div>' +
-              '<span style="color:var(--text-tertiary);font-size:13px;line-height:1.4;">提交后进入“总部评审队列”，评审通过将自动更新表格</span>' +
             '</div>' +
           '</div>' +
           '<table class="data-table risk-tier-table">' +
@@ -397,6 +391,11 @@
             '<span id="riskTierTotalCount">共 0 条记录</span>' +
             '<div class="pagination-btns" id="riskTierPaginationBtns"></div>' +
           '</div>' +
+        '</div>' +
+        '<div class="section-title" style="margin-top:22px;">转运中心风险辨识管控清单（设施、部位、场所、区域）</div><div class="data-table-wrapper" style="margin-top:0;"><div class="table-toolbar"><div class="table-toolbar-left"><div class="table-filter"><span>风险分级：</span><select id="riskControlRiskLevelSelect"><option>全部</option><option>重大风险</option><option>较大风险</option><option>一般风险</option><option>低风险</option></select></div></div><div class="table-search" style="flex-direction:column;align-items:flex-start;gap:8px;"><div style="display:flex;align-items:center;gap:10px;width:100%;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input id="riskControlSearchInput" type="text" placeholder="搜索风险点/控制措施..." style="flex:1;min-width:220px;"><button class="btn btn-outline" id="riskControlExportBtn" type="button">导出报表</button></div></div></div><table class="data-table"><thead><tr><th style="width:60px;">序号</th><th style="width:200px;">风险点</th><th style="width:190px;">可能发生事故类型</th><th style="width:140px;">风险等级</th><th style="width:360px;">控制措施</th><th style="width:360px;">应急措施</th><th style="width:110px;">管控层级</th><th style="width:190px;">责任人/联系方式</th></tr></thead><tbody id="riskControlTbody"><tr><td>1</td><td>装卸平台</td><td>物体打击</td><td><span class="risk-badge blue">低风险</span></td><td>1.物品在装卸车过程中禁止抛掷，规范传递。<br>2.操作人员穿防砸鞋，规范操作。</td><td>停止操作查看伤情，伤情较轻，可休息；如果伤者有出血情况，应进行医疗救护。</td><td>岗位级</td><td></td></tr><tr><td>2</td><td>装卸平台</td><td>车辆伤害</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.车辆停放时拉紧手刹，防止车辆溜车。<br>2.车辆倒车时，驾驶员注意观察现场环境，无关人员禁止停留。<br>3.驾驶员听从指挥人员指令。<br>4.严格按照规定路线行驶。</td><td>1.止血包扎：如果伤者有出血情况， 应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>2.骨折处理：应采取夹板临时固定后小心将伤者置于担架上；<br>3.联系急救：拨打120急救电话，联系急救车辆进行专业救护。</td><td>班组级</td><td></td></tr><tr><td>3</td><td>物品临时放置区</td><td>坍塌</td><td><span class="risk-badge blue">低风险</span></td><td>1.严格加强管理物品堆放规范。<br>2.推放物品时禁止抛掷。</td><td>1.脱离现场：让伤者脱离危险现场；<br>2.止血包扎：如果伤者有出血情况，应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>3.联系急救：拨打120急救电话，进行专业救护。</td><td>岗位级</td><td></td></tr><tr><td>4</td><td>物品临时放置区</td><td>物体打击</td><td><span class="risk-badge blue">低风险</span></td><td>1.物品堆放整齐。<br>2.禁止抛掷，规范传递。<br>3.操作人员穿防砸靴等劳动防护用品。</td><td>1.止血包扎：如果伤者有出血情况，应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>2.联系急救：拨打120急救电话，进行专业救护。</td><td>岗位级</td><td></td></tr><tr><td>5</td><td>物品临时放置区</td><td>火灾</td><td><span class="risk-badge blue">低风险</span></td><td>1.电气设施定期检查，发现问题及时处理。<br>2.配电设施周边禁止堆放物品。<br>3.区域内严禁明火操作。</td><td>1.火灾扑救：立即切断电源；火灾较小时，使用灭火器、消防栓对准火源根部进行灭火；<br>2.人员疏散：立即疏散至安全地带。</td><td>班组级</td><td></td></tr><tr><td>6</td><td>称重扫描设备</td><td>触电</td><td><span class="risk-badge blue">低风险</span></td><td>1.规范布置设备电气线路。<br>2.电气设施定期检查，发生问题及时处理。<br>3.确保电气设施安装的漏电保护完好。</td><td>1.脱离电源：立即断开电源、使用绝缘工具拉开触电者或挑开电源电线；<br>2.人员救护：使伤者脱离危险区域，根据伤者情况在现场不间断进行心肺复苏急救，同时立即拨打120急救电话联系急救。</td><td>岗位级</td><td></td></tr><tr><td>7</td><td>输送设备</td><td>机械伤害</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.操作时，员工按要求穿戴工作服，女工将长发盘起。<br>2.设备开启前，进行试运转；发现异常及时停机维修。<br>3.操作人员进行检维修时，挂牌操作。<br>4.加强培训，确保规范操作。<br>5.定期对设备润滑，隔离防护设施，对易损部件进行检查、维护。<br>6.设备旋转部位设置明显的警示标识。</td><td>1.脱离现场：关闭机械设备，让伤者脱离危险现场；<br>2.止血包扎：如果伤者有出血情况，应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>3.联系急救：拨打120急救电话，进行专业救护。</td><td>班组级</td><td></td></tr><tr><td>8</td><td>输送设备</td><td>触电</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.定期检查设备电气线路及开关。<br>2.设备进行可靠的接地保护。<br>3.电气设备的操作严格按照操作规程进行。<br>4.电气设施存在触电危险部位需张贴安全警示标志。</td><td>1.脱离电源：立即断开电源、使用绝缘工具拉开触电者或挑开电源电线；<br>2.人员救护：使伤者脱离危险区域，根据伤者情况在现场不间断进行心肺复苏急救，同时立即拨打120急救电话联系急救。</td><td>班组级</td><td></td></tr><tr><td>9</td><td>输送设备</td><td>火灾</td><td><span class="risk-badge blue">低风险</span></td><td>1.设备严禁过载运行，防止电气设施发热起火。<br>2.定期检查电气线路防止老化短路。</td><td>1.火灾扑救：立即切断电源；火灾较小时，使用灭火器对准火源根部进行灭火；<br>2.人员疏散：立即疏散至安全地带。</td><td>岗位级</td><td></td></tr><tr><td>10</td><td>分拣设备</td><td>机械伤害</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.操作时，员工按要求穿戴工作服，女工将长发盘起。<br>2.设备开启前，进行试运转；发现异常及时停机维修。<br>3.操作人员进行检修、维修时，挂牌操作。<br>4.加强培训确保规范操作。<br>5.定期对设备润滑、隔离防护设施、易损、部件进行检查、维护。<br>6.设备旋转部位设置明显的警示标识。</td><td>1.脱离现场：关闭机械设备，让伤者脱离危险现场；<br>2.止血包扎：如果伤者有出血情况，应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>3.联系急救：拨打120急救电话，进行专业救护。</td><td>班组级</td><td></td></tr><tr><td>11</td><td>分拣设备</td><td>触电</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.定期检查设备电气线路及开关。<br>2.设备进行可靠的接地保护。<br>3.电气设备的操作严格按照操作规程进行。<br>4.电气设施存在触电危险部位需张贴安全警示标志。</td><td>1.脱离电源：立即断开电源、使用绝缘工具拉开触电者或挑开电源电线；<br>2.人员救护：使伤者脱离危险区域，根据伤者情况在现场不间断进行心肺复苏急救，同时立即拨打120急救电话联系急救；<br>3.注意事项：在未确认切断电源前禁止用手或其他导电体接触伤者；在120到达之前应持续不间断进行心肺复苏急救。</td><td>班组级</td><td></td></tr><tr><td>12</td><td>分拣设备</td><td>火灾</td><td><span class="risk-badge blue">低风险</span></td><td>1.设备严禁过载运行，防止电气设施发热起火。<br>2.定期检查电气线路防止老化短路。</td><td>1.火灾扑救：立即切断电源；火灾较小时，使用灭火器对准火源根部进行灭火；<br>2.人员疏散：立即疏散至安全地带。</td><td>岗位级</td><td></td></tr><tr><td>13</td><td>装车区</td><td>车辆伤害</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.厂区入口及主要道路、车间设置明显的限速标志。<br>2.严格要求驾驶员按照规定路线行驶。<br>3.驾驶员听从现场指挥人员指令。<br>4.车辆定期进行检维修。<br>5.操作人员经过培训持证上岗。<br>6.车辆严禁超载、带病行驶。</td><td>1.止血包扎：如果伤者有出血情况，应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>2.骨折处理：应采取夹板临时固定后小心将伤者置于担架上；<br>3.联系急救：拨打120急救电话，联系急救车辆进行专业救护。</td><td>班组级</td><td></td></tr><tr><td>14</td><td>配电设施</td><td>触电</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.电气线路由专业电工规范安装。<br>2.电气线路定期检查，防止破损漏电。<br>3.规范接线，防止裸露。<br>4.配电箱箱门与箱体进行跨接。</td><td>1.脱离电源：立即断开电源、使用绝缘工具拉开触电者或挑开电源电线；<br>2.人员救护：使伤者脱离危险区域，根据伤者情况在现场不间断进行心肺复苏急救，同时立即拨打120急救电话联系急救。</td><td>班组级</td><td></td></tr><tr><td>15</td><td>配电设施</td><td>火灾</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.合理布置、规范使用、严禁超负荷使用、定期检查。<br>2.定期检查配电线路，防止老化短路起火。</td><td>1.火灾扑救：立即切断电源；火灾较小时，使用灭火器对准火源根部进行灭火；<br>2.人员疏散：立即疏散至安全地带。</td><td>班组级</td><td></td></tr></tbody></table></div>' +
+        '<div class="table-pagination">' +
+          '<span id="riskControlTotalCount">共 0 条记录</span>' +
+          '<div class="pagination-btns" id="riskControlPaginationBtns"></div>' +
         '</div>' +
         '<div class="panel" style="margin-top:16px;">' +
           '<div class="panel-header">' +
@@ -811,7 +810,7 @@
 
     if (!searchInput || !riskLevelSelect || !tbodyEl || !totalCountEl || !paginationBtnsWrap || !paginationEl) return;
 
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 5;
     let currentPage = 1;
     let searchTimer = null;
 
@@ -986,9 +985,319 @@
       }
     });
 
+    // 导出报表（CSV）：导出当前搜索/筛选条件下匹配的全部行
+    const exportBtn = document.getElementById('riskTierExportBtn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', function () {
+        const rowEls = Array.from(tbodyEl.querySelectorAll('tr'));
+        const keyword = normalizeText(searchInput.value);
+        const levelFilter = riskLevelSelect.value;
+
+        const matchingRows = [];
+        rowEls.forEach(function (tr) {
+          if (matchesRow(tr, keyword, levelFilter)) matchingRows.push(tr);
+        });
+
+        function tdToText(tdEl) {
+          // 把 <br> 转为换行，移除其它标签
+          return String(tdEl && tdEl.innerHTML ? tdEl.innerHTML : '')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<[^>]+>/g, '')
+            .trim();
+        }
+
+        function csvEscape(val) {
+          const s = String(val == null ? '' : val);
+          // 统一换行符，避免浏览器/系统差异导致 CSV 格式错乱
+          const normalized = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+          return '"' + normalized.replace(/"/g, '""') + '"';
+        }
+
+        const headers = ['序号', '风险点', '危险因素', '可能发生事故类型', 'L', 'E', 'C', 'D', '危险性程度'];
+        const csvLines = [];
+        csvLines.push(headers.map(csvEscape).join(','));
+
+        matchingRows.forEach(function (tr) {
+          const tds = tr.querySelectorAll('td');
+          if (!tds || tds.length < 9) return;
+          const row = [
+            tdToText(tds[0]),
+            tdToText(tds[1]),
+            tdToText(tds[2]),
+            tdToText(tds[3]),
+            tdToText(tds[4]),
+            tdToText(tds[5]),
+            tdToText(tds[6]),
+            tdToText(tds[7]),
+            tdToText(tds[8])
+          ];
+          csvLines.push(row.map(csvEscape).join(','));
+        });
+
+        const csv = csvLines.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '转运中心风险评估分级表.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+    }
+
     // tbody 内容会在“评审通过”时被整块替换，这里用 MutationObserver 自动重新应用过滤分页视图
     const observer = new MutationObserver(function () {
       // 不要重置页码：保持用户当前页位置
+      apply();
+    });
+    observer.observe(tbodyEl, { childList: true });
+
+    apply();
+  }
+
+  // ============ 转运中心风险辨识管控清单：简单分页 ============
+  function initDualPreventionRiskControlSimplePager() {
+    const searchInput = document.getElementById('riskControlSearchInput');
+    const riskLevelSelect = document.getElementById('riskControlRiskLevelSelect');
+    const exportBtn = document.getElementById('riskControlExportBtn');
+    const tbodyEl = document.getElementById('riskControlTbody');
+    const totalCountEl = document.getElementById('riskControlTotalCount');
+    const paginationBtnsWrap = document.getElementById('riskControlPaginationBtns');
+    const paginationEl = paginationBtnsWrap && paginationBtnsWrap.closest ? paginationBtnsWrap.closest('.table-pagination') : null;
+
+    if (!searchInput || !riskLevelSelect || !tbodyEl || !totalCountEl || !paginationBtnsWrap || !paginationEl) return;
+
+    const PAGE_SIZE = 5;
+    let currentPage = 1;
+    let searchTimer = null;
+
+    function getRows() {
+      return Array.from(tbodyEl.querySelectorAll('tr'));
+    }
+
+    function normalizeText(s) {
+      return String(s == null ? '' : s).trim().toLowerCase();
+    }
+
+    function getRiskLevelTextFromTr(tr) {
+      const tds = tr.querySelectorAll('td');
+      if (!tds || tds.length < 4) return '';
+      return String(tds[3].textContent || '').trim();
+    }
+
+    function getRowKeywordTextFromTr(tr) {
+      const tds = tr.querySelectorAll('td');
+      if (!tds || tds.length < 8) return '';
+      const parts = [
+        tds[1], // 风险点
+        tds[2], // 可能发生事故类型
+        tds[4], // 控制措施
+        tds[5], // 应急措施
+        tds[6], // 管控层级
+        tds[7]  // 责任人/联系方式
+      ].map(function (el) { return String(el && el.textContent ? el.textContent : ''); });
+      return normalizeText(parts.join(' '));
+    }
+
+    function matchesRow(tr, keyword, levelFilter) {
+      const riskLevelText = getRiskLevelTextFromTr(tr);
+      if (levelFilter && levelFilter !== '全部') {
+        if (String(riskLevelText || '').indexOf(levelFilter) === -1) return false;
+      }
+      if (keyword) {
+        const hay = getRowKeywordTextFromTr(tr);
+        if (hay.indexOf(keyword) === -1) return false;
+      }
+      return true;
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getPaginationModel(page, totalPages) {
+      const pages = new Set([1, totalPages]);
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+      for (let p = start; p <= end; p++) pages.add(p);
+
+      if (page <= 3 && totalPages >= 4) {
+        pages.add(2); pages.add(3); pages.add(4);
+      }
+      if (page >= totalPages - 2 && totalPages >= 4) {
+        pages.add(totalPages - 1);
+        pages.add(totalPages - 2);
+        pages.add(totalPages - 3);
+      }
+
+      return Array.from(pages)
+        .filter(function (p) { return p >= 1 && p <= totalPages; })
+        .sort(function (a, b) { return a - b; });
+    }
+
+    function renderPagination(totalPages) {
+      if (totalPages <= 1) {
+        paginationEl.style.display = 'none';
+        paginationBtnsWrap.innerHTML = '';
+        return;
+      }
+
+      paginationEl.style.display = 'flex';
+      const pages = getPaginationModel(currentPage, totalPages);
+      let html = '';
+
+      function addPageBtn(label, page, isActive) {
+        html += '<button type="button" class="pagination-btn' + (isActive ? ' active' : '') + '"' +
+          ' data-page="' + page + '">' + escapeHtml(label) + '</button>';
+      }
+
+      function addEllipsis() {
+        html += '<button type="button" class="pagination-btn" style="pointer-events:none;opacity:0.6;" aria-hidden="true">...</button>';
+      }
+
+      // prev
+      if (currentPage > 1) {
+        html += '<button type="button" class="pagination-btn" data-page="' + (currentPage - 1) + '">&lt;</button>';
+      } else {
+        html += '<button type="button" class="pagination-btn" style="pointer-events:none;opacity:0.6;" aria-hidden="true">&lt;</button>';
+      }
+
+      // page list
+      let prev = null;
+      pages.forEach(function (p) {
+        if (prev !== null && p - prev > 1) addEllipsis();
+        addPageBtn(String(p), p, p === currentPage);
+        prev = p;
+      });
+
+      // next
+      if (currentPage < totalPages) {
+        html += '<button type="button" class="pagination-btn" data-page="' + (currentPage + 1) + '">&gt;</button>';
+      } else {
+        html += '<button type="button" class="pagination-btn" style="pointer-events:none;opacity:0.6;" aria-hidden="true">&gt;</button>';
+      }
+
+      paginationBtnsWrap.innerHTML = html;
+    }
+
+    function apply() {
+      const rows = getRows();
+      const keyword = normalizeText(searchInput.value);
+      const levelFilter = riskLevelSelect.value;
+
+      const matchingRows = [];
+      rows.forEach(function (tr) {
+        if (matchesRow(tr, keyword, levelFilter)) matchingRows.push(tr);
+      });
+
+      totalCountEl.textContent = '共 ' + matchingRows.length + ' 条记录';
+
+      rows.forEach(function (tr) { tr.style.display = 'none'; });
+
+      const totalPages = Math.ceil(matchingRows.length / PAGE_SIZE) || 1;
+      currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+      if (matchingRows.length > 0) {
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        const pageRows = matchingRows.slice(startIndex, startIndex + PAGE_SIZE);
+        pageRows.forEach(function (tr) { tr.style.display = 'table-row'; });
+      }
+
+      renderPagination(totalPages);
+    }
+
+    function scheduleApplyResetPage() {
+      currentPage = 1;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        apply();
+      }, 300);
+    }
+
+    searchInput.addEventListener('input', scheduleApplyResetPage);
+    riskLevelSelect.addEventListener('change', function () {
+      currentPage = 1;
+      apply();
+    });
+
+    paginationBtnsWrap.addEventListener('click', function (e) {
+      const btn = e.target.closest('button.pagination-btn');
+      if (!btn) return;
+      const pageText = btn.dataset.page;
+      const nextPage = parseInt(pageText, 10);
+      if (!isNaN(nextPage)) {
+        currentPage = nextPage;
+        apply();
+      }
+    });
+
+    // 导出报表（CSV）：导出当前搜索/筛选条件下匹配的全部行
+    if (exportBtn) {
+      exportBtn.addEventListener('click', function () {
+        const rows = getRows();
+        const keyword = normalizeText(searchInput.value);
+        const levelFilter = riskLevelSelect.value;
+
+        const matchingRows = [];
+        rows.forEach(function (tr) {
+          if (matchesRow(tr, keyword, levelFilter)) matchingRows.push(tr);
+        });
+
+        function tdToText(tdEl) {
+          return String(tdEl && tdEl.innerHTML ? tdEl.innerHTML : '')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<[^>]+>/g, '')
+            .trim();
+        }
+
+        function csvEscape(val) {
+          const s = String(val == null ? '' : val);
+          const normalized = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+          return '"' + normalized.replace(/"/g, '""') + '"';
+        }
+
+        const headers = ['序号', '风险点', '可能发生事故类型', '风险等级', '控制措施', '应急措施', '管控层级', '责任人/联系方式'];
+        const csvLines = [];
+        csvLines.push(headers.map(csvEscape).join(','));
+
+        matchingRows.forEach(function (tr) {
+          const tds = tr.querySelectorAll('td');
+          if (!tds || tds.length < 8) return;
+          const row = [
+            tdToText(tds[0]),
+            tdToText(tds[1]),
+            tdToText(tds[2]),
+            tdToText(tds[3]),
+            tdToText(tds[4]),
+            tdToText(tds[5]),
+            tdToText(tds[6]),
+            tdToText(tds[7])
+          ];
+          csvLines.push(row.map(csvEscape).join(','));
+        });
+
+        const csv = csvLines.join('\n');
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '转运中心风险辨识管控清单.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    // 后续如果 tbody 行被追加/替换，自动重新应用过滤分页视图
+    const observer = new MutationObserver(function () {
       apply();
     });
     observer.observe(tbodyEl, { childList: true });
@@ -1010,7 +1319,7 @@
       return;
     }
 
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 5;
     let currentPage = 1;
 
     // 允许外部在运行时注入数据（例如后续接入接口或本地缓存）
