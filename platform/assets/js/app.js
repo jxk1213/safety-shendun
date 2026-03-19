@@ -148,7 +148,10 @@
     mainContent.scrollTop = 0;
     switch (page) {
       case 'dashboard': mainContent.innerHTML = renderDashboard(); break;
-      case 'dual-prevention': mainContent.innerHTML = renderDualPrevention(); break;
+      case 'dual-prevention':
+        mainContent.innerHTML = renderDualPrevention();
+        initDualPreventionRiskReportWorkflow();
+        break;
       case 'accident-emergency': mainContent.innerHTML = renderAccidentEmergency(); break;
       case 'personnel': mainContent.innerHTML = renderPersonnel(); break;
       case 'facility': mainContent.innerHTML = renderFacility(); break;
@@ -335,7 +338,539 @@
             '</div>' +
           '</div>' +
         '</div>' +
+        '<div class="section-title" style="margin-top:28px;">转运中心风险评估分级表</div>' +
+        '<div class="data-table-wrapper">' +
+          '<div class="table-toolbar">' +
+            '<div class="table-toolbar-left">' +
+              '<button class="btn btn-primary" id="riskTierReportBtn">' +
+                '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg>' +
+                '上报风险' +
+              '</button>' +
+            '</div>' +
+            '<div class="table-search">' +
+              '<span style="color:var(--text-tertiary);font-size:13px;">提交后进入“总部评审队列”，评审通过将自动更新表格</span>' +
+            '</div>' +
+          '</div>' +
+          '<table class="data-table risk-tier-table">' +
+            '<thead>' +
+              '<tr>' +
+                '<th rowspan="2">序 号</th>' +
+                '<th rowspan="2">风险点</th>' +
+                '<th rowspan="2">危险因素</th>' +
+                '<th rowspan="2">可能发生<br>事故类型</th>' +
+                '<th colspan="4">危险值<br><span style="font-weight:500;">D=L×E×C</span></th>' +
+                '<th rowspan="2">危险性<br>程度</th>' +
+              '</tr>' +
+              '<tr>' +
+                '<th>L</th>' +
+                '<th>E</th>' +
+                '<th>C</th>' +
+                '<th>D</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody id="riskTierTbody">' +
+              '<tr>' +
+                '<td>1</td>' +
+                '<td>装卸平台</td>' +
+                '<td>1.物品在装卸车过程中抛掷伤人。<br>2.物品意外掉落砸伤操作人员。</td>' +
+                '<td>物体打击</td>' +
+                '<td>1</td>' +
+                '<td>6</td>' +
+                '<td>3</td>' +
+                '<td>18</td>' +
+                '<td><span class="risk-badge blue">低风险</span></td>' +
+              '</tr>' +
+              '<tr>' +
+                '<td>2</td>' +
+                '<td>装卸平台</td>' +
+                '<td>1.未采取可靠的防止车辆异常动作或防溜车的措施。<br>2.车辆倒车时未注意观察现场环境，人员违规停留。<br>3.驾驶员未听从指挥人员指令。<br>4.车辆未按照要求，超速行驶。</td>' +
+                '<td>车辆伤害</td>' +
+                '<td>3</td>' +
+                '<td>6</td>' +
+                '<td>7</td>' +
+                '<td>126</td>' +
+                '<td><span class="risk-badge yellow">一般风险</span></td>' +
+              '</tr>' +
+              '<tr>' +
+                '<td>3</td>' +
+                '<td>物品临时放置区</td>' +
+                '<td>1.物品超高堆放意外倾斜倒塌。<br>2.推放物品时违章操作。</td>' +
+                '<td>坍塌</td>' +
+                '<td>1</td>' +
+                '<td>6</td>' +
+                '<td>3</td>' +
+                '<td>18</td>' +
+                '<td><span class="risk-badge blue">低风险</span></td>' +
+              '</tr>' +
+              '<tr>' +
+                '<td>4</td>' +
+                '<td>物品临时放置区</td>' +
+                '<td>1.货架物品堆放不整齐，掉落砸伤操作人员。<br>2.传递物品时违规抛掷砸伤。<br>3.操作人员未穿防砸靴等劳动防护用品。</td>' +
+                '<td>物体打击</td>' +
+                '<td>1</td>' +
+                '<td>6</td>' +
+                '<td>3</td>' +
+                '<td>18</td>' +
+                '<td><span class="risk-badge blue">低风险</span></td>' +
+              '</tr>' +
+              '<tr>' +
+                '<td>5</td>' +
+                '<td>物品临时放置区</td>' +
+                '<td>1.电气设施未定期检查老化短路。<br>2.货物堆放距离配电设施过近。</td>' +
+                '<td>火灾</td>' +
+                '<td>1</td>' +
+                '<td>3</td>' +
+                '<td>15</td>' +
+                '<td>45</td>' +
+                '<td><span class="risk-badge blue">低风险</span></td>' +
+              '</tr>' +
+            '</tbody>' +
+          '</table>' +
+        '</div>' +
+        '<div class="panel" style="margin-top:16px;">' +
+          '<div class="panel-header">' +
+            '<div class="panel-title">总部评审队列</div>' +
+            '<span class="panel-link" id="riskTierPendingCount">待评审 0 条</span>' +
+          '</div>' +
+          '<div class="panel-body">' +
+            '<div id="riskTierPendingEmpty" style="padding:18px 0;color:var(--text-secondary);text-align:center;">暂无待评审风险</div>' +
+            '<div id="riskTierPendingTableWrap" style="display:none;">' +
+              '<table class="data-table">' +
+                '<thead><tr><th>序号</th><th>风险点</th><th>危险性程度</th><th>操作</th></tr></thead>' +
+                '<tbody id="riskTierPendingTbody"></tbody>' +
+              '</table>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="modal-overlay" id="riskTierReportModalOverlay" style="display:none;">' +
+          '<div class="modal" role="dialog" aria-modal="true">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title">上报风险</div>' +
+              '<button class="modal-close" id="riskTierReportCancelBtn" type="button" title="关闭">×</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+              '<div class="form-grid">' +
+                '<div class="form-field"><div class="form-label">序号</div><input type="text" id="riskTierReportSeq" placeholder="例如 6"></div>' +
+                '<div class="form-field"><div class="form-label">风险点</div><input type="text" id="riskTierReportRiskPoint" placeholder="例如 物品临时放置区..."></div>' +
+                '<div class="form-field span-2"><div class="form-label">危险因素</div><textarea id="riskTierReportHazardFactors" rows="3" placeholder="逐条填写（回车换行）"></textarea></div>' +
+                '<div class="form-field span-2"><div class="form-label">可能发生事故类型</div><textarea id="riskTierReportAccidentType" rows="2" placeholder="例如 物体打击 / 车辆伤害"></textarea></div>' +
+                '<div class="form-field"><div class="form-label">L</div><input type="number" step="1" min="0" id="riskTierReportL"></div>' +
+                '<div class="form-field"><div class="form-label">E</div><input type="number" step="1" min="0" id="riskTierReportE"></div>' +
+                '<div class="form-field"><div class="form-label">C</div><input type="number" step="1" min="0" id="riskTierReportC"></div>' +
+                '<div class="form-field"><div class="form-label">D（危险值，只读）</div><input type="text" id="riskTierReportD" readonly placeholder="自动计算"></div>' +
+                '<div class="form-field span-2"><div class="form-label">危险性程度</div><div id="riskTierReportRiskBadge"></div></div>' +
+              '</div>' +
+              '<div class="modal-hint" id="riskTierReportFormHint" style="margin-top:12px;color:var(--text-secondary);font-size:13px;"></div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-outline" id="riskTierReportCancelBtn2" type="button">取消</button>' +
+              '<button class="btn btn-primary" id="riskTierReportSubmitBtn" type="button">提交上报</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '</div>' +
       '</div>';
+  }
+
+  // ============ 转运中心风险分级表：风险上报工作流（总部评审） ============
+  function initDualPreventionRiskReportWorkflow() {
+    const reportBtn = document.getElementById('riskTierReportBtn');
+    const tbodyEl = document.getElementById('riskTierTbody');
+    const pendingTbody = document.getElementById('riskTierPendingTbody');
+    const pendingEmpty = document.getElementById('riskTierPendingEmpty');
+    const pendingTableWrap = document.getElementById('riskTierPendingTableWrap');
+    const pendingCount = document.getElementById('riskTierPendingCount');
+    const modalOverlay = document.getElementById('riskTierReportModalOverlay');
+    const cancelBtn = document.getElementById('riskTierReportCancelBtn');
+    const cancelBtn2 = document.getElementById('riskTierReportCancelBtn2');
+    const submitBtn = document.getElementById('riskTierReportSubmitBtn');
+
+    if (!reportBtn || !tbodyEl || !pendingTbody || !pendingEmpty || !pendingTableWrap || !pendingCount || !modalOverlay || !cancelBtn || !cancelBtn2 || !submitBtn) {
+      return;
+    }
+
+    const seqEl = document.getElementById('riskTierReportSeq');
+    const riskPointEl = document.getElementById('riskTierReportRiskPoint');
+    const hazardFactorsEl = document.getElementById('riskTierReportHazardFactors');
+    const accidentTypeEl = document.getElementById('riskTierReportAccidentType');
+    const lEl = document.getElementById('riskTierReportL');
+    const eEl = document.getElementById('riskTierReportE');
+    const cEl = document.getElementById('riskTierReportC');
+    const dEl = document.getElementById('riskTierReportD');
+    const riskBadgeEl = document.getElementById('riskTierReportRiskBadge');
+    const hintEl = document.getElementById('riskTierReportFormHint');
+
+    if (!seqEl || !riskPointEl || !hazardFactorsEl || !accidentTypeEl || !lEl || !eEl || !cEl || !dEl || !riskBadgeEl || !hintEl) {
+      return;
+    }
+
+    let approvedRows = parseRiskTierRowsFromTbody(tbodyEl);
+    let pendingReports = [];
+
+    function showModal() {
+      modalOverlay.style.display = 'flex';
+      resetForm();
+      computeDAndRisk();
+      hintEl.textContent = '';
+    }
+
+    function hideModal() {
+      modalOverlay.style.display = 'none';
+    }
+
+    function resetForm() {
+      seqEl.value = '';
+      riskPointEl.value = '';
+      hazardFactorsEl.value = '';
+      accidentTypeEl.value = '';
+      lEl.value = '';
+      eEl.value = '';
+      cEl.value = '';
+      dEl.value = '';
+      riskBadgeEl.innerHTML = '--';
+    }
+
+    function numVal(inputEl) {
+      const v = String(inputEl.value || '').trim();
+      if (!v) return NaN;
+      const n = parseFloat(v);
+      return n;
+    }
+
+    function computeDAndRisk() {
+      const L = numVal(lEl);
+      const E = numVal(eEl);
+      const C = numVal(cEl);
+
+      if (isNaN(L) || isNaN(E) || isNaN(C)) {
+        dEl.value = '';
+        riskBadgeEl.innerHTML = '--';
+        return;
+      }
+
+      const D = L * E * C;
+      dEl.value = String(D);
+      const riskLevelText = guessRiskLevelByD(D);
+      riskBadgeEl.innerHTML = getRiskBadgeHTML(riskLevelText);
+    }
+
+    ['input', 'change'].forEach(function (evt) {
+      lEl.addEventListener(evt, computeDAndRisk);
+      eEl.addEventListener(evt, computeDAndRisk);
+      cEl.addEventListener(evt, computeDAndRisk);
+    });
+
+    function renderPending() {
+      pendingCount.textContent = '待评审 ' + pendingReports.length + ' 条';
+      if (pendingReports.length === 0) {
+        pendingEmpty.style.display = 'block';
+        pendingTableWrap.style.display = 'none';
+        pendingTbody.innerHTML = '';
+        return;
+      }
+
+      pendingEmpty.style.display = 'none';
+      pendingTableWrap.style.display = 'block';
+      pendingTbody.innerHTML = pendingReports.map(function (r) {
+        return '' +
+          '<tr data-report-id="' + escapeHtml(r.id) + '">' +
+          '<td>' + escapeHtml(r.seq) + '</td>' +
+          '<td>' + escapeHtml(r.riskPoint) + '</td>' +
+          '<td>' + getRiskBadgeHTML(r.riskLevelText) + '</td>' +
+          '<td>' +
+          '<button type="button" class="btn btn-primary risk-action-btn risk-approve-btn" data-report-id="' + escapeHtml(r.id) + '">评审通过</button>' +
+          '<button type="button" class="btn btn-outline risk-action-btn risk-reject-btn" data-report-id="' + escapeHtml(r.id) + '" style="margin-left:8px;">驳回</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function upsertApprovedRow(row) {
+      const seqText = String(row.seq || '').trim();
+      if (!seqText) return;
+
+      const idx = approvedRows.findIndex(function (r) {
+        return String(r.seq || '').trim() === seqText;
+      });
+
+      if (idx >= 0) {
+        approvedRows[idx] = row;
+      } else {
+        approvedRows.push(row);
+      }
+
+      approvedRows.sort(function (a, b) {
+        const ai = parseFloat(a.seq);
+        const bi = parseFloat(b.seq);
+        if (isNaN(ai) || isNaN(bi)) return 0;
+        return ai - bi;
+      });
+
+      tbodyEl.innerHTML = buildRiskTierTbodyHTML(approvedRows);
+    }
+
+    pendingTbody.addEventListener('click', function (e) {
+      const approveBtn = e.target.closest('.risk-approve-btn');
+      const rejectBtn = e.target.closest('.risk-reject-btn');
+      if (!approveBtn && !rejectBtn) return;
+      const reportId = (approveBtn || rejectBtn).dataset.reportId;
+      if (!reportId) return;
+
+      const report = pendingReports.find(function (r) { return r.id === reportId; });
+      if (!report) return;
+
+      if (approveBtn) {
+        upsertApprovedRow(report);
+      }
+
+      pendingReports = pendingReports.filter(function (r) { return r.id !== reportId; });
+      renderPending();
+    });
+
+    reportBtn.addEventListener('click', function () {
+      showModal();
+    });
+
+    cancelBtn.addEventListener('click', function () { hideModal(); });
+    cancelBtn2.addEventListener('click', function () { hideModal(); });
+    modalOverlay.addEventListener('click', function (e) {
+      if (e.target === modalOverlay) hideModal();
+    });
+
+    submitBtn.addEventListener('click', function () {
+      const seqText = String(seqEl.value || '').trim();
+      const riskPointText = String(riskPointEl.value || '').trim();
+      const hazardFactorsText = String(hazardFactorsEl.value || '').trim().replace(/\r\n/g, '\n');
+      const accidentTypeText = String(accidentTypeEl.value || '').trim().replace(/\r\n/g, '\n');
+      const L = numVal(lEl);
+      const E = numVal(eEl);
+      const C = numVal(cEl);
+      const DText = String(dEl.value || '').trim();
+
+      if (!seqText || !riskPointText || !hazardFactorsText || !accidentTypeText) {
+        hintEl.textContent = '请完整填写：序号、风险点、危险因素、可能发生事故类型';
+        return;
+      }
+      if (isNaN(L) || isNaN(E) || isNaN(C) || !DText) {
+        hintEl.textContent = '请填写 L/E/C（用于自动计算危险值 D）';
+        return;
+      }
+
+      const Dnum = parseFloat(DText);
+      const riskLevelText = guessRiskLevelByD(Dnum);
+
+      const newRow = {
+        id: 'RP_' + Date.now() + '_' + Math.random().toString(16).slice(2),
+        seq: seqText,
+        riskPoint: riskPointText,
+        hazardFactors: hazardFactorsText,
+        accidentType: accidentTypeText,
+        L: String(L),
+        E: String(E),
+        C: String(C),
+        D: DText,
+        riskLevelText: riskLevelText
+      };
+
+      pendingReports.push(newRow);
+      renderPending();
+      hideModal();
+    });
+
+    renderPending();
+
+    function parseRiskTierRowsFromTbody(tbody) {
+      const rows = [];
+      const trList = tbody.querySelectorAll('tr');
+      trList.forEach(function (tr) {
+        const tds = tr.querySelectorAll('td');
+        if (!tds || tds.length < 9) return;
+
+        const seq = tds[0].textContent.trim();
+        const riskPoint = tds[1].textContent.trim();
+        const hazardFactors = (tds[2].innerHTML || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim();
+        const accidentType = (tds[3].innerHTML || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim();
+        const L = tds[4].textContent.trim();
+        const E = tds[5].textContent.trim();
+        const C = tds[6].textContent.trim();
+        const D = tds[7].textContent.trim();
+        const riskLevelText = tds[8].textContent.trim();
+
+        if (!seq) return;
+        rows.push({
+          seq: seq,
+          riskPoint: riskPoint,
+          hazardFactors: hazardFactors,
+          accidentType: accidentType,
+          L: L,
+          E: E,
+          C: C,
+          D: D,
+          riskLevelText: riskLevelText
+        });
+      });
+      return rows;
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function nl2br(value) {
+    return escapeHtml(value).replace(/\n/g, '<br>');
+  }
+
+  function guessRiskLevelByD(d) {
+    // 兼容 Excel 只提供 D 的情况；阈值如与实际公司口径不一致，请以表内“危险性程度”为准
+    const num = parseFloat(d);
+    if (isNaN(num)) return '';
+    if (num > 320) return '重大风险';
+    if (num > 160) return '较大风险';
+    if (num > 70) return '一般风险';
+    return '低风险';
+  }
+
+  function getRiskBadgeHTML(levelText) {
+    const t = String(levelText || '').trim();
+    if (!t) return '--';
+    if (t.indexOf('重大') !== -1 || t.indexOf('红') !== -1) return '<span class="risk-badge red">' + escapeHtml(t) + '</span>';
+    if (t.indexOf('较大') !== -1 || t.indexOf('橙') !== -1) return '<span class="risk-badge orange">' + escapeHtml(t) + '</span>';
+    if (t.indexOf('一般') !== -1 || t.indexOf('黄') !== -1) return '<span class="risk-badge yellow">' + escapeHtml(t) + '</span>';
+    if (t.indexOf('低') !== -1 || t.indexOf('蓝') !== -1) return '<span class="risk-badge blue">' + escapeHtml(t) + '</span>';
+    return '<span class="risk-badge blue">' + escapeHtml(t) + '</span>';
+  }
+
+  function buildRiskTierTbodyHTML(rows) {
+    return rows.map(function (r) {
+      return '' +
+        '<tr data-seq="' + escapeHtml(r.seq) + '">' +
+        '<td>' + escapeHtml(r.seq) + '</td>' +
+        '<td>' + escapeHtml(r.riskPoint) + '</td>' +
+        '<td>' + nl2br(r.hazardFactors) + '</td>' +
+        '<td>' + nl2br(r.accidentType) + '</td>' +
+        '<td>' + escapeHtml(r.L) + '</td>' +
+        '<td>' + escapeHtml(r.E) + '</td>' +
+        '<td>' + escapeHtml(r.C) + '</td>' +
+        '<td>' + escapeHtml(r.D) + '</td>' +
+        '<td>' + getRiskBadgeHTML(r.riskLevelText) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function parseRiskTierRowsFromExcel(file) {
+    // 支持：表头 + 数据；解析后返回结构化 rows
+    const reader = new FileReader();
+    const buffer = file.arrayBuffer ? file.arrayBuffer() : null;
+    // 为兼容不同浏览器：用 Promise 包装
+    return buffer ? buffer.then(function (ab) { return parseRiskTierRowsFromArrayBuffer(ab, file); }) : new Promise(function (resolve, reject) {
+      reader.onload = function (e) {
+        try {
+          const ab = e.target.result;
+          const rows = parseRiskTierRowsFromArrayBuffer(ab, file);
+          resolve(rows);
+        } catch (err) { reject(err); }
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function parseRiskTierRowsFromArrayBuffer(ab) {
+    const workbook = XLSX.read(ab, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[firstSheetName];
+    if (!sheet) return [];
+
+    const arrayRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+    if (!arrayRows || arrayRows.length < 2) return [];
+
+    // 以第一行作为表头（Excel 通常都包含表头）
+    const headers = arrayRows[0].map(function (h) { return normalizeHeaderKey(h); });
+    const headerRowRaw = arrayRows[0].map(function (h) { return String(h == null ? '' : h); }).join('');
+    const headerLooksValid = /风险点|危险因素|危险性程度|可能发生|事故类型|序/.test(headerRowRaw);
+    const startRow = headerLooksValid ? 1 : 0;
+
+    function idxOfHeader(pred) {
+      for (let i = 0; i < headers.length; i++) {
+        const hk = headers[i];
+        if (pred(hk)) return i;
+      }
+      return -1;
+    }
+
+    const idxSeq = idxOfHeader(function (k) { return k.indexOf('序') !== -1 && k.indexOf('号') !== -1; });
+    const idxRiskPoint = idxOfHeader(function (k) { return k.indexOf('风险点') !== -1; });
+    const idxHazardFactors = idxOfHeader(function (k) { return k.indexOf('危险因素') !== -1; });
+    const idxAccidentType = idxOfHeader(function (k) { return k.indexOf('可能发生') !== -1 || k.indexOf('事故类型') !== -1; });
+    const idxL = idxOfHeader(function (k) { return k === 'L'; });
+    const idxE = idxOfHeader(function (k) { return k === 'E'; });
+    const idxC = idxOfHeader(function (k) { return k === 'C'; });
+    const idxD = idxOfHeader(function (k) { return k === 'D' || k.indexOf('危险值') !== -1; });
+    const idxRiskLevelText = idxOfHeader(function (k) { return k.indexOf('危险性程度') !== -1 || k.indexOf('风险等级') !== -1 || k.indexOf('危险程度') !== -1 || (k.indexOf('风险') !== -1); });
+
+    // 若表头未命中，则直接尝试按固定列顺序：序号/风险点/危险因素/可能发生事故类型/L/E/C/D/危险性程度
+    const fixedOrder = idxSeq === -1 || idxRiskPoint === -1 || idxHazardFactors === -1 || idxAccidentType === -1;
+    const getByIndex = function (row, index) {
+      const v = index >= 0 ? row[index] : '';
+      return v == null ? '' : v;
+    };
+
+    const rows = [];
+    for (let r = startRow; r < arrayRows.length; r++) {
+      const row = arrayRows[r];
+      if (!row || row.length === 0) continue;
+
+      const seq = fixedOrder ? getByIndex(row, 0) : getByIndex(row, idxSeq);
+      const riskPoint = fixedOrder ? getByIndex(row, 1) : getByIndex(row, idxRiskPoint);
+      const hazardFactors = fixedOrder ? getByIndex(row, 2) : getByIndex(row, idxHazardFactors);
+      const accidentType = fixedOrder ? getByIndex(row, 3) : getByIndex(row, idxAccidentType);
+      const L = fixedOrder ? getByIndex(row, 4) : getByIndex(row, idxL);
+      const E = fixedOrder ? getByIndex(row, 5) : getByIndex(row, idxE);
+      const C = fixedOrder ? getByIndex(row, 6) : getByIndex(row, idxC);
+      let D = fixedOrder ? getByIndex(row, 7) : getByIndex(row, idxD);
+      let riskLevelText = fixedOrder ? getByIndex(row, 8) : getByIndex(row, idxRiskLevelText);
+
+      // 清洗字符串与换行
+      const seqText = String(seq || '').trim();
+      const riskPointText = String(riskPoint || '').trim();
+      if (!seqText && !riskPointText) continue;
+
+      const hazardFactorsText = String(hazardFactors || '').replace(/\r\n/g, '\n');
+      const accidentTypeText = String(accidentType || '').replace(/\r\n/g, '\n');
+
+      const Lnum = parseFloat(L);
+      const Enum = parseFloat(E);
+      const Cnum = parseFloat(C);
+      const Dnum = parseFloat(D);
+
+      if ((riskLevelText == null || String(riskLevelText).trim() === '') && !isNaN(Dnum)) {
+        riskLevelText = guessRiskLevelByD(Dnum);
+      }
+
+      if ((D == null || String(D).trim() === '') && !isNaN(Lnum) && !isNaN(Enum) && !isNaN(Cnum)) {
+        D = String(Lnum * Enum * Cnum);
+      }
+
+      rows.push({
+        seq: seqText,
+        riskPoint: riskPointText,
+        hazardFactors: hazardFactorsText,
+        accidentType: accidentTypeText,
+        L: String(L || ''),
+        E: String(E || ''),
+        C: String(C || ''),
+        D: String(D || ''),
+        riskLevelText: String(riskLevelText || '').trim()
+      });
+    }
+
+    return rows;
   }
 
   // ============ 事故与应急管理 ============
