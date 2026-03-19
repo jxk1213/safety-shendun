@@ -151,6 +151,7 @@
       case 'dual-prevention':
         mainContent.innerHTML = renderDualPrevention();
         initDualPreventionRiskReportWorkflow();
+        initDualPreventionRiskTierTablePager();
         break;
       case 'accident-emergency': mainContent.innerHTML = renderAccidentEmergency(); break;
       case 'personnel': mainContent.innerHTML = renderPersonnel(); break;
@@ -296,48 +297,6 @@
             '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>', 'green') +
         '</div>' +
 
-        '<div class="data-table-wrapper">' +
-          '<div class="table-toolbar">' +
-            '<div class="table-toolbar-left">' +
-              '<div class="table-filter">' +
-                '<span>风险等级：</span>' +
-                '<select><option>全部</option><option>重大</option><option>较大</option><option>一般</option><option>低</option></select>' +
-              '</div>' +
-              '<div class="table-filter">' +
-                '<span>状态：</span>' +
-                '<select><option>全部</option><option>管控中</option><option>已整改</option><option>待复查</option></select>' +
-              '</div>' +
-            '</div>' +
-            '<div class="table-search">' +
-              '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
-              '<input type="text" placeholder="搜索风险点...">' +
-            '</div>' +
-          '</div>' +
-          '<table class="data-table">' +
-            '<thead><tr>' +
-              '<th>风险编号</th><th>风险点名称</th><th>所在区域</th><th>风险等级</th><th>管控措施</th><th>责任人</th><th>状态</th>' +
-            '</tr></thead>' +
-            '<tbody>' +
-              '<tr><td>RF-2026-001</td><td>分拨中心消防通道堵塞</td><td>华东分拨中心</td><td><span class="status-badge danger">重大</span></td><td>每日巡查，限期整改</td><td>张伟</td><td><span class="status-badge warning">管控中</span></td></tr>' +
-              '<tr><td>RF-2026-002</td><td>装卸平台防护栏缺失</td><td>华南转运中心</td><td><span class="status-badge danger">重大</span></td><td>临时围挡，采购安装</td><td>李明</td><td><span class="status-badge warning">管控中</span></td></tr>' +
-              '<tr><td>RF-2026-003</td><td>配电房防潮措施不足</td><td>西南分拨中心</td><td><span class="status-badge warning">较大</span></td><td>加装除湿设备</td><td>王强</td><td><span class="status-badge success">已整改</span></td></tr>' +
-              '<tr><td>RF-2026-004</td><td>叉车通行区域标线磨损</td><td>华北转运中心</td><td><span class="status-badge info">一般</span></td><td>重新划线</td><td>赵刚</td><td><span class="status-badge success">已整改</span></td></tr>' +
-              '<tr><td>RF-2026-005</td><td>监控盲区（B区仓库东侧）</td><td>华东分拨中心</td><td><span class="status-badge info">一般</span></td><td>增设摄像头</td><td>陈亮</td><td><span class="status-badge warning">管控中</span></td></tr>' +
-            '</tbody>' +
-          '</table>' +
-          '<div class="table-pagination">' +
-            '<span>共 171 条记录</span>' +
-            '<div class="pagination-btns">' +
-              '<button class="pagination-btn">&lt;</button>' +
-              '<button class="pagination-btn active">1</button>' +
-              '<button class="pagination-btn">2</button>' +
-              '<button class="pagination-btn">3</button>' +
-              '<button class="pagination-btn">...</button>' +
-              '<button class="pagination-btn">18</button>' +
-              '<button class="pagination-btn">&gt;</button>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
         '<div class="section-title" style="margin-top:28px;">转运中心风险评估分级表</div>' +
         '<div class="data-table-wrapper">' +
           '<div class="table-toolbar">' +
@@ -346,9 +305,17 @@
                 '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg>' +
                 '上报风险' +
               '</button>' +
+              '<div class="table-filter">' +
+                '<span>风险等级：</span>' +
+                '<select id="riskTierRiskLevelSelect"><option>全部</option><option>重大</option><option>较大</option><option>一般</option><option>低</option></select>' +
+              '</div>' +
             '</div>' +
-            '<div class="table-search">' +
-              '<span style="color:var(--text-tertiary);font-size:13px;">提交后进入“总部评审队列”，评审通过将自动更新表格</span>' +
+            '<div class="table-search" style="flex-direction:column;align-items:flex-start;gap:8px;">' +
+              '<div style="display:flex;align-items:center;gap:6px;width:100%;">' +
+                '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+                '<input id="riskTierSearchInput" type="text" placeholder="搜索风险点/危险因素...">' +
+              '</div>' +
+              '<span style="color:var(--text-tertiary);font-size:13px;line-height:1.4;">提交后进入“总部评审队列”，评审通过将自动更新表格</span>' +
             '</div>' +
           '</div>' +
           '<table class="data-table risk-tier-table">' +
@@ -426,6 +393,10 @@
               '</tr>' +
             '</tbody>' +
           '</table>' +
+          '<div class="table-pagination">' +
+            '<span id="riskTierTotalCount">共 0 条记录</span>' +
+            '<div class="pagination-btns" id="riskTierPaginationBtns"></div>' +
+          '</div>' +
         '</div>' +
         '<div class="panel" style="margin-top:16px;">' +
           '<div class="panel-header">' +
@@ -436,7 +407,7 @@
             '<div id="riskTierPendingEmpty" style="padding:18px 0;color:var(--text-secondary);text-align:center;">暂无待评审风险</div>' +
             '<div id="riskTierPendingTableWrap" style="display:none;">' +
               '<table class="data-table">' +
-                '<thead><tr><th>序号</th><th>风险点</th><th>危险性程度</th><th>操作</th></tr></thead>' +
+                '<thead><tr><th>风险点</th><th>危险因素</th><th>可能发生事故类型</th><th>操作</th></tr></thead>' +
                 '<tbody id="riskTierPendingTbody"></tbody>' +
               '</table>' +
             '</div>' +
@@ -450,21 +421,58 @@
             '</div>' +
             '<div class="modal-body">' +
               '<div class="form-grid">' +
-                '<div class="form-field"><div class="form-label">序号</div><input type="text" id="riskTierReportSeq" placeholder="例如 6"></div>' +
-                '<div class="form-field"><div class="form-label">风险点</div><input type="text" id="riskTierReportRiskPoint" placeholder="例如 物品临时放置区..."></div>' +
-                '<div class="form-field span-2"><div class="form-label">危险因素</div><textarea id="riskTierReportHazardFactors" rows="3" placeholder="逐条填写（回车换行）"></textarea></div>' +
-                '<div class="form-field span-2"><div class="form-label">可能发生事故类型</div><textarea id="riskTierReportAccidentType" rows="2" placeholder="例如 物体打击 / 车辆伤害"></textarea></div>' +
-                '<div class="form-field"><div class="form-label">L</div><input type="number" step="1" min="0" id="riskTierReportL"></div>' +
-                '<div class="form-field"><div class="form-label">E</div><input type="number" step="1" min="0" id="riskTierReportE"></div>' +
-                '<div class="form-field"><div class="form-label">C</div><input type="number" step="1" min="0" id="riskTierReportC"></div>' +
-                '<div class="form-field"><div class="form-label">D（危险值，只读）</div><input type="text" id="riskTierReportD" readonly placeholder="自动计算"></div>' +
-                '<div class="form-field span-2"><div class="form-label">危险性程度</div><div id="riskTierReportRiskBadge"></div></div>' +
+                '<div class="form-field span-2"><div class="form-label">风险点</div><input type="text" id="riskTierReportRiskPoint" placeholder="例如 物品临时放置区..."></div>' +
+                '<div class="form-field span-2"><div class="form-label">危险因素</div><textarea id="riskTierReportHazardFactors" rows="4" placeholder="逐条填写（回车换行）"></textarea></div>' +
+                '<div class="form-field span-2"><div class="form-label">可能发生事故类型</div><textarea id="riskTierReportAccidentType" rows="3" placeholder="例如 物体打击 / 车辆伤害"></textarea></div>' +
               '</div>' +
               '<div class="modal-hint" id="riskTierReportFormHint" style="margin-top:12px;color:var(--text-secondary);font-size:13px;"></div>' +
             '</div>' +
             '<div class="modal-footer">' +
               '<button class="btn btn-outline" id="riskTierReportCancelBtn2" type="button">取消</button>' +
               '<button class="btn btn-primary" id="riskTierReportSubmitBtn" type="button">提交上报</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="modal-overlay" id="riskTierReviewModalOverlay" style="display:none;">' +
+          '<div class="modal" role="dialog" aria-modal="true">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title">总部评审（LEC）</div>' +
+              '<button class="modal-close" id="riskTierReviewCloseBtn" type="button" title="关闭">×</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+              '<div class="form-grid">' +
+                '<div class="form-field span-2"><div class="form-label">风险点（只读）</div><input type="text" id="riskTierReviewRiskPoint" readonly></div>' +
+                '<div class="form-field span-2"><div class="form-label">危险因素（只读）</div><textarea id="riskTierReviewHazardFactors" rows="4" readonly></textarea></div>' +
+                '<div class="form-field span-2"><div class="form-label">可能发生事故类型（只读）</div><textarea id="riskTierReviewAccidentType" rows="3" readonly></textarea></div>' +
+
+                '<div class="form-field"><div class="form-label">L（可能性）</div><input type="number" step="0.1" min="0" id="riskTierReviewL" placeholder="例如 3"></div>' +
+                '<div class="form-field"><div class="form-label">E（暴露频次）</div><input type="number" step="0.1" min="0" id="riskTierReviewE" placeholder="例如 6"></div>' +
+                '<div class="form-field"><div class="form-label">C（后果严重性）</div><input type="number" step="0.1" min="0" id="riskTierReviewC" placeholder="例如 7"></div>' +
+                '<div class="form-field"><div class="form-label">D（危险值，只读）</div><input type="text" id="riskTierReviewD" readonly placeholder="自动计算"></div>' +
+                '<div class="form-field span-2"><div class="form-label">风险分级（自动）</div><div id="riskTierReviewRiskBadge">--</div></div>' +
+
+                '<div class="form-field span-2">' +
+                  '<div class="form-label">驳回理由</div>' +
+                  '<textarea id="riskTierReviewRejectReason" rows="3" placeholder="请填写驳回原因（例如：信息不完整/描述不清/需补充现场照片等）"></textarea>' +
+                '</div>' +
+
+                '<div class="form-field span-2">' +
+                  '<div class="form-label">LEC 数值含义（简要）</div>' +
+                  '<div style="background:var(--bg-body);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 12px;color:var(--text-secondary);font-size:13px;line-height:1.6;">' +
+                    '<div style="font-weight:600;color:var(--text-primary);margin-bottom:6px;">D = L × E × C</div>' +
+                    '<div><b>L（可能性）</b>：事故发生的可能性，值越大表示越可能发生（可按 0.5 / 1 / 3 / 6 / 10 等梯度打分）。</div>' +
+                    '<div><b>E（暴露频次）</b>：人员/设备暴露在危险环境中的频次，值越大表示暴露越频繁（可按 0.5 / 1 / 2 / 3 / 6 / 10 等梯度打分）。</div>' +
+                    '<div><b>C（后果严重性）</b>：一旦发生的后果严重程度，值越大表示后果越严重（可按 1 / 3 / 7 / 15 / 40 / 100 等梯度打分）。</div>' +
+                    '<div style="margin-top:6px;">系统会根据输入的 L/E/C 自动计算 D 并自动生成风险分级。</div>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="modal-hint" id="riskTierReviewHint" style="margin-top:12px;color:var(--text-secondary);font-size:13px;"></div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-outline" id="riskTierReviewCancelBtn" type="button">取消</button>' +
+              '<button class="btn btn-outline" id="riskTierReviewRejectBtn" type="button">驳回风险</button>' +
+              '<button class="btn btn-primary" id="riskTierReviewApproveBtn" type="button">评审通过</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -484,33 +492,47 @@
     const cancelBtn = document.getElementById('riskTierReportCancelBtn');
     const cancelBtn2 = document.getElementById('riskTierReportCancelBtn2');
     const submitBtn = document.getElementById('riskTierReportSubmitBtn');
+    const reviewOverlay = document.getElementById('riskTierReviewModalOverlay');
+    const reviewCloseBtn = document.getElementById('riskTierReviewCloseBtn');
+    const reviewCancelBtn = document.getElementById('riskTierReviewCancelBtn');
+    const reviewApproveBtn = document.getElementById('riskTierReviewApproveBtn');
+    const reviewRejectBtn = document.getElementById('riskTierReviewRejectBtn');
 
-    if (!reportBtn || !tbodyEl || !pendingTbody || !pendingEmpty || !pendingTableWrap || !pendingCount || !modalOverlay || !cancelBtn || !cancelBtn2 || !submitBtn) {
+    if (!reportBtn || !tbodyEl || !pendingTbody || !pendingEmpty || !pendingTableWrap || !pendingCount || !modalOverlay || !cancelBtn || !cancelBtn2 || !submitBtn || !reviewOverlay || !reviewCloseBtn || !reviewCancelBtn || !reviewApproveBtn || !reviewRejectBtn) {
       return;
     }
 
-    const seqEl = document.getElementById('riskTierReportSeq');
     const riskPointEl = document.getElementById('riskTierReportRiskPoint');
     const hazardFactorsEl = document.getElementById('riskTierReportHazardFactors');
     const accidentTypeEl = document.getElementById('riskTierReportAccidentType');
-    const lEl = document.getElementById('riskTierReportL');
-    const eEl = document.getElementById('riskTierReportE');
-    const cEl = document.getElementById('riskTierReportC');
-    const dEl = document.getElementById('riskTierReportD');
-    const riskBadgeEl = document.getElementById('riskTierReportRiskBadge');
     const hintEl = document.getElementById('riskTierReportFormHint');
 
-    if (!seqEl || !riskPointEl || !hazardFactorsEl || !accidentTypeEl || !lEl || !eEl || !cEl || !dEl || !riskBadgeEl || !hintEl) {
+    if (!riskPointEl || !hazardFactorsEl || !accidentTypeEl || !hintEl) {
+      return;
+    }
+
+    const reviewRiskPointEl = document.getElementById('riskTierReviewRiskPoint');
+    const reviewHazardFactorsEl = document.getElementById('riskTierReviewHazardFactors');
+    const reviewAccidentTypeEl = document.getElementById('riskTierReviewAccidentType');
+    const reviewLEl = document.getElementById('riskTierReviewL');
+    const reviewEEl = document.getElementById('riskTierReviewE');
+    const reviewCEl = document.getElementById('riskTierReviewC');
+    const reviewDEl = document.getElementById('riskTierReviewD');
+    const reviewRiskBadgeEl = document.getElementById('riskTierReviewRiskBadge');
+    const reviewHintEl = document.getElementById('riskTierReviewHint');
+    const reviewRejectReasonEl = document.getElementById('riskTierReviewRejectReason');
+
+    if (!reviewRiskPointEl || !reviewHazardFactorsEl || !reviewAccidentTypeEl || !reviewLEl || !reviewEEl || !reviewCEl || !reviewDEl || !reviewRiskBadgeEl || !reviewHintEl || !reviewRejectReasonEl) {
       return;
     }
 
     let approvedRows = parseRiskTierRowsFromTbody(tbodyEl);
     let pendingReports = [];
+    let reviewActiveReportId = null;
 
     function showModal() {
       modalOverlay.style.display = 'flex';
       resetForm();
-      computeDAndRisk();
       hintEl.textContent = '';
     }
 
@@ -519,46 +541,62 @@
     }
 
     function resetForm() {
-      seqEl.value = '';
       riskPointEl.value = '';
       hazardFactorsEl.value = '';
       accidentTypeEl.value = '';
-      lEl.value = '';
-      eEl.value = '';
-      cEl.value = '';
-      dEl.value = '';
-      riskBadgeEl.innerHTML = '--';
+    }
+
+    function nextSeq() {
+      let maxSeq = 0;
+      approvedRows.forEach(function (r) {
+        const n = parseFloat(String(r.seq || '').trim());
+        if (!isNaN(n)) maxSeq = Math.max(maxSeq, n);
+      });
+      return String(maxSeq + 1);
     }
 
     function numVal(inputEl) {
       const v = String(inputEl.value || '').trim();
       if (!v) return NaN;
-      const n = parseFloat(v);
-      return n;
+      return parseFloat(v);
     }
 
-    function computeDAndRisk() {
-      const L = numVal(lEl);
-      const E = numVal(eEl);
-      const C = numVal(cEl);
+    function showReview(report) {
+      reviewActiveReportId = report.id;
+      reviewOverlay.style.display = 'flex';
+      reviewRiskPointEl.value = report.riskPoint || '';
+      reviewHazardFactorsEl.value = report.hazardFactors || '';
+      reviewAccidentTypeEl.value = report.accidentType || '';
+      reviewLEl.value = '';
+      reviewEEl.value = '';
+      reviewCEl.value = '';
+      reviewDEl.value = '';
+      reviewRiskBadgeEl.innerHTML = '--';
+      reviewRejectReasonEl.value = '';
+      reviewHintEl.textContent = '';
+    }
+
+    function hideReview() {
+      reviewOverlay.style.display = 'none';
+      reviewActiveReportId = null;
+    }
+
+    function computeReviewDAndRisk() {
+      const L = numVal(reviewLEl);
+      const E = numVal(reviewEEl);
+      const C = numVal(reviewCEl);
 
       if (isNaN(L) || isNaN(E) || isNaN(C)) {
-        dEl.value = '';
-        riskBadgeEl.innerHTML = '--';
+        reviewDEl.value = '';
+        reviewRiskBadgeEl.innerHTML = '--';
         return;
       }
 
       const D = L * E * C;
-      dEl.value = String(D);
+      reviewDEl.value = String(D);
       const riskLevelText = guessRiskLevelByD(D);
-      riskBadgeEl.innerHTML = getRiskBadgeHTML(riskLevelText);
+      reviewRiskBadgeEl.innerHTML = getRiskBadgeHTML(riskLevelText);
     }
-
-    ['input', 'change'].forEach(function (evt) {
-      lEl.addEventListener(evt, computeDAndRisk);
-      eEl.addEventListener(evt, computeDAndRisk);
-      cEl.addEventListener(evt, computeDAndRisk);
-    });
 
     function renderPending() {
       pendingCount.textContent = '待评审 ' + pendingReports.length + ' 条';
@@ -574,11 +612,11 @@
       pendingTbody.innerHTML = pendingReports.map(function (r) {
         return '' +
           '<tr data-report-id="' + escapeHtml(r.id) + '">' +
-          '<td>' + escapeHtml(r.seq) + '</td>' +
           '<td>' + escapeHtml(r.riskPoint) + '</td>' +
-          '<td>' + getRiskBadgeHTML(r.riskLevelText) + '</td>' +
+          '<td>' + nl2br(r.hazardFactors) + '</td>' +
+          '<td>' + nl2br(r.accidentType) + '</td>' +
           '<td>' +
-          '<button type="button" class="btn btn-primary risk-action-btn risk-approve-btn" data-report-id="' + escapeHtml(r.id) + '">评审通过</button>' +
+          '<button type="button" class="btn btn-primary risk-action-btn risk-approve-btn" data-report-id="' + escapeHtml(r.id) + '">评审</button>' +
           '<button type="button" class="btn btn-outline risk-action-btn risk-reject-btn" data-report-id="' + escapeHtml(r.id) + '" style="margin-left:8px;">驳回</button>' +
           '</td>' +
           '</tr>';
@@ -620,11 +658,78 @@
       if (!report) return;
 
       if (approveBtn) {
-        upsertApprovedRow(report);
+        showReview(report);
+        return;
       }
 
-      pendingReports = pendingReports.filter(function (r) { return r.id !== reportId; });
+      // 驳回也走评审页，要求填写驳回理由
+      showReview(report);
+    });
+
+    ['input', 'change'].forEach(function (evt) {
+      reviewLEl.addEventListener(evt, computeReviewDAndRisk);
+      reviewEEl.addEventListener(evt, computeReviewDAndRisk);
+      reviewCEl.addEventListener(evt, computeReviewDAndRisk);
+    });
+
+    reviewCloseBtn.addEventListener('click', hideReview);
+    reviewCancelBtn.addEventListener('click', hideReview);
+    reviewOverlay.addEventListener('click', function (e) {
+      if (e.target === reviewOverlay) hideReview();
+    });
+
+    reviewApproveBtn.addEventListener('click', function () {
+      if (!reviewActiveReportId) return;
+      const report = pendingReports.find(function (r) { return r.id === reviewActiveReportId; });
+      if (!report) return;
+
+      const L = numVal(reviewLEl);
+      const E = numVal(reviewEEl);
+      const C = numVal(reviewCEl);
+      if (isNaN(L) || isNaN(E) || isNaN(C)) {
+        reviewHintEl.textContent = '请填写 L / E / C（数字），系统将自动计算 D 并生成风险分级';
+        return;
+      }
+
+      const D = L * E * C;
+      const riskLevelText = guessRiskLevelByD(D);
+
+      const approved = {
+        seq: nextSeq(),
+        riskPoint: report.riskPoint,
+        hazardFactors: report.hazardFactors,
+        accidentType: report.accidentType,
+        L: String(L),
+        E: String(E),
+        C: String(C),
+        D: String(D),
+        riskLevelText: riskLevelText
+      };
+      upsertApprovedRow(approved);
+
+      pendingReports = pendingReports.filter(function (r) { return r.id !== reviewActiveReportId; });
       renderPending();
+      hideReview();
+    });
+
+    reviewRejectBtn.addEventListener('click', function () {
+      if (!reviewActiveReportId) return;
+      const reason = String(reviewRejectReasonEl.value || '').trim();
+      if (!reason) {
+        reviewHintEl.textContent = '请填写驳回理由后再驳回';
+        return;
+      }
+
+      // 当前版本为前端演示：记录驳回理由到控制台，实际接入接口时可提交到后端
+      const report = pendingReports.find(function (r) { return r.id === reviewActiveReportId; });
+      if (report) {
+        // eslint-disable-next-line no-console
+        console.log('[风险驳回]', { id: report.id, riskPoint: report.riskPoint, reason: reason });
+      }
+
+      pendingReports = pendingReports.filter(function (r) { return r.id !== reviewActiveReportId; });
+      renderPending();
+      hideReview();
     });
 
     reportBtn.addEventListener('click', function () {
@@ -638,38 +743,20 @@
     });
 
     submitBtn.addEventListener('click', function () {
-      const seqText = String(seqEl.value || '').trim();
       const riskPointText = String(riskPointEl.value || '').trim();
       const hazardFactorsText = String(hazardFactorsEl.value || '').trim().replace(/\r\n/g, '\n');
       const accidentTypeText = String(accidentTypeEl.value || '').trim().replace(/\r\n/g, '\n');
-      const L = numVal(lEl);
-      const E = numVal(eEl);
-      const C = numVal(cEl);
-      const DText = String(dEl.value || '').trim();
 
-      if (!seqText || !riskPointText || !hazardFactorsText || !accidentTypeText) {
-        hintEl.textContent = '请完整填写：序号、风险点、危险因素、可能发生事故类型';
+      if (!riskPointText || !hazardFactorsText || !accidentTypeText) {
+        hintEl.textContent = '请完整填写：风险点、危险因素、可能发生事故类型';
         return;
       }
-      if (isNaN(L) || isNaN(E) || isNaN(C) || !DText) {
-        hintEl.textContent = '请填写 L/E/C（用于自动计算危险值 D）';
-        return;
-      }
-
-      const Dnum = parseFloat(DText);
-      const riskLevelText = guessRiskLevelByD(Dnum);
 
       const newRow = {
         id: 'RP_' + Date.now() + '_' + Math.random().toString(16).slice(2),
-        seq: seqText,
         riskPoint: riskPointText,
         hazardFactors: hazardFactorsText,
-        accidentType: accidentTypeText,
-        L: String(L),
-        E: String(E),
-        C: String(C),
-        D: DText,
-        riskLevelText: riskLevelText
+        accidentType: accidentTypeText
       };
 
       pendingReports.push(newRow);
@@ -711,6 +798,444 @@
       });
       return rows;
     }
+  }
+
+  // ============ 转运中心风险评估分级表：搜索 + 分页 ============
+  function initDualPreventionRiskTierTablePager() {
+    const searchInput = document.getElementById('riskTierSearchInput');
+    const riskLevelSelect = document.getElementById('riskTierRiskLevelSelect');
+    const tbodyEl = document.getElementById('riskTierTbody');
+    const totalCountEl = document.getElementById('riskTierTotalCount');
+    const paginationBtnsWrap = document.getElementById('riskTierPaginationBtns');
+    const paginationEl = paginationBtnsWrap && paginationBtnsWrap.closest ? paginationBtnsWrap.closest('.table-pagination') : null;
+
+    if (!searchInput || !riskLevelSelect || !tbodyEl || !totalCountEl || !paginationBtnsWrap || !paginationEl) return;
+
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+    let searchTimer = null;
+
+    function normalizeText(s) {
+      return String(s == null ? '' : s).trim().toLowerCase();
+    }
+
+    function getRiskLevelTextFromTr(tr) {
+      const tds = tr.querySelectorAll('td');
+      if (!tds || tds.length < 9) return '';
+      return String(tds[8].textContent || '').trim();
+    }
+
+    function getRowKeywordTextFromTr(tr) {
+      const tds = tr.querySelectorAll('td');
+      if (!tds || tds.length < 4) return '';
+      const riskPoint = String(tds[1].textContent || '');
+      const hazardFactors = String(tds[2].textContent || '');
+      const accidentType = String(tds[3].textContent || '');
+      const riskLevel = String(tds[8] && tds[8].textContent ? tds[8].textContent : '');
+      return (riskPoint + ' ' + hazardFactors + ' ' + accidentType + ' ' + riskLevel).toLowerCase();
+    }
+
+    function matchesRow(tr, keyword, levelFilter) {
+      const riskLevelText = getRiskLevelTextFromTr(tr);
+
+      if (levelFilter && levelFilter !== '全部') {
+        if (String(riskLevelText || '').indexOf(levelFilter) === -1) return false;
+      }
+
+      if (keyword) {
+        const hay = getRowKeywordTextFromTr(tr);
+        if (hay.indexOf(keyword) === -1) return false;
+      }
+
+      return true;
+    }
+
+    function getPaginationModel(page, totalPages) {
+      const pages = new Set([1, totalPages]);
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+      for (let p = start; p <= end; p++) pages.add(p);
+
+      if (page <= 3 && totalPages >= 4) {
+        pages.add(2);
+        pages.add(3);
+        pages.add(4);
+      }
+      if (page >= totalPages - 2 && totalPages >= 4) {
+        pages.add(totalPages - 1);
+        pages.add(totalPages - 2);
+        pages.add(totalPages - 3);
+      }
+
+      return Array.from(pages)
+        .filter(function (p) { return p >= 1 && p <= totalPages; })
+        .sort(function (a, b) { return a - b; });
+    }
+
+    function renderPagination(totalPages, filteredCount) {
+      if (filteredCount === 0) {
+        paginationEl.style.display = 'none';
+        paginationBtnsWrap.innerHTML = '';
+        return;
+      }
+
+      if (totalPages <= 1) {
+        paginationEl.style.display = 'none';
+        paginationBtnsWrap.innerHTML = '';
+        return;
+      }
+
+      paginationEl.style.display = 'flex';
+
+      const pages = getPaginationModel(currentPage, totalPages);
+      let html = '';
+
+      function addPageBtn(label, page, isActive) {
+        html += '<button type="button" class="pagination-btn' + (isActive ? ' active' : '') + '"' +
+          ' data-page="' + page + '">' + escapeHtml(label) + '</button>';
+      }
+
+      function addDisabledBtn(label) {
+        html += '<button type="button" class="pagination-btn" style="pointer-events:none;opacity:0.6;" aria-hidden="true">' +
+          escapeHtml(label) +
+          '</button>';
+      }
+
+      if (currentPage > 1) {
+        html += '<button type="button" class="pagination-btn" data-page="' + (currentPage - 1) + '">&lt;</button>';
+      } else {
+        addDisabledBtn('<');
+      }
+
+      let prev = null;
+      pages.forEach(function (p) {
+        if (prev !== null && p - prev > 1) {
+          html += '<button type="button" class="pagination-btn" style="pointer-events:none;opacity:0.6;" aria-hidden="true">...</button>';
+        }
+        addPageBtn(String(p), p, p === currentPage);
+        prev = p;
+      });
+
+      if (currentPage < totalPages) {
+        html += '<button type="button" class="pagination-btn" data-page="' + (currentPage + 1) + '">&gt;</button>';
+      } else {
+        addDisabledBtn('>');
+      }
+
+      paginationBtnsWrap.innerHTML = html;
+    }
+
+    function apply() {
+      const rowEls = Array.from(tbodyEl.querySelectorAll('tr'));
+      if (rowEls.length === 0) {
+        totalCountEl.textContent = '共 0 条记录';
+        renderPagination(1, 0);
+        return;
+      }
+
+      const keyword = normalizeText(searchInput.value);
+      const levelFilter = riskLevelSelect.value;
+
+      const matchingRows = [];
+      rowEls.forEach(function (tr) {
+        if (matchesRow(tr, keyword, levelFilter)) matchingRows.push(tr);
+      });
+
+      totalCountEl.textContent = '共 ' + matchingRows.length + ' 条记录';
+
+      if (matchingRows.length === 0) {
+        rowEls.forEach(function (tr) { tr.style.display = 'none'; });
+        renderPagination(1, 0);
+        return;
+      }
+
+      const totalPages = Math.ceil(matchingRows.length / PAGE_SIZE);
+      currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+      rowEls.forEach(function (tr) { tr.style.display = 'none'; });
+
+      const startIndex = (currentPage - 1) * PAGE_SIZE;
+      const pageRows = matchingRows.slice(startIndex, startIndex + PAGE_SIZE);
+      pageRows.forEach(function (tr) { tr.style.display = 'table-row'; });
+
+      renderPagination(totalPages, matchingRows.length);
+    }
+
+    function scheduleApplyResetPage() {
+      currentPage = 1;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        apply();
+      }, 300);
+    }
+
+    searchInput.addEventListener('input', scheduleApplyResetPage);
+    riskLevelSelect.addEventListener('change', function () {
+      currentPage = 1;
+      apply();
+    });
+
+    paginationBtnsWrap.addEventListener('click', function (e) {
+      const btn = e.target.closest('button.pagination-btn');
+      if (!btn) return;
+      const pageText = btn.dataset.page;
+      const nextPage = parseInt(pageText, 10);
+      if (!isNaN(nextPage) && nextPage >= 1) {
+        currentPage = nextPage;
+        apply();
+      }
+    });
+
+    // tbody 内容会在“评审通过”时被整块替换，这里用 MutationObserver 自动重新应用过滤分页视图
+    const observer = new MutationObserver(function () {
+      // 不要重置页码：保持用户当前页位置
+      apply();
+    });
+    observer.observe(tbodyEl, { childList: true });
+
+    apply();
+  }
+
+  // ============ 风险分级管控表：分页 + 搜索 ============
+  function initDualPreventionRiskControlTable() {
+    const searchInput = document.getElementById('riskControlSearchInput');
+    const riskLevelSelect = document.getElementById('riskControlRiskLevelSelect');
+    const statusSelect = document.getElementById('riskControlStatusSelect');
+    const tbodyEl = document.getElementById('riskControlTbody');
+    const totalCountEl = document.getElementById('riskControlTotalCount');
+    const paginationEl = document.getElementById('riskControlPaginationBtns')?.closest('.table-pagination');
+    const paginationBtnsWrap = document.getElementById('riskControlPaginationBtns');
+
+    if (!searchInput || !riskLevelSelect || !statusSelect || !tbodyEl || !totalCountEl || !paginationBtnsWrap || !paginationEl) {
+      return;
+    }
+
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+
+    // 允许外部在运行时注入数据（例如后续接入接口或本地缓存）
+    // 数据格式建议：
+    // { riskNo, riskPointName, area/location, riskLevel, controlMeasures, owner/responsible, status }
+    let allRows = Array.isArray(window.__riskControlRows) ? window.__riskControlRows : [];
+
+    function rowValue(row, keys) {
+      if (!row) return '';
+      for (let i = 0; i < keys.length; i++) {
+        const v = row[keys[i]];
+        if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+      }
+      return '';
+    }
+
+    function normalizeText(s) {
+      return String(s == null ? '' : s).trim().toLowerCase();
+    }
+
+    function getRiskLevelBadgeHTML(levelText) {
+      const t = String(levelText == null ? '' : levelText).trim();
+      if (!t) return '--';
+      if (t.indexOf('重大') !== -1 || t.indexOf('红') !== -1) return '<span class="status-badge danger">' + escapeHtml(t) + '</span>';
+      if (t.indexOf('较大') !== -1 || t.indexOf('橙') !== -1) return '<span class="status-badge warning">' + escapeHtml(t) + '</span>';
+      if (t.indexOf('一般') !== -1 || t.indexOf('黄') !== -1) return '<span class="status-badge info">' + escapeHtml(t) + '</span>';
+      if (t.indexOf('低') !== -1 || t.indexOf('蓝') !== -1) return '<span class="status-badge success">' + escapeHtml(t) + '</span>';
+      return '<span class="status-badge info">' + escapeHtml(t) + '</span>';
+    }
+
+    function getStatusBadgeHTML(statusText) {
+      const t = String(statusText == null ? '' : statusText).trim();
+      if (!t) return '--';
+      if (t.indexOf('管控中') !== -1) return '<span class="status-badge warning">' + escapeHtml(t) + '</span>';
+      if (t.indexOf('已整改') !== -1) return '<span class="status-badge success">' + escapeHtml(t) + '</span>';
+      if (t.indexOf('待复查') !== -1) return '<span class="status-badge info">' + escapeHtml(t) + '</span>';
+      return '<span class="status-badge info">' + escapeHtml(t) + '</span>';
+    }
+
+    function buildRowHTML(r) {
+      const riskNo = rowValue(r, ['riskNo', 'riskId', 'risk编号', '风险编号', 'id']);
+      const riskPointName = rowValue(r, ['riskPointName', 'riskPoint', 'risk点名称', '风险点名称', '风险点']);
+      const area = rowValue(r, ['area', 'location', 'region', '所在区域', '区域']);
+      const riskLevelText = rowValue(r, ['riskLevel', 'riskGrade', 'risk等级', '风险等级']);
+      const controlMeasures = rowValue(r, ['controlMeasures', 'control', 'measures', '管控措施']);
+      const owner = rowValue(r, ['owner', 'responsible', 'responsiblePerson', '责任人', '负责人']);
+      const statusText = rowValue(r, ['status', 'state', 'riskStatus', '状态']);
+
+      return '' +
+        '<tr>' +
+        '<td>' + escapeHtml(riskNo) + '</td>' +
+        '<td>' + escapeHtml(riskPointName) + '</td>' +
+        '<td>' + escapeHtml(area) + '</td>' +
+        '<td>' + getRiskLevelBadgeHTML(riskLevelText) + '</td>' +
+        '<td>' + escapeHtml(controlMeasures) + '</td>' +
+        '<td>' + escapeHtml(owner) + '</td>' +
+        '<td>' + getStatusBadgeHTML(statusText) + '</td>' +
+        '</tr>';
+    }
+
+    function applyFilters() {
+      const keyword = normalizeText(searchInput.value);
+      const levelFilter = riskLevelSelect.value;
+      const statusFilter = statusSelect.value;
+
+      return allRows.filter(function (r) {
+        const riskPointName = rowValue(r, ['riskPointName', 'riskPoint', '风险点名称', '风险点']);
+        const riskNo = rowValue(r, ['riskNo', 'riskId', '风险编号', 'id']);
+        const area = rowValue(r, ['area', 'location', 'region', '所在区域']);
+        const riskLevelText = rowValue(r, ['riskLevel', 'riskGrade', '风险等级']);
+        const controlMeasures = rowValue(r, ['controlMeasures', 'control', 'measures', '管控措施']);
+        const owner = rowValue(r, ['owner', 'responsible', 'responsiblePerson', '责任人']);
+        const statusText = rowValue(r, ['status', 'state', 'riskStatus', '状态']);
+
+        if (levelFilter && levelFilter !== '全部') {
+          if (String(riskLevelText || '').indexOf(levelFilter) === -1) return false;
+        }
+
+        if (statusFilter && statusFilter !== '全部') {
+          if (String(statusText || '').indexOf(statusFilter) === -1) return false;
+        }
+
+        if (keyword) {
+          const hay = normalizeText([
+            riskNo,
+            riskPointName,
+            area,
+            riskLevelText,
+            controlMeasures,
+            owner,
+            statusText
+          ].join(' '));
+          if (hay.indexOf(keyword) === -1) return false;
+        }
+
+        return true;
+      });
+    }
+
+    function getPaginationModel(page, totalPages) {
+      // 精简分页：首尾 + 当前页及其相邻页
+      const pages = new Set([1, totalPages]);
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+      for (let p = start; p <= end; p++) pages.add(p);
+
+      // 当前页靠近开头时，补齐前几页
+      if (page <= 3 && totalPages >= 4) {
+        pages.add(2);
+        pages.add(3);
+        pages.add(4);
+      }
+      // 当前页靠近结尾时，补齐后几页
+      if (page >= totalPages - 2 && totalPages >= 4) {
+        pages.add(totalPages - 1);
+        pages.add(totalPages - 2);
+        pages.add(totalPages - 3);
+      }
+
+      return Array.from(pages).filter(function (p) { return p >= 1 && p <= totalPages; }).sort(function (a, b) { return a - b; });
+    }
+
+    function renderPagination(totalPages, filteredCount) {
+      if (filteredCount === 0) {
+        paginationEl.style.display = 'none';
+        paginationBtnsWrap.innerHTML = '';
+        return;
+      }
+      paginationEl.style.display = 'flex';
+
+      const pages = getPaginationModel(currentPage, totalPages);
+      let html = '';
+
+      function addPageBtn(label, page, isActive) {
+        html += '<button type="button" class="pagination-btn' + (isActive ? ' active' : '') + '"' +
+          ' data-page="' + page + '">' + escapeHtml(label) + '</button>';
+      }
+
+      function addEllipsis() {
+        html += '<button type="button" class="pagination-btn" style="pointer-events:none;opacity:0.6;" aria-hidden="true">...</button>';
+      }
+
+      // prev
+      if (currentPage > 1) {
+        html += '<button type="button" class="pagination-btn" data-page="' + (currentPage - 1) + '">&lt;</button>';
+      } else {
+        html += '<button type="button" class="pagination-btn" style="pointer-events:none;opacity:0.6;" aria-hidden="true">&lt;</button>';
+      }
+
+      let prev = null;
+      pages.forEach(function (p) {
+        if (prev !== null && p - prev > 1) addEllipsis();
+        addPageBtn(String(p), p, p === currentPage);
+        prev = p;
+      });
+
+      // next
+      if (currentPage < totalPages) {
+        html += '<button type="button" class="pagination-btn" data-page="' + (currentPage + 1) + '">&gt;</button>';
+      } else {
+        html += '<button type="button" class="pagination-btn" style="pointer-events:none;opacity:0.6;" aria-hidden="true">&gt;</button>';
+      }
+
+      paginationBtnsWrap.innerHTML = html;
+    }
+
+    function render() {
+      const filteredRows = applyFilters();
+      const filteredCount = filteredRows.length;
+      totalCountEl.textContent = '共 ' + filteredCount + ' 条记录';
+
+      if (filteredCount === 0) {
+        tbodyEl.innerHTML =
+          '<tr>' +
+          '<td colspan="7" style="padding:40px 20px;color:var(--text-secondary);text-align:center;">暂无数据</td>' +
+          '</tr>';
+        renderPagination(1, 0);
+        return;
+      }
+
+      const totalPages = Math.ceil(filteredCount / PAGE_SIZE);
+      currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+      const startIndex = (currentPage - 1) * PAGE_SIZE;
+      const pageRows = filteredRows.slice(startIndex, startIndex + PAGE_SIZE);
+
+      tbodyEl.innerHTML = pageRows.map(buildRowHTML).join('');
+      renderPagination(totalPages, filteredCount);
+    }
+
+    let searchTimer = null;
+    function scheduleRender() {
+      currentPage = 1;
+      render();
+    }
+
+    searchInput.addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        scheduleRender();
+      }, 300);
+    });
+
+    riskLevelSelect.addEventListener('change', function () { scheduleRender(); });
+    statusSelect.addEventListener('change', function () { scheduleRender(); });
+
+    paginationBtnsWrap.addEventListener('click', function (e) {
+      const btn = e.target.closest('button.pagination-btn');
+      if (!btn) return;
+      const pageText = btn.dataset.page;
+      const nextPage = parseInt(pageText, 10);
+      if (!isNaN(nextPage) && nextPage >= 1) {
+        currentPage = nextPage;
+        render();
+      }
+    });
+
+    // 暴露给外部注入/刷新数据
+    window.setRiskControlRows = function (rows) {
+      allRows = Array.isArray(rows) ? rows : [];
+      currentPage = 1;
+      render();
+    };
+
+    render();
   }
 
   function escapeHtml(value) {
