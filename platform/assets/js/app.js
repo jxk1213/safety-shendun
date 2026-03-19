@@ -150,9 +150,11 @@
       case 'dashboard': mainContent.innerHTML = renderDashboard(); break;
       case 'dual-prevention':
         mainContent.innerHTML = renderDualPrevention();
+        initDualPreventionMainTab();
         initDualPreventionRiskReportWorkflow();
         initDualPreventionRiskTierTablePager();
         initDualPreventionRiskControlSimplePager();
+        initDualPreventionHazardTab();
         break;
       case 'accident-emergency': mainContent.innerHTML = renderAccidentEmergency(); break;
       case 'personnel': mainContent.innerHTML = renderPersonnel(); break;
@@ -275,11 +277,12 @@
           '</div>' +
         '</div>' +
 
-        '<div class="tab-nav">' +
-          '<div class="tab-item active">风险分级管控</div>' +
-          '<div class="tab-item">隐患排查治理</div>' +
+        '<div class="tab-nav" id="dualPreventionMainTabNav">' +
+          '<div class="tab-item active" data-dp-tab="risk">风险分级管控</div>' +
+          '<div class="tab-item" data-dp-tab="hazard">隐患排查治理</div>' +
         '</div>' +
 
+        '<div id="dualPreventionPanelRisk" class="dual-prevention-panel">' +
         '<div class="stats-row">' +
           buildStatCard('重大风险', '2', '较上月持平', 'up',
             '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>', 'red') +
@@ -476,7 +479,233 @@
           '</div>' +
         '</div>' +
         '</div>' +
+        '</div>' +
+        renderDualPreventionHazardPanel() +
       '</div>';
+  }
+
+  function renderDualPreventionHazardPanel() {
+    return '' +
+        '<div id="dualPreventionPanelHazard" class="dual-prevention-panel" style="display:none;">' +
+          '<div class="stats-row">' +
+            buildStatCard('待稽核', '12', '待总部稽核', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>', 'orange') +
+            buildStatCard('整改中', '8', '责任单位整改中', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>', 'blue') +
+            buildStatCard('待验收', '5', '待验收关闭', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>', 'green') +
+            buildStatCard('已关闭', '126', '验收通过关闭', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>', 'green') +
+          '</div>' +
+          '<div class="tab-nav hazard-sub-tab-nav" style="margin-top:20px;margin-bottom:12px;">' +
+            '<div class="tab-item active" data-hazard-sub="report">隐患上报</div>' +
+            '<div class="tab-item" data-hazard-sub="selfcheck">自查自纠</div>' +
+            '<div class="tab-item" data-hazard-sub="audit">总部稽核</div>' +
+            '<div class="tab-item" data-hazard-sub="special">专项稽查</div>' +
+            '<div class="tab-item" data-hazard-sub="remind">提醒推送</div>' +
+          '</div>' +
+          '<div id="hazardSubPanelReport" class="hazard-sub-panel">' +
+            '<div class="section-title">隐患上报列表</div>' +
+            '<div class="data-table-wrapper">' +
+              '<div class="table-toolbar">' +
+                '<div class="table-toolbar-left">' +
+                  '<button class="btn btn-primary" id="hazardReportAddBtn">' +
+                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg> 新增隐患上报' +
+                  '</button>' +
+                  '<div class="table-filter"><span>隐患类别：</span><select id="hazardFilterCategory"><option value="">全部</option><option>人员安全</option><option>场地安全</option><option>消防安全</option><option>用电安全</option><option>交通安全</option><option>设备安全</option><option>操作安全</option></select></div>' +
+                  '<div class="table-filter"><span>状态：</span><select id="hazardFilterStatus"><option value="">全部</option><option>待稽核</option><option>稽核通过</option><option>稽核不通过-待修正</option><option>待再次稽核</option><option>整改中</option><option>待验收</option><option>验收通过-关闭</option></select></div>' +
+                '</div>' +
+                '<div class="table-search">' +
+                  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+                  '<input id="hazardSearchInput" type="text" placeholder="搜索问题描述/地点..." style="min-width:200px;">' +
+                '</div>' +
+              '</div>' +
+              '<table class="data-table">' +
+                '<thead><tr><th style="width:50px;">序号</th><th>隐患类别</th><th>二级描述</th><th>具体问题描述</th><th>发生地点</th><th>状态</th><th style="width:100px;">发现时间</th><th style="width:80px;">操作</th></tr></thead>' +
+                '<tbody id="hazardReportTbody">' +
+                  '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>' +
+                '</tbody>' +
+              '</table>' +
+            '</div>' +
+          '</div>' +
+          '<div id="hazardSubPanelSelfcheck" class="hazard-sub-panel" style="display:none;">' +
+            '<div class="section-title">自查自纠任务</div>' +
+            '<p style="color:var(--text-secondary);margin-bottom:12px;">每周根据《中心安全检查表》至少完成一次中心场地安全巡检并上传巡检记录。</p>' +
+            '<div class="data-table-wrapper">' +
+              '<table class="data-table"><thead><tr><th>任务周期</th><th>截止时间</th><th>状态</th><th>操作</th></tr></thead>' +
+              '<tbody id="hazardSelfcheckTbody"><tr><td>2026年第12周</td><td>2026-03-22 18:00</td><td><span class="risk-badge blue">未开始</span></td><td><button type="button" class="btn btn-outline btn-sm">进入巡检</button></td></tr></tbody></table>' +
+            '</div>' +
+          '</div>' +
+          '<div id="hazardSubPanelAudit" class="hazard-sub-panel" style="display:none;">' +
+            '<div class="section-title">总部稽核任务</div>' +
+            '<p style="color:var(--text-secondary);margin-bottom:12px;">月度全覆盖，稽核通过生成整改单，不通过退回修正后再次稽核。</p>' +
+            '<div class="data-table-wrapper">' +
+              '<table class="data-table"><thead><tr><th>稽核任务</th><th>覆盖范围</th><th>截止时间</th><th>操作</th></tr></thead>' +
+              '<tbody><tr><td>2026年3月月度稽核</td><td>华东区</td><td>2026-03-31</td><td><button type="button" class="btn btn-outline btn-sm">进入稽核</button></td></tr></tbody></table>' +
+            '</div>' +
+          '</div>' +
+          '<div id="hazardSubPanelSpecial" class="hazard-sub-panel" style="display:none;">' +
+            '<div class="section-title">专项稽查</div>' +
+            '<p style="color:var(--text-secondary);margin-bottom:12px;">突发事件、国家要求、临时做表。处理方式复用总部稽核机制。</p>' +
+            '<div class="data-table-wrapper">' +
+              '<table class="data-table"><thead><tr><th>任务名称</th><th>触发类型</th><th>截止时间</th><th>操作</th></tr></thead>' +
+              '<tbody><tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:20px;">暂无专项稽查任务</td></tr></tbody></table>' +
+            '</div>' +
+          '</div>' +
+          '<div id="hazardSubPanelRemind" class="hazard-sub-panel" style="display:none;">' +
+            '<div class="section-title">提醒推送</div>' +
+            '<p style="color:var(--text-secondary);margin-bottom:12px;">未完成关键节点提醒，超阈值通报主管。每次触达写入提醒推送记录。</p>' +
+            '<div class="panel" style="margin-top:12px;"><div class="panel-header"><div class="panel-title">提醒规则设置</div></div><div class="panel-body"><div class="form-grid"><div class="form-field"><div class="form-label">触发类型</div><select><option>自查自纠未提交</option><option>整改单未提交验收</option></select></div><div class="form-field"><div class="form-label">阈值（天）</div><input type="number" value="3" placeholder="T+N"></div><div class="form-field"><div class="form-label">升级策略</div><input type="text" value="提醒1 → 提醒2 → 通报主管" readonly style="background:var(--bg-body);"></div></div></div></div>' +
+            '<div class="panel" style="margin-top:12px;"><div class="panel-header"><div class="panel-title">提醒推送记录</div></div><div class="panel-body"><table class="data-table"><thead><tr><th>时间</th><th>触发类型</th><th>触达对象</th><th>是否升级</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:20px;">暂无记录</td></tr></tbody></table></div></div>' +
+          '</div>' +
+          '<div class="modal-overlay" id="hazardReportModalOverlay" style="display:none;">' +
+            '<div class="modal" role="dialog" style="max-width:560px;">' +
+              '<div class="modal-header"><div class="modal-title">新增隐患上报</div><button class="modal-close" id="hazardReportModalClose" type="button" title="关闭">×</button></div>' +
+              '<div class="modal-body">' +
+                '<div class="form-grid">' +
+                  '<div class="form-field span-2"><div class="form-label required">隐患类别</div><select id="hazardFormCategory"><option value="">请选择</option><option>人员安全</option><option>场地安全</option><option>消防安全</option><option>用电安全</option><option>交通安全</option><option>设备安全</option><option>操作安全</option><option>其他</option></select></div>' +
+                  '<div class="form-field span-2" id="hazardFormSecondWrap"><div class="form-label">二级隐患描述</div><select id="hazardFormSecond"><option value="">请选择</option><option>选项A</option><option>选项B</option><option>其他</option></select></div>' +
+                  '<div class="form-field span-2" id="hazardFormOtherWrap" style="display:none;"><div class="form-label required">自填隐患描述</div><input type="text" id="hazardFormOtherDesc" placeholder="选择「其他」时必填"></div>' +
+                  '<div class="form-field span-2"><div class="form-label required">具体问题描述</div><textarea id="hazardFormDesc" rows="3" placeholder="请详细描述具体问题"></textarea></div>' +
+                  '<div class="form-field"><div class="form-label">发生地点</div><select id="hazardFormRegion"><option value="">请选择省区/中心</option><option>华东区</option><option>华南区</option><option>华北区</option></select></div>' +
+                  '<div class="form-field"><div class="form-label">发现时间</div><input type="datetime-local" id="hazardFormTime"></div>' +
+                  '<div class="form-field span-2"><div class="form-label">附件</div><input type="file" id="hazardFormFile" multiple accept="image/*,.pdf"></div>' +
+                '</div>' +
+                '<div class="modal-hint" id="hazardReportFormHint" style="margin-top:8px;color:var(--danger);font-size:13px;"></div>' +
+              '</div>' +
+              '<div class="modal-footer">' +
+                '<button class="btn btn-outline" id="hazardReportModalCancel" type="button">取消</button>' +
+                '<button class="btn btn-primary" id="hazardReportSubmitBtn" type="button">提交上报</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+  }
+
+  function initDualPreventionMainTab() {
+    const nav = document.getElementById('dualPreventionMainTabNav');
+    const panelRisk = document.getElementById('dualPreventionPanelRisk');
+    const panelHazard = document.getElementById('dualPreventionPanelHazard');
+    if (!nav || !panelRisk || !panelHazard) return;
+    nav.addEventListener('click', function (e) {
+      const tab = e.target.closest('.tab-item[data-dp-tab]');
+      if (!tab) return;
+      const value = tab.dataset.dpTab;
+      document.querySelectorAll('#dualPreventionMainTabNav .tab-item').forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      panelRisk.style.display = value === 'risk' ? '' : 'none';
+      panelHazard.style.display = value === 'hazard' ? '' : 'none';
+    });
+  }
+
+  function initDualPreventionHazardTab() {
+    var hazardReportList = [];
+    var hazardIndex = 0;
+
+    var subNav = mainContent.querySelector('.hazard-sub-tab-nav');
+    var panels = {
+      report: document.getElementById('hazardSubPanelReport'),
+      selfcheck: document.getElementById('hazardSubPanelSelfcheck'),
+      audit: document.getElementById('hazardSubPanelAudit'),
+      special: document.getElementById('hazardSubPanelSpecial'),
+      remind: document.getElementById('hazardSubPanelRemind')
+    };
+    if (subNav) {
+      subNav.addEventListener('click', function (e) {
+        var tab = e.target.closest('.tab-item[data-hazard-sub]');
+        if (!tab) return;
+        var key = tab.dataset.hazardSub;
+        subNav.querySelectorAll('.tab-item').forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        Object.keys(panels).forEach(function (k) {
+          var el = panels[k];
+          if (el) el.style.display = k === key ? '' : 'none';
+        });
+      });
+    }
+
+    var overlay = document.getElementById('hazardReportModalOverlay');
+    var addBtn = document.getElementById('hazardReportAddBtn');
+    var closeBtn = document.getElementById('hazardReportModalClose');
+    var cancelBtn = document.getElementById('hazardReportModalCancel');
+    var submitBtn = document.getElementById('hazardReportSubmitBtn');
+    var hintEl = document.getElementById('hazardReportFormHint');
+    var categoryEl = document.getElementById('hazardFormCategory');
+    var secondEl = document.getElementById('hazardFormSecond');
+    var otherWrap = document.getElementById('hazardFormOtherWrap');
+    var otherDescEl = document.getElementById('hazardFormOtherDesc');
+    var descEl = document.getElementById('hazardFormDesc');
+    var tbody = document.getElementById('hazardReportTbody');
+
+    function showHint(msg) { if (hintEl) hintEl.textContent = msg || ''; }
+    function openModal() {
+      if (categoryEl) categoryEl.value = '';
+      if (secondEl) secondEl.value = '';
+      if (otherDescEl) otherDescEl.value = '';
+      if (descEl) descEl.value = '';
+      if (otherWrap) otherWrap.style.display = 'none';
+      var timeEl = document.getElementById('hazardFormTime');
+      if (timeEl) {
+        var now = new Date();
+        timeEl.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + 'T' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      }
+      showHint('');
+      if (overlay) overlay.style.display = 'flex';
+    }
+    function closeModal() {
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    if (secondEl) {
+      secondEl.addEventListener('change', function () {
+        if (otherWrap) otherWrap.style.display = (secondEl.value === '其他') ? '' : 'none';
+        if (otherDescEl && secondEl.value !== '其他') otherDescEl.value = '';
+      });
+    }
+    if (categoryEl) {
+      categoryEl.addEventListener('change', function () {
+        if (!otherWrap) return;
+        otherWrap.style.display = (categoryEl.value === '其他' || (secondEl && secondEl.value === '其他')) ? '' : 'none';
+      });
+    }
+
+    if (addBtn) addBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+      });
+    }
+
+    if (submitBtn && tbody) {
+      submitBtn.addEventListener('click', function () {
+        var category = categoryEl ? categoryEl.value.trim() : '';
+        var second = secondEl ? secondEl.value : '';
+        var otherDesc = otherDescEl ? otherDescEl.value.trim() : '';
+        var desc = descEl ? descEl.value.trim() : '';
+        if (!category) { showHint('请选择隐患类别'); return; }
+        if (!desc) { showHint('请填写具体问题描述'); return; }
+        if ((second === '其他' || category === '其他') && !otherDesc) { showHint('选择「其他」时请填写自填隐患描述'); return; }
+        showHint('');
+        hazardIndex += 1;
+        hazardReportList.push({
+          id: hazardIndex,
+          category: category,
+          second: second,
+          otherDesc: otherDesc,
+          desc: desc,
+          region: document.getElementById('hazardFormRegion') ? document.getElementById('hazardFormRegion').value : '',
+          time: document.getElementById('hazardFormTime') ? document.getElementById('hazardFormTime').value || new Date().toISOString().slice(0, 16) : '',
+          status: '待稽核'
+        });
+        var rows = hazardReportList.map(function (r, i) {
+          return '<tr><td>' + (i + 1) + '</td><td>' + (r.category || '-') + '</td><td>' + (r.second === '其他' ? r.otherDesc : (r.second || '-')) + '</td><td>' + (r.desc ? r.desc.substring(0, 40) + (r.desc.length > 40 ? '…' : '') : '-') + '</td><td>' + (r.region || '-') + '</td><td><span class="risk-badge orange">' + r.status + '</span></td><td>' + (r.time ? r.time.replace('T', ' ') : '-') + '</td><td><button type="button" class="btn btn-outline btn-sm">查看</button></td></tr>';
+        }).join('');
+        tbody.innerHTML = rows || '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据</td></tr>';
+        closeModal();
+      });
+    }
   }
 
   // ============ 转运中心风险分级表：风险上报工作流（总部评审） ============
