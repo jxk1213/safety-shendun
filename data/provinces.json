@@ -1,0 +1,163 @@
+[
+  {
+    "code": "P01",
+    "name": "上海省公司",
+    "northSouth": "中部",
+    "partitionName": "上海",
+    "operationManager": "刘辉"
+  },
+  {
+    "code": "P02",
+    "name": "浙江大区",
+    "northSouth": "中部",
+    "partitionName": "浙江",
+    "operationManager": "任强强"
+  },
+  {
+    "code": "P03",
+    "name": "江苏省公司",
+    "northSouth": "中部",
+    "partitionName": "江苏",
+    "operationManager": "汤竹清"
+  },
+  {
+    "code": "P04",
+    "name": "安徽省公司",
+    "northSouth": "中部",
+    "partitionName": "安徽",
+    "operationManager": "陈志斌"
+  },
+  {
+    "code": "P05",
+    "name": "重庆省公司",
+    "northSouth": "中部",
+    "partitionName": "重庆",
+    "operationManager": "罗雄辉"
+  },
+  {
+    "code": "P06",
+    "name": "云南省公司",
+    "northSouth": "中部",
+    "partitionName": "云贵",
+    "operationManager": "曾广宜"
+  },
+  {
+    "code": "P07",
+    "name": "湖北省公司",
+    "northSouth": "中部",
+    "partitionName": "湖北",
+    "operationManager": "明朗"
+  },
+  {
+    "code": "P08",
+    "name": "贵州省公司",
+    "northSouth": "中部",
+    "partitionName": "云贵",
+    "operationManager": "李凯鹏"
+  },
+  {
+    "code": "P09",
+    "name": "川藏省公司",
+    "northSouth": "中部",
+    "partitionName": "川藏",
+    "operationManager": "徐振迪"
+  },
+  {
+    "code": "P10",
+    "name": "北京省公司",
+    "northSouth": "北部",
+    "partitionName": "京津冀",
+    "operationManager": "王星桐"
+  },
+  {
+    "code": "P11",
+    "name": "天津省公司",
+    "northSouth": "北部",
+    "partitionName": "京津冀",
+    "operationManager": "王星桐"
+  },
+  {
+    "code": "P12",
+    "name": "河北省公司",
+    "northSouth": "北部",
+    "partitionName": "京津冀",
+    "operationManager": "王星桐"
+  },
+  {
+    "code": "P13",
+    "name": "山西省公司",
+    "northSouth": "北部",
+    "partitionName": "山西",
+    "operationManager": "李显"
+  },
+  {
+    "code": "P14",
+    "name": "内蒙古省公司",
+    "northSouth": "北部",
+    "partitionName": "内蒙",
+    "operationManager": "王维辉"
+  },
+  {
+    "code": "P15",
+    "name": "东北大区",
+    "northSouth": "北部",
+    "partitionName": "东北",
+    "operationManager": "张林海"
+  },
+  {
+    "code": "P16",
+    "name": "山东省公司",
+    "northSouth": "北部",
+    "partitionName": "山东",
+    "operationManager": "徐慧斌"
+  },
+  {
+    "code": "P17",
+    "name": "西北大区",
+    "northSouth": "北部",
+    "partitionName": "西北",
+    "operationManager": "毛伟聪"
+  },
+  {
+    "code": "P18",
+    "name": "河南省公司",
+    "northSouth": "北部",
+    "partitionName": "河南",
+    "operationManager": "王庆宵"
+  },
+  {
+    "code": "P19",
+    "name": "江西省公司",
+    "northSouth": "南部",
+    "partitionName": "江西",
+    "operationManager": "吴洪华"
+  },
+  {
+    "code": "P20",
+    "name": "湖南省公司",
+    "northSouth": "南部",
+    "partitionName": "湖南",
+    "operationManager": "赵承兵"
+  },
+  {
+    "code": "P21",
+    "name": "广西省公司",
+    "northSouth": "南部",
+    "partitionName": "广西",
+    "operationManager": "郭俊"
+  },
+  {
+    "code": "P22",
+    "name": "广东省公司",
+    "northSouth": "南部",
+    "partitionName": "广东",
+    "operationManager": "于明"
+  },
+  {
+    "code": "P23",
+    "name": "福建省公司",
+    "northSouth": "南部",
+    "partitionName": "福建",
+    "operationManager": "吴晓炜"
+  }
+]

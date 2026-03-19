@@ -1013,18 +1013,120 @@ input {
 }
 
 .form-field input,
-.form-field textarea {
+.form-field textarea,
+.form-field select,
+.form-control {
   background: var(--bg-body);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 9px 12px;
   font-size: 13px;
   color: var(--text-primary);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus,
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-100);
 }
 
 .form-field textarea {
   resize: vertical;
   min-height: 60px;
+}
+
+/* 新增隐患上报弹窗美化 */
+.modal-hazard-report .modal-header {
+  background: linear-gradient(135deg, var(--primary-50) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border-light);
+  padding: 18px 24px;
+}
+
+.modal-hazard-report .modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.modal-hazard-report .modal-body {
+  padding: 24px;
+  background: var(--bg-white);
+}
+
+.form-grid-hazard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-grid-hazard .form-field.span-2 {
+  grid-column: span 2;
+}
+
+.form-grid-hazard .form-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.form-grid-hazard .form-control {
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.form-grid-hazard textarea.form-control {
+  min-height: 80px;
+}
+
+.file-upload-area {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88px;
+  padding: 16px;
+  background: var(--bg-body);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.file-upload-area:hover {
+  border-color: var(--primary);
+  background: var(--primary-50);
+}
+
+.file-upload-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.file-upload-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.modal-hazard-report .modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-light);
+  gap: 12px;
+}
+
+.modal-hazard-report .btn-primary {
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
 }
 
 .risk-action-btn {

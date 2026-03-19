@@ -559,19 +559,24 @@
             '<div class="panel" style="margin-top:12px;"><div class="panel-header"><div class="panel-title">提醒推送记录</div></div><div class="panel-body"><table class="data-table"><thead><tr><th>时间</th><th>触发类型</th><th>触达对象</th><th>是否升级</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:20px;">暂无记录</td></tr></tbody></table></div></div>' +
           '</div>' +
           '<div class="modal-overlay" id="hazardReportModalOverlay" style="display:none;">' +
-            '<div class="modal" role="dialog" style="max-width:560px;">' +
-              '<div class="modal-header"><div class="modal-title">新增隐患上报</div><button class="modal-close" id="hazardReportModalClose" type="button" title="关闭">×</button></div>' +
+            '<div class="modal modal-hazard-report" role="dialog" style="max-width:600px;">' +
+              '<div class="modal-header">' +
+                '<div class="modal-title">新增隐患上报</div>' +
+                '<button class="modal-close" id="hazardReportModalClose" type="button" title="关闭" aria-label="关闭">×</button>' +
+              '</div>' +
               '<div class="modal-body">' +
-                '<div class="form-grid">' +
-                  '<div class="form-field span-2"><div class="form-label required">隐患类别</div><select id="hazardFormCategory"><option value="">请选择</option><option>人员安全</option><option>场地安全</option><option>消防安全</option><option>用电安全</option><option>交通安全</option><option>设备安全</option><option>操作安全</option><option>其他</option></select></div>' +
-                  '<div class="form-field span-2" id="hazardFormSecondWrap"><div class="form-label">二级隐患描述</div><select id="hazardFormSecond"><option value="">请选择</option><option>选项A</option><option>选项B</option><option>其他</option></select></div>' +
-                  '<div class="form-field span-2" id="hazardFormOtherWrap" style="display:none;"><div class="form-label required">自填隐患描述</div><input type="text" id="hazardFormOtherDesc" placeholder="选择「其他」时必填"></div>' +
-                  '<div class="form-field span-2"><div class="form-label required">具体问题描述</div><textarea id="hazardFormDesc" rows="3" placeholder="请详细描述具体问题"></textarea></div>' +
-                  '<div class="form-field"><div class="form-label">发生地点</div><select id="hazardFormRegion"><option value="">请选择省区/中心</option><option>华东区</option><option>华南区</option><option>华北区</option></select></div>' +
-                  '<div class="form-field"><div class="form-label">发现时间</div><input type="datetime-local" id="hazardFormTime"></div>' +
-                  '<div class="form-field span-2"><div class="form-label">附件</div><input type="file" id="hazardFormFile" multiple accept="image/*,.pdf"></div>' +
+                '<div class="form-grid form-grid-hazard">' +
+                  '<div class="form-field span-2"><label class="form-label required">隐患类别</label><select id="hazardFormCategory" class="form-control"><option value="">请选择</option><option>人员安全</option><option>场地安全</option><option>消防安全</option><option>用电安全</option><option>交通安全</option><option>设备安全</option><option>操作安全</option><option>其他</option></select></div>' +
+                  '<div class="form-field span-2" id="hazardFormSecondWrap"><label class="form-label">二级隐患描述</label><select id="hazardFormSecond" class="form-control"><option value="">请选择</option><option>选项A</option><option>选项B</option><option>其他</option></select></div>' +
+                  '<div class="form-field span-2" id="hazardFormOtherWrap" style="display:none;"><label class="form-label required">自填隐患描述</label><input type="text" id="hazardFormOtherDesc" class="form-control" placeholder="选择「其他」时必填"></div>' +
+                  '<div class="form-field span-2"><label class="form-label required">具体问题描述</label><textarea id="hazardFormDesc" class="form-control" rows="3" placeholder="请详细描述具体问题"></textarea></div>' +
+                  '<div class="form-field"><label class="form-label">南北部</label><select id="hazardFormNorthSouth" class="form-control"><option value="">请选择</option><option value="北部">北部</option><option value="南部">南部</option><option value="中部">中部</option></select></div>' +
+                  '<div class="form-field"><label class="form-label">省区</label><select id="hazardFormProvince" class="form-control"><option value="">请选择</option></select></div>' +
+                  '<div class="form-field span-2"><label class="form-label">中心</label><select id="hazardFormCenter" class="form-control"><option value="">请选择</option></select></div>' +
+                  '<div class="form-field"><label class="form-label">发现时间</label><input type="datetime-local" id="hazardFormTime" class="form-control"></div>' +
+                  '<div class="form-field"><label class="form-label">附件</label><div class="file-upload-area" id="hazardFormFileArea"><input type="file" id="hazardFormFile" multiple accept="image/*,.pdf" class="file-upload-input"><span class="file-upload-text" id="hazardFormFileText">点击或拖拽上传</span></div></div>' +
                 '</div>' +
-                '<div class="modal-hint" id="hazardReportFormHint" style="margin-top:8px;color:var(--danger);font-size:13px;"></div>' +
+                '<div class="modal-hint" id="hazardReportFormHint" style="margin-top:10px;color:var(--danger);font-size:13px;"></div>' +
               '</div>' +
               '<div class="modal-footer">' +
                 '<button class="btn btn-outline" id="hazardReportModalCancel" type="button">取消</button>' +
@@ -601,6 +606,8 @@
   function initDualPreventionHazardTab() {
     var hazardReportList = [];
     var hazardIndex = 0;
+    var provincesData = [];
+    var centersData = [];
 
     var subNav = mainContent.querySelector('.hazard-sub-tab-nav');
     var panels = {
@@ -638,17 +645,57 @@
     var tbody = document.getElementById('hazardReportTbody');
 
     function showHint(msg) { if (hintEl) hintEl.textContent = msg || ''; }
+
+    function fillProvincesByNorthSouth(northSouthVal) {
+      var sel = document.getElementById('hazardFormProvince');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">请选择</option>';
+      document.getElementById('hazardFormCenter').innerHTML = '<option value="">请选择</option>';
+      if (!northSouthVal || !provincesData.length) return;
+      provincesData.filter(function (p) { return p.northSouth === northSouthVal; }).forEach(function (p) {
+        var opt = document.createElement('option');
+        opt.value = p.code;
+        opt.textContent = p.name;
+        opt.dataset.name = p.name;
+        sel.appendChild(opt);
+      });
+    }
+    function fillCentersByProvince(provinceCode) {
+      var sel = document.getElementById('hazardFormCenter');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">请选择</option>';
+      if (!provinceCode || !centersData.length) return;
+      centersData.filter(function (c) { return c.provinceCode === provinceCode; }).forEach(function (c) {
+        var opt = document.createElement('option');
+        opt.value = c.code;
+        opt.textContent = c.shortName || c.name;
+        opt.dataset.name = c.name;
+        opt.dataset.shortName = c.shortName || c.name;
+        sel.appendChild(opt);
+      });
+    }
+
     function openModal() {
       if (categoryEl) categoryEl.value = '';
       if (secondEl) secondEl.value = '';
       if (otherDescEl) otherDescEl.value = '';
       if (descEl) descEl.value = '';
       if (otherWrap) otherWrap.style.display = 'none';
+      var nsEl = document.getElementById('hazardFormNorthSouth');
+      var provEl = document.getElementById('hazardFormProvince');
+      var centerEl = document.getElementById('hazardFormCenter');
+      if (nsEl) nsEl.value = '';
+      if (provEl) provEl.innerHTML = '<option value="">请选择</option>';
+      if (centerEl) centerEl.innerHTML = '<option value="">请选择</option>';
       var timeEl = document.getElementById('hazardFormTime');
       if (timeEl) {
         var now = new Date();
         timeEl.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + 'T' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
       }
+      var fileEl = document.getElementById('hazardFormFile');
+      var fileText = document.getElementById('hazardFormFileText');
+      if (fileEl) fileEl.value = '';
+      if (fileText) fileText.textContent = '点击或拖拽上传';
       showHint('');
       if (overlay) overlay.style.display = 'flex';
     }
@@ -666,6 +713,38 @@
       categoryEl.addEventListener('change', function () {
         if (!otherWrap) return;
         otherWrap.style.display = (categoryEl.value === '其他' || (secondEl && secondEl.value === '其他')) ? '' : 'none';
+      });
+    }
+
+    (function loadLocationData() {
+      if (typeof window.LOCATION_PROVINCES !== 'undefined' && typeof window.LOCATION_CENTERS !== 'undefined') {
+        provincesData = window.LOCATION_PROVINCES;
+        centersData = window.LOCATION_CENTERS;
+        return;
+      }
+      Promise.all([
+        fetch('data/provinces.json').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
+        fetch('data/centers.json').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+      ]).then(function (arr) {
+        provincesData = arr[0] || [];
+        centersData = arr[1] || [];
+      });
+    })();
+
+    var nsSelect = document.getElementById('hazardFormNorthSouth');
+    var provSelect = document.getElementById('hazardFormProvince');
+    var centerSelect = document.getElementById('hazardFormCenter');
+    if (nsSelect) nsSelect.addEventListener('change', function () { fillProvincesByNorthSouth(this.value); });
+    if (provSelect) provSelect.addEventListener('change', function () { fillCentersByProvince(this.value); });
+
+    var fileArea = document.getElementById('hazardFormFileArea');
+    var fileInput = document.getElementById('hazardFormFile');
+    var fileTextEl = document.getElementById('hazardFormFileText');
+    if (fileArea && fileInput && fileTextEl) {
+      fileArea.addEventListener('click', function () { fileInput.click(); });
+      fileInput.addEventListener('change', function () {
+        var n = this.files ? this.files.length : 0;
+        fileTextEl.textContent = n ? '已选 ' + n + ' 个文件' : '点击或拖拽上传';
       });
     }
 
@@ -687,6 +766,14 @@
         if (!category) { showHint('请选择隐患类别'); return; }
         if (!desc) { showHint('请填写具体问题描述'); return; }
         if ((second === '其他' || category === '其他') && !otherDesc) { showHint('选择「其他」时请填写自填隐患描述'); return; }
+        var nsEl = document.getElementById('hazardFormNorthSouth');
+        var provEl = document.getElementById('hazardFormProvince');
+        var centerEl = document.getElementById('hazardFormCenter');
+        var nsText = nsEl && nsEl.options[nsEl.selectedIndex] ? nsEl.options[nsEl.selectedIndex].text : '';
+        var provText = provEl && provEl.options[provEl.selectedIndex] ? provEl.options[provEl.selectedIndex].dataset.name || provEl.options[provEl.selectedIndex].text : '';
+        var centerText = centerEl && centerEl.options[centerEl.selectedIndex] ? centerEl.options[centerEl.selectedIndex].dataset.shortName || centerEl.options[centerEl.selectedIndex].text : '';
+        var regionParts = [nsText, provText, centerText].filter(Boolean);
+        var region = regionParts.length ? regionParts.join(' / ') : '';
         showHint('');
         hazardIndex += 1;
         hazardReportList.push({
@@ -695,7 +782,7 @@
           second: second,
           otherDesc: otherDesc,
           desc: desc,
-          region: document.getElementById('hazardFormRegion') ? document.getElementById('hazardFormRegion').value : '',
+          region: region,
           time: document.getElementById('hazardFormTime') ? document.getElementById('hazardFormTime').value || new Date().toISOString().slice(0, 16) : '',
           status: '待稽核'
         });
