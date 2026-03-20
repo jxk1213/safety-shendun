@@ -507,9 +507,12 @@
           '<div id="hazardSubPanelReport" class="hazard-sub-panel">' +
             '<div class="hazard-list-header">' +
               '<div class="section-title">隐患上报列表</div>' +
-              '<button class="btn btn-primary" id="hazardReportAddBtn">' +
-                '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg> 新增隐患上报' +
-              '</button>' +
+              '<div class="hazard-list-header-actions">' +
+                '<button class="btn btn-primary" id="hazardReportAddBtn" type="button">' +
+                  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg> 新增隐患上报' +
+                '</button>' +
+                '<button class="btn btn-outline" id="hazardReportExportBtn" type="button">导出报表</button>' +
+              '</div>' +
             '</div>' +
             '<div class="data-table-wrapper">' +
               '<div class="table-toolbar hazard-report-toolbar">' +
@@ -905,6 +908,57 @@
           '<td>' + closedText + '</td></tr>';
       }).join('');
       tbody.innerHTML = html;
+    }
+
+    var exportReportBtn = document.getElementById('hazardReportExportBtn');
+    if (exportReportBtn) {
+      exportReportBtn.addEventListener('click', function () {
+        var filtered = getFilteredHazardList();
+        function csvEscape(val) {
+          var s = String(val == null ? '' : val);
+          var normalized = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+          return '"' + normalized.replace(/"/g, '""') + '"';
+        }
+        var headers = ['上报时间', '所属片区', '所属省区', '所属中心', '隐患类别', '隐患内容', '整改前照片张数', '具体问题描述', '整改时间', '整改后照片张数', '整改描述', '整改状态', '整改人', '是否闭环'];
+        var lines = [];
+        lines.push(headers.map(csvEscape).join(','));
+        filtered.forEach(function (r) {
+          var regionParts = (r.region || '').split(/\s*\/\s*/);
+          var area = (regionParts[0] || '').trim() || '-';
+          var province = (regionParts[1] || '').trim() || '-';
+          var center = (regionParts[2] || '').trim() || '-';
+          var content = r.second === '其他' ? (r.otherDesc || '-') : (r.second || '-');
+          var beforeN = (r.imageBefore && r.imageBefore.length) ? String(r.imageBefore.length) : '0';
+          var afterN = (r.imageAfter && r.imageAfter.length) ? String(r.imageAfter.length) : '0';
+          var row = [
+            r.time ? String(r.time).replace('T', ' ') : '-',
+            area,
+            province,
+            center,
+            r.category || '-',
+            content,
+            beforeN,
+            r.desc || '-',
+            r.rectifyTime || '-',
+            afterN,
+            r.rectifyDesc || '-',
+            r.status || '待稽核',
+            r.rectifyPerson || '-',
+            r.closedLoop ? '是' : '否'
+          ];
+          lines.push(row.map(csvEscape).join(','));
+        });
+        var csv = '\ufeff' + lines.join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = '隐患上报列表.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
     }
 
     if (submitBtn && tbody) {
