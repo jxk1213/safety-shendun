@@ -661,6 +661,7 @@
                   '<div class="hazard-detail-section"><div class="form-label">整改前图片</div><div class="hazard-imgs-row" id="hazardDetailBeforeImgs"></div></div>' +
                   '<div class="hazard-detail-section" id="hazardDetailAfterSection"><div class="form-label">整改后图片</div><div class="file-upload-area hazard-upload-after" id="hazardDetailAfterUpload"><input type="file" id="hazardDetailAfterFile" accept="image/*" class="file-upload-input" multiple><span class="file-upload-text" id="hazardDetailAfterFileText">点击上传整改后照片</span></div><div class="hazard-imgs-row" id="hazardDetailAfterImgs"></div></div>' +
                 '</div>' +
+                '<div class="hazard-detail-section" style="margin-top:12px;"><div class="form-label">整改描述</div><textarea id="hazardDetailRectifyDesc" class="form-control" rows="3" placeholder="请详细描述具体整改措施和完成情况" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none;background:var(--bg-white);"></textarea></div>' +
                 '<div class="modal-hint" id="hazardDetailFormHint" style="margin-top:8px;color:var(--danger);font-size:13px;"></div>' +
               '</div>' +
               '<div class="modal-footer">' +
@@ -901,7 +902,9 @@
       var timeEl = document.getElementById('hazardFormTime');
       if (timeEl) {
         var now = new Date();
-        timeEl.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + 'T' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        var nowStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + 'T' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        timeEl.value = nowStr;
+        timeEl.max = nowStr;
       }
       var fileEl = document.getElementById('hazardFormFile');
       var fileText = document.getElementById('hazardFormFileText');
@@ -1163,6 +1166,16 @@
         var region = regionParts.length ? regionParts.join(' / ') : '';
         var fileInput = document.getElementById('hazardFormFile');
         var files = fileInput && fileInput.files ? fileInput.files : [];
+        var timeInput = document.getElementById('hazardFormTime');
+        var timeVal = timeInput ? timeInput.value : '';
+        if (timeVal) {
+          var selectedTime = new Date(timeVal).getTime();
+          var nowTime = new Date().getTime();
+          if (selectedTime > nowTime) {
+            showHint('发现时间不能选择未来时间');
+            return;
+          }
+        }
         readFilesAsDataUrls(files, function (imageBefore) {
           showHint('');
           hazardIndex += 1;
@@ -1196,6 +1209,7 @@
     var detailAfterFile = document.getElementById('hazardDetailAfterFile');
     var detailAfterFileText = document.getElementById('hazardDetailAfterFileText');
     var detailHintEl = document.getElementById('hazardDetailFormHint');
+    var detailRectifyDescEl = document.getElementById('hazardDetailRectifyDesc');
     var currentDetailId = null;
     var pendingAfterUrls = [];
 
@@ -1225,6 +1239,11 @@
       if (detailCloseLoopBtn) detailCloseLoopBtn.style.display = r.closedLoop ? 'none' : '';
       if (detailOnlyCloseBtn) detailOnlyCloseBtn.style.display = r.closedLoop ? '' : 'none';
       if (detailAfterUpload) detailAfterUpload.style.display = r.closedLoop ? 'none' : 'flex';
+      if (detailRectifyDescEl) {
+        detailRectifyDescEl.value = r.rectifyDesc || '';
+        detailRectifyDescEl.readOnly = !!r.closedLoop;
+        detailRectifyDescEl.style.background = r.closedLoop ? 'var(--bg-body)' : 'var(--bg-white)';
+      }
       if (detailOverlay) detailOverlay.style.display = 'flex';
     }
 
@@ -1256,7 +1275,15 @@
           if (detailHintEl) detailHintEl.textContent = '请上传整改后照片后再确认闭环';
           return;
         }
+        var rectDesc = detailRectifyDescEl ? detailRectifyDescEl.value.trim() : '';
+        if (!r.closedLoop && !rectDesc) {
+          if (detailHintEl) detailHintEl.textContent = '请填写整改描述';
+          return;
+        }
         r.imageAfter = pendingAfterUrls.slice();
+        r.rectifyDesc = rectDesc;
+        r.rectifyTime = new Date().toISOString().replace('T', ' ').substring(0, 16);
+        r.rectifyPerson = '管理员';
         r.closedLoop = true;
         r.status = '验收通过-关闭';
         if (detailHintEl) detailHintEl.textContent = '';
