@@ -53,6 +53,60 @@
     }
   };
 
+  /**
+   * 隐患类别与二级描述（与《隐患及内容选项.xlsx》Sheet1 一致）
+   * 分类 -> 内容选项列表
+   */
+  var HAZARD_CATEGORY_LIST = [
+    '消防安全',
+    '设备安全',
+    '标志标牌类',
+    '人车分离',
+    '场所管理',
+    '人员管理',
+    '台账类',
+    '消防类',
+    '其他',
+    '食安类'
+  ];
+  var HAZARD_CATEGORY_CONTENT = {
+    '消防安全': [
+      '未建立健全消防安全工作责任制且未落实各层级各岗位人员消防安全职责（消防制度、操作规程、应急预案、演练、消防器材）；'
+    ],
+    '设备安全': [
+      '传送带滚筒、托辊、皮带分段接缝等人体能触及到的设备外露旋转部位未设置符合安全要求的防护罩、防护栏、过渡板等安全防护装置；',
+      '分抹设备人员操作侧未设置符合国家标准的急停装置（10米）；'
+    ],
+    '标志标牌类': [
+      '易发生高处坠落、物体打击、机械伤害等事故区域未设置安全警示标志和安全防护设备；',
+      '对邮件快件处理场所内部人车交汇、装卸、接驳等区域未设置安全警示标志和安全防护设备；'
+    ],
+    '人车分离': [
+      '在邮件快件处理场所内部未通过地面划线或安装隔离设备等方式划分人行道与机动车道；',
+      '对进入邮件快件处理场所内部道路的装卸、接驳车辆未规划指定行驶路线、指定停靠位置;'
+    ],
+    '场所管理': [
+      '该场所为“三合一”场所；'
+    ],
+    '人员管理': [
+      '从业人员未进行培训或培训不达标或无书面培训记录；'
+    ],
+    '台账类': [
+      '监控录像保存时间不足90日（含监控不在线）；'
+    ],
+    '消防类': [
+      '从业人员在场所内吸烟或者有明火；',
+      '充电柜旁、消防设施等堆放杂物；',
+      '室内不规范充电；'
+    ],
+    '其他': [
+      '其他（备案资质、警示牌、消防点检卡等）'
+    ],
+    '食安类': [
+      '场地内部发现虫鼠害实体（鼠、猫、狗等）'
+    ]
+  };
+
   // ============ DOM 元素 ============
   const sidebar = document.getElementById('sidebar');
   const sidebarToggle = document.getElementById('sidebarToggle');
@@ -517,7 +571,7 @@
             '<div class="data-table-wrapper">' +
               '<div class="table-toolbar hazard-report-toolbar">' +
                 '<div class="hazard-toolbar-row hazard-toolbar-row--filters">' +
-                  '<div class="hazard-filter-item"><label>隐患类别</label><select id="hazardFilterCategory"><option value="">全部</option><option>人员安全</option><option>场地安全</option><option>消防安全</option><option>用电安全</option><option>交通安全</option><option>设备安全</option><option>操作安全</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>隐患类别</label><select id="hazardFilterCategory"><option value="">全部</option></select></div>' +
                   '<div class="hazard-filter-item"><label>状态</label><select id="hazardFilterStatus"><option value="">全部</option><option>待稽核</option><option>稽核通过</option><option>稽核不通过-待修正</option><option>待再次稽核</option><option>整改中</option><option>待验收</option><option>验收通过-关闭</option></select></div>' +
                   '<div class="hazard-filter-item"><label>所属片区</label><select id="hazardFilterArea"><option value="">全部</option><option value="北部">北部</option><option value="南部">南部</option><option value="中部">中部</option></select></div>' +
                   '<div class="hazard-filter-item"><label>所属省区</label><select id="hazardFilterProvince"><option value="">全部</option></select></div>' +
@@ -576,8 +630,8 @@
               '</div>' +
               '<div class="modal-body">' +
                 '<div class="form-grid form-grid-hazard">' +
-                  '<div class="form-field span-2"><label class="form-label required">隐患类别</label><select id="hazardFormCategory" class="form-control"><option value="">请选择</option><option>人员安全</option><option>场地安全</option><option>消防安全</option><option>用电安全</option><option>交通安全</option><option>设备安全</option><option>操作安全</option><option>其他</option></select></div>' +
-                  '<div class="form-field span-2" id="hazardFormSecondWrap"><label class="form-label">二级隐患描述</label><select id="hazardFormSecond" class="form-control"><option value="">请选择</option><option>选项A</option><option>选项B</option><option>其他</option></select></div>' +
+                  '<div class="form-field span-2"><label class="form-label required">隐患类别</label><select id="hazardFormCategory" class="form-control"><option value="">请选择</option></select></div>' +
+                  '<div class="form-field span-2" id="hazardFormSecondWrap"><label class="form-label">二级隐患描述</label><select id="hazardFormSecond" class="form-control"><option value="">请选择</option></select></div>' +
                   '<div class="form-field span-2" id="hazardFormOtherWrap" style="display:none;"><label class="form-label required">自填隐患描述</label><input type="text" id="hazardFormOtherDesc" class="form-control" placeholder="选择「其他」时必填"></div>' +
                   '<div class="form-field span-2"><label class="form-label required">具体问题描述</label><textarea id="hazardFormDesc" class="form-control" rows="3" placeholder="请详细描述具体问题"></textarea></div>' +
                   '<div class="form-field"><label class="form-label">南北部</label><select id="hazardFormNorthSouth" class="form-control"><option value="">请选择</option><option value="北部">北部</option><option value="南部">南部</option><option value="中部">中部</option></select></div>' +
@@ -672,6 +726,42 @@
     var descEl = document.getElementById('hazardFormDesc');
     var tbody = document.getElementById('hazardReportTbody');
 
+    function fillHazardSecondOptions(category) {
+      if (!secondEl) return;
+      secondEl.innerHTML = '<option value="">请选择</option>';
+      if (!category || !HAZARD_CATEGORY_CONTENT[category]) return;
+      HAZARD_CATEGORY_CONTENT[category].forEach(function (text) {
+        var opt = document.createElement('option');
+        opt.value = text;
+        opt.textContent = text;
+        secondEl.appendChild(opt);
+      });
+    }
+
+    function populateHazardCategorySelects() {
+      var filterSel = document.getElementById('hazardFilterCategory');
+      var formSel = document.getElementById('hazardFormCategory');
+      if (filterSel) {
+        filterSel.innerHTML = '<option value="">全部</option>';
+        HAZARD_CATEGORY_LIST.forEach(function (c) {
+          var opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          filterSel.appendChild(opt);
+        });
+      }
+      if (formSel) {
+        formSel.innerHTML = '<option value="">请选择</option>';
+        HAZARD_CATEGORY_LIST.forEach(function (c) {
+          var opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          formSel.appendChild(opt);
+        });
+      }
+    }
+    populateHazardCategorySelects();
+
     function showHint(msg) { if (hintEl) hintEl.textContent = msg || ''; }
 
     function fillProvincesByNorthSouth(northSouthVal) {
@@ -705,7 +795,7 @@
 
     function openModal() {
       if (categoryEl) categoryEl.value = '';
-      if (secondEl) secondEl.value = '';
+      fillHazardSecondOptions('');
       if (otherDescEl) otherDescEl.value = '';
       if (descEl) descEl.value = '';
       if (otherWrap) otherWrap.style.display = 'none';
@@ -739,8 +829,9 @@
     }
     if (categoryEl) {
       categoryEl.addEventListener('change', function () {
-        if (!otherWrap) return;
-        otherWrap.style.display = (categoryEl.value === '其他' || (secondEl && secondEl.value === '其他')) ? '' : 'none';
+        fillHazardSecondOptions(categoryEl.value);
+        if (otherWrap) otherWrap.style.display = 'none';
+        if (otherDescEl) otherDescEl.value = '';
       });
     }
 
@@ -968,8 +1059,9 @@
         var otherDesc = otherDescEl ? otherDescEl.value.trim() : '';
         var desc = descEl ? descEl.value.trim() : '';
         if (!category) { showHint('请选择隐患类别'); return; }
+        if (!second) { showHint('请选择二级隐患描述'); return; }
         if (!desc) { showHint('请填写具体问题描述'); return; }
-        if ((second === '其他' || category === '其他') && !otherDesc) { showHint('选择「其他」时请填写自填隐患描述'); return; }
+        if (second === '其他' && !otherDesc) { showHint('选择「其他」时请填写自填隐患描述'); return; }
         var nsEl = document.getElementById('hazardFormNorthSouth');
         var provEl = document.getElementById('hazardFormProvince');
         var centerEl = document.getElementById('hazardFormCenter');
