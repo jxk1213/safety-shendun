@@ -542,7 +542,7 @@
     return '' +
         '<div id="dualPreventionPanelHazard" class="dual-prevention-panel" style="display:none;">' +
           '<div class="stats-row">' +
-            buildStatCard('待稽核', '12', '待总部稽核', 'up',
+            buildStatCard('待稽核', '12', '待安全稽核', 'up',
               '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>', 'orange') +
             buildStatCard('整改中', '8', '责任单位整改中', 'up',
               '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>', 'blue') +
@@ -554,7 +554,7 @@
           '<div class="tab-nav hazard-sub-tab-nav" style="margin-top:20px;margin-bottom:12px;">' +
             '<div class="tab-item active" data-hazard-sub="report">隐患上报</div>' +
             '<div class="tab-item" data-hazard-sub="selfcheck">自查自纠</div>' +
-            '<div class="tab-item" data-hazard-sub="audit">总部稽核</div>' +
+            '<div class="tab-item" data-hazard-sub="audit">安全稽核</div>' +
             '<div class="tab-item" data-hazard-sub="special">专项稽查</div>' +
             '<div class="tab-item" data-hazard-sub="remind">提醒推送</div>' +
           '</div>' +
@@ -594,6 +594,24 @@
           '</div>' +
           '<div id="hazardSubPanelSelfcheck" class="hazard-sub-panel" style="display:none;">' +
             '<div class="hazard-list-header">' +
+              '<div class="section-title">中心自查自纠任务下发</div>' +
+              '<div class="hazard-list-header-actions">' +
+                '<button class="btn btn-primary" id="selfcheckTaskUploadBtn">' +
+                  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
+                  '上传检查表并下发任务' +
+                '</button>' +
+                '<input type="file" id="selfcheckTaskFileInput" style="display:none;" accept=".xlsx,.xls,.doc,.docx,.pdf">' +
+              '</div>' +
+            '</div>' +
+            '<p style="color:var(--text-secondary);margin-bottom:12px;">上传《中心安全检查表》文件，下发给相关中心开展自查自纠任务。</p>' +
+            '<div class="data-table-wrapper">' +
+              '<table class="data-table"><thead><tr><th>任务名称</th><th>下发时间</th><th>截止时间</th><th>文件名</th><th>状态</th><th>完成率</th><th>操作</th></tr></thead>' +
+              '<tbody id="selfcheckTaskTbody">' +
+                '<tr><td>2026年第12周中心自查自纠</td><td>2026-03-20 10:00</td><td>2026-03-27 10:00</td><td><a href="javascript:void(0)" class="file-link">中心安全检查表_2026W12.xlsx</a></td><td><span class="risk-badge blue">进行中</span></td><td><span style="color:var(--primary);font-weight:600;">65%</span></td><td><button type="button" class="btn btn-outline btn-sm selfcheck-remind-btn">提醒完成</button></td></tr>' +
+              '</tbody></table>' +
+            '</div>' +
+
+            '<div class="hazard-list-header" style="margin-top:24px;">' +
               '<div class="section-title">自查自纠报告</div>' +
               '<div class="hazard-list-header-actions">' +
                 '<button class="btn btn-outline" id="selfcheckExportBtn" type="button">导出报表</button>' +
@@ -622,27 +640,103 @@
                 '</table>' +
               '</div>' +
             '</div>' +
-            '<div class="section-title" style="margin-top:24px;">巡检任务清单</div>' +
-            '<p style="color:var(--text-secondary);margin-bottom:12px;">每周根据《中心安全检查表》至少完成一次中心场地安全巡检并上传巡检记录。</p>' +
-            '<div class="data-table-wrapper">' +
-              '<table class="data-table"><thead><tr><th>任务周期</th><th>截止时间</th><th>状态</th><th>操作</th></tr></thead>' +
-              '<tbody id="hazardSelfcheckTbody"><tr><td>2026年第12周</td><td>2026-03-22 18:00</td><td><span class="risk-badge blue">未开始</span></td><td><button type="button" class="btn btn-outline btn-sm">进入巡检</button></td></tr></tbody></table>' +
-            '</div>' +
           '</div>' +
           '<div id="hazardSubPanelAudit" class="hazard-sub-panel" style="display:none;">' +
-            '<div class="section-title">总部稽核任务</div>' +
-            '<p style="color:var(--text-secondary);margin-bottom:12px;">月度全覆盖，稽核通过生成整改单，不通过退回修正后再次稽核。</p>' +
+            '<div class="hazard-list-header">' +
+              '<div class="section-title">安全稽核任务下发</div>' +
+              '<div class="hazard-list-header-actions">' +
+                '<button class="btn btn-primary" id="securityAuditTaskUploadBtn">' +
+                  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
+                  '上传稽核表并下发任务' +
+                '</button>' +
+                '<input type="file" id="securityAuditTaskFileInput" style="display:none;" accept=".xlsx,.xls,.doc,.docx,.pdf">' +
+              '</div>' +
+            '</div>' +
+            '<p style="color:var(--text-secondary);margin-bottom:12px;">每季度开展一次全覆盖安全稽核，上传《安全稽核表》并下发给相关中心。</p>' +
             '<div class="data-table-wrapper">' +
-              '<table class="data-table"><thead><tr><th>稽核任务</th><th>覆盖范围</th><th>截止时间</th><th>操作</th></tr></thead>' +
-              '<tbody><tr><td>2026年3月月度稽核</td><td>华东区</td><td>2026-03-31</td><td><button type="button" class="btn btn-outline btn-sm">进入稽核</button></td></tr></tbody></table>' +
+              '<table class="data-table"><thead><tr><th>任务名称</th><th>下发时间</th><th>截止时间</th><th>文件名</th><th>状态</th><th>完成率</th><th>操作</th></tr></thead>' +
+              '<tbody id="securityAuditTaskTbody">' +
+                '<tr><td>2026年第1季度安全稽核</td><td>2026-01-10 09:00</td><td>2026-03-31 18:00</td><td><a href="javascript:void(0)" class="file-link">2026Q1安全稽核表.xlsx</a></td><td><span class="risk-badge blue">进行中</span></td><td><span style="color:var(--primary);font-weight:600;">85%</span></td><td><button type="button" class="btn btn-outline btn-sm security-audit-remind-btn">提醒完成</button></td></tr>' +
+              '</tbody></table>' +
+            '</div>' +
+
+            '<div class="hazard-list-header" style="margin-top:24px;">' +
+              '<div class="section-title">安全稽核报告</div>' +
+              '<div class="hazard-list-header-actions">' +
+                '<button class="btn btn-outline" id="securityAuditExportBtn" type="button">导出报表</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="data-table-wrapper">' +
+              '<div class="table-toolbar security-audit-toolbar">' +
+                '<div class="hazard-toolbar-row hazard-toolbar-row--filters">' +
+                  '<div class="hazard-filter-item"><label>隐患类别</label><select id="securityAuditFilterCategory"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>状态</label><select id="securityAuditFilterStatus"><option value="">全部</option><option>待稽核</option><option>稽核通过</option><option>稽核不通过-待修正</option><option>待再次稽核</option><option>整改中</option><option>待验收</option><option>验收通过-关闭</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属片区</label><select id="securityAuditFilterArea"><option value="">全部</option><option value="北部">北部</option><option value="南部">南部</option><option value="中部">中部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属省区</label><select id="securityAuditFilterProvince"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属中心</label><select id="securityAuditFilterCenter"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-toolbar-search hazard-toolbar-search--inline">' +
+                    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+                    '<input id="securityAuditSearchInput" type="text" placeholder="搜索问题描述/地点...">' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="data-table-scroll">' +
+                '<table class="data-table">' +
+                  '<thead><tr><th style="width:100px;">上报时间</th><th style="width:80px;">所属片区</th><th style="width:100px;">所属省区</th><th style="width:100px;">所属中心</th><th style="width:90px;">隐患类别</th><th style="width:160px;">隐患内容</th><th style="width:72px;">整改前照片</th><th style="width:200px;">具体问题描述</th><th style="width:100px;">整改时间</th><th style="width:90px;">整改后照片</th><th style="width:120px;">整改描述</th><th style="width:90px;">整改状态</th><th style="width:80px;">整改人</th><th style="width:100px;">操作</th><th style="width:72px;">是否闭环</th></tr></thead>' +
+                  '<tbody id="securityAuditReportsTbody">' +
+                    '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据</td></tr>' +
+                  '</tbody>' +
+                '</table>' +
+              '</div>' +
             '</div>' +
           '</div>' +
           '<div id="hazardSubPanelSpecial" class="hazard-sub-panel" style="display:none;">' +
-            '<div class="section-title">专项稽查</div>' +
-            '<p style="color:var(--text-secondary);margin-bottom:12px;">突发事件、国家要求、临时做表。处理方式复用总部稽核机制。</p>' +
+            '<div class="hazard-list-header">' +
+              '<div class="section-title">专项稽查任务下发</div>' +
+              '<div class="hazard-list-header-actions">' +
+                '<button class="btn btn-primary" id="specialAuditTaskUploadBtn">' +
+                  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
+                  '上传稽查表并下发任务' +
+                '</button>' +
+                '<input type="file" id="specialAuditTaskFileInput" style="display:none;" accept=".xlsx,.xls,.doc,.docx,.pdf">' +
+              '</div>' +
+            '</div>' +
+            '<p style="color:var(--text-secondary);margin-bottom:12px;">针对突发事件、国家要求或临时工作，下发专项稽查任务。</p>' +
             '<div class="data-table-wrapper">' +
-              '<table class="data-table"><thead><tr><th>任务名称</th><th>触发类型</th><th>截止时间</th><th>操作</th></tr></thead>' +
-              '<tbody><tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:20px;">暂无专项稽查任务</td></tr></tbody></table>' +
+              '<table class="data-table"><thead><tr><th>任务名称</th><th>下发时间</th><th>截止时间</th><th>文件名</th><th>状态</th><th>完成率</th><th>操作</th></tr></thead>' +
+              '<tbody id="specialAuditTaskTbody">' +
+                '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无专项稽查任务</td></tr>' +
+              '</tbody></table>' +
+            '</div>' +
+
+            '<div class="hazard-list-header" style="margin-top:24px;">' +
+              '<div class="section-title">专项稽查报告</div>' +
+              '<div class="hazard-list-header-actions">' +
+                '<button class="btn btn-outline" id="specialAuditExportBtn" type="button">导出报表</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="data-table-wrapper">' +
+              '<div class="table-toolbar special-audit-toolbar">' +
+                '<div class="hazard-toolbar-row hazard-toolbar-row--filters">' +
+                  '<div class="hazard-filter-item"><label>隐患类别</label><select id="specialAuditFilterCategory"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>状态</label><select id="specialAuditFilterStatus"><option value="">全部</option><option>待稽核</option><option>稽核通过</option><option>稽核不通过-待修正</option><option>待再次稽核</option><option>整改中</option><option>待验收</option><option>验收通过-关闭</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属片区</label><select id="specialAuditFilterArea"><option value="">全部</option><option value="北部">北部</option><option value="南部">南部</option><option value="中部">中部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属省区</label><select id="specialAuditFilterProvince"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属中心</label><select id="specialAuditFilterCenter"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-toolbar-search hazard-toolbar-search--inline">' +
+                    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+                    '<input id="specialAuditSearchInput" type="text" placeholder="搜索问题描述/地点...">' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="data-table-scroll">' +
+                '<table class="data-table">' +
+                  '<thead><tr><th style="width:100px;">上报时间</th><th style="width:80px;">所属片区</th><th style="width:100px;">所属省区</th><th style="width:100px;">所属中心</th><th style="width:90px;">隐患类别</th><th style="width:160px;">隐患内容</th><th style="width:72px;">整改前照片</th><th style="width:200px;">具体问题描述</th><th style="width:100px;">整改时间</th><th style="width:90px;">整改后照片</th><th style="width:120px;">整改描述</th><th style="width:90px;">整改状态</th><th style="width:80px;">整改人</th><th style="width:100px;">操作</th><th style="width:72px;">是否闭环</th></tr></thead>' +
+                  '<tbody id="specialAuditReportsTbody">' +
+                    '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据</td></tr>' +
+                  '</tbody>' +
+                '</table>' +
+              '</div>' +
             '</div>' +
           '</div>' +
           '<div id="hazardSubPanelRemind" class="hazard-sub-panel" style="display:none;">' +
@@ -1062,24 +1156,21 @@
     }
     if (filterCenter) filterCenter.addEventListener('change', applyHazardFilters);
 
-    function applySelfcheckFilters() { renderSelfcheckRows(); }
-    if (selfcheckSearchInput) selfcheckSearchInput.addEventListener('input', applySelfcheckFilters);
-    if (selfcheckFilterCategory) selfcheckFilterCategory.addEventListener('change', applySelfcheckFilters);
-    if (selfcheckFilterStatus) selfcheckFilterStatus.addEventListener('change', applySelfcheckFilters);
-    if (selfcheckFilterArea) {
-      selfcheckFilterArea.addEventListener('change', function() {
-        fillFilterProvinces(selfcheckFilterArea, selfcheckFilterProvince, selfcheckFilterCenter);
-        fillFilterCenters(selfcheckFilterProvince, selfcheckFilterCenter, selfcheckFilterArea);
-        applySelfcheckFilters();
+    function bindReportFilters(prefix, renderFn) {
+      ['Category', 'Status', 'Area', 'Province', 'Center'].forEach(function(key) {
+        var el = document.getElementById(prefix + key);
+        if (el) el.addEventListener('change', renderFn);
       });
     }
-    if (selfcheckFilterProvince) {
-      selfcheckFilterProvince.addEventListener('change', function() {
-        fillFilterCenters(selfcheckFilterProvince, selfcheckFilterCenter, selfcheckFilterArea);
-        applySelfcheckFilters();
-      });
-    }
-    if (selfcheckFilterCenter) selfcheckFilterCenter.addEventListener('change', applySelfcheckFilters);
+    bindReportFilters('selfcheckFilter', renderSelfcheckRows);
+    bindReportFilters('securityAuditFilter', renderSecurityAuditRows);
+    bindReportFilters('specialAuditFilter', renderSpecialAuditRows);
+    
+    if (selfcheckSearchInput) selfcheckSearchInput.addEventListener('input', renderSelfcheckRows);
+    var saSearchInput = document.getElementById('securityAuditSearchInput');
+    if (saSearchInput) saSearchInput.addEventListener('input', renderSecurityAuditRows);
+    var spSearchInput = document.getElementById('specialAuditSearchInput');
+    if (spSearchInput) spSearchInput.addEventListener('input', renderSpecialAuditRows);
 
     function readFilesAsDataUrls(files, callback) {
       var list = [];
@@ -1162,15 +1253,26 @@
     }
 
     function renderSelfcheckRows() {
-      var selfTbody = document.getElementById('selfcheckReportsTbody');
-      if (!selfTbody) return;
-      var filtered = getFilteredSelfcheckList();
+      renderRowsBySource('selfcheckReportsTbody', getFilteredSelfcheckList(), 'self-check', '暂无自查自纠数据');
+    }
+
+    function renderSecurityAuditRows() {
+      renderRowsBySource('securityAuditReportsTbody', getFilteredSecurityAuditList(), 'security-audit', '暂无安全稽核数据');
+    }
+
+    function renderSpecialAuditRows() {
+      renderRowsBySource('specialAuditReportsTbody', getFilteredSpecialAuditList(), 'special-audit', '暂无专项稽查数据');
+    }
+
+    function renderRowsBySource(tbodyId, filtered, source, emptyMsg) {
+      var tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
       if (!filtered.length) {
-        var hasData = hazardReportList.some(function(r) { return r.source === 'self-check'; });
-        selfTbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">' + (hasData ? '无匹配结果' : '暂无自查自纠数据') + '</td></tr>';
+        var hasData = hazardReportList.some(function (r) { return r.source === source; });
+        tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">' + (hasData ? '无匹配结果' : emptyMsg) + '</td></tr>';
         return;
       }
-      selfTbody.innerHTML = buildRowsHtml(filtered);
+      tbody.innerHTML = buildRowsHtml(filtered);
     }
 
     function buildRowsHtml(list) {
@@ -1219,6 +1321,18 @@
     if (selfcheckExportBtn) {
       selfcheckExportBtn.addEventListener('click', function () {
         exportToCsv(getFilteredSelfcheckList(), '自查自纠报告列表.csv');
+      });
+    }
+    var saExportBtn = document.getElementById('securityAuditExportBtn');
+    if (saExportBtn) {
+      saExportBtn.addEventListener('click', function () {
+        exportToCsv(getFilteredSecurityAuditList(), '安全稽核报告列表.csv');
+      });
+    }
+    var spExportBtn = document.getElementById('specialAuditExportBtn');
+    if (spExportBtn) {
+      spExportBtn.addEventListener('click', function () {
+        exportToCsv(getFilteredSpecialAuditList(), '专项稽查报告列表.csv');
       });
     }
 
@@ -1464,6 +1578,203 @@
       source: 'self-check'
     });
     renderSelfcheckRows();
+    initSelfCheckTaskUpload();
+
+    function initSelfCheckTaskUpload() {
+      var selfcheckTaskUploadBtn = document.getElementById('selfcheckTaskUploadBtn');
+      var selfcheckTaskFileInput = document.getElementById('selfcheckTaskFileInput');
+      var selfcheckTaskTbody = document.getElementById('selfcheckTaskTbody');
+
+      if (!selfcheckTaskUploadBtn || !selfcheckTaskFileInput || !selfcheckTaskTbody) return;
+
+      selfcheckTaskUploadBtn.addEventListener('click', function () {
+        selfcheckTaskFileInput.click();
+      });
+
+      // Event delegation for remind buttons
+      selfcheckTaskTbody.addEventListener('click', function (e) {
+        if (e.target.classList.contains('selfcheck-remind-btn')) {
+          alert('提醒已发送！已通过钉钉和系统通知督促相关负责人。');
+        }
+      });
+
+      selfcheckTaskFileInput.addEventListener('change', function () {
+        var files = this.files;
+        if (!files || !files.length) return;
+        
+        var file = files[0];
+        var now = new Date();
+        var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        
+        // Calculate deadline (T+7)
+        var deadlineDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        var deadlineStr = deadlineDate.getFullYear() + '-' + String(deadlineDate.getMonth() + 1).padStart(2, '0') + '-' + String(deadlineDate.getDate()).padStart(2, '0') + ' ' + String(deadlineDate.getHours()).padStart(2, '0') + ':' + String(deadlineDate.getMinutes()).padStart(2, '0');
+
+        function getWeekNumber(d) {
+          d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+          d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+          var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+          var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+          return weekNo;
+        }
+
+        var taskName = now.getFullYear() + '年第' + getWeekNumber(now) + '周中心自查自纠';
+        
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + taskName + '</td>' +
+                       '<td>' + timeStr + '</td>' +
+                       '<td>' + deadlineStr + '</td>' +
+                       '<td><a href="javascript:void(0)" class="file-link">' + file.name + '</a></td>' +
+                       '<td><span class="risk-badge blue">进行中</span></td>' +
+                       '<td><span style="color:var(--primary);font-weight:600;">0%</span></td>' +
+                       '<td><button type="button" class="btn btn-outline btn-sm selfcheck-remind-btn">提醒完成</button></td>';
+        
+        selfcheckTaskTbody.insertBefore(tr, selfcheckTaskTbody.firstChild);
+        
+        // Reset file input
+        this.value = '';
+        alert('任务下发成功！');
+      });
+    }
+
+    initSecurityAuditTaskUpload();
+
+    function initSecurityAuditTaskUpload() {
+      var uploadBtn = document.getElementById('securityAuditTaskUploadBtn');
+      var fileInput = document.getElementById('securityAuditTaskFileInput');
+      var tbody = document.getElementById('securityAuditTaskTbody');
+
+      if (!uploadBtn || !fileInput || !tbody) return;
+
+      uploadBtn.addEventListener('click', function () {
+        fileInput.click();
+      });
+
+      tbody.addEventListener('click', function (e) {
+        if (e.target.classList.contains('security-audit-remind-btn')) {
+          alert('提醒已发送！已通过钉钉和系统通知督促相关负责人。');
+        }
+      });
+
+      fileInput.addEventListener('change', function () {
+        var files = this.files;
+        if (!files || !files.length) return;
+        
+        var file = files[0];
+        var now = new Date();
+        var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        
+        // Calculate deadline (Quarterly - end of Q)
+        var q = Math.floor(now.getMonth() / 3) + 1;
+        var deadlineYear = now.getFullYear();
+        var deadlineMonth = q * 3; // 3, 6, 9, 12
+        var lastDay = new Date(deadlineYear, deadlineMonth, 0).getDate();
+        var deadlineStr = deadlineYear + '-' + String(deadlineMonth).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0') + ' 18:00';
+
+        var taskName = now.getFullYear() + '年第' + q + '季度安全稽核';
+        
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + taskName + '</td>' +
+                       '<td>' + timeStr + '</td>' +
+                       '<td>' + deadlineStr + '</td>' +
+                       '<td><a href="javascript:void(0)" class="file-link">' + file.name + '</a></td>' +
+                       '<td><span class="risk-badge blue">进行中</span></td>' +
+                       '<td><span style="color:var(--primary);font-weight:600;">0%</span></td>' +
+                       '<td><button type="button" class="btn btn-outline btn-sm security-audit-remind-btn">提醒完成</button></td>';
+        
+        tbody.insertBefore(tr, tbody.firstChild);
+        this.value = '';
+        alert('稽核任务下发成功！');
+      });
+    }
+
+    initSpecialAuditTaskUpload();
+
+    function initSpecialAuditTaskUpload() {
+      var uploadBtn = document.getElementById('specialAuditTaskUploadBtn');
+      var fileInput = document.getElementById('specialAuditTaskFileInput');
+      var tbody = document.getElementById('specialAuditTaskTbody');
+
+      if (!uploadBtn || !fileInput || !tbody) return;
+
+      uploadBtn.addEventListener('click', function () {
+        fileInput.click();
+      });
+
+      tbody.addEventListener('click', function (e) {
+        if (e.target.classList.contains('special-audit-remind-btn')) {
+          alert('提醒已发送！已通过钉钉和系统通知督促相关负责人。');
+        }
+      });
+
+      fileInput.addEventListener('change', function () {
+        var files = this.files;
+        if (!files || !files.length) return;
+        
+        var file = files[0];
+        var now = new Date();
+        var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        
+        // Calculate deadline (irregular - default T+15)
+        var deadlineDate = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
+        var deadlineStr = deadlineDate.getFullYear() + '-' + String(deadlineDate.getMonth() + 1).padStart(2, '0') + '-' + String(deadlineDate.getDate()).padStart(2, '0') + ' 18:00';
+
+        var taskName = '专项稽查-' + file.name.split('.')[0];
+        
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + taskName + '</td>' +
+                       '<td>' + timeStr + '</td>' +
+                       '<td>' + deadlineStr + '</td>' +
+                       '<td><a href="javascript:void(0)" class="file-link">' + file.name + '</a></td>' +
+                       '<td><span class="risk-badge blue">进行中</span></td>' +
+                       '<td><span style="color:var(--primary);font-weight:600;">0%</span></td>' +
+                       '<td><button type="button" class="btn btn-outline btn-sm special-audit-remind-btn">提醒完成</button></td>';
+        
+        // Remove empty state if exists
+        if (tbody.querySelector('td[colspan]')) {
+          tbody.innerHTML = '';
+        }
+
+        tbody.insertBefore(tr, tbody.firstChild);
+        this.value = '';
+        alert('专项稽查任务下发成功！');
+      });
+    }
+
+    renderSelfcheckRows();
+    renderSecurityAuditRows();
+    renderSpecialAuditRows();
+
+    // Add mock data for reports
+    hazardReportList.push({
+      id: 1001,
+      category: '标志标牌类',
+      second: '其他',
+      otherDesc: '分拣区二楼平台边缘警示牌破损',
+      desc: '分拣区二楼平台边缘警示牌破损',
+      region: '中部 / 浙江大区 / 义乌',
+      time: '2026-03-20 09:30',
+      status: '整改中',
+      closedLoop: false,
+      source: 'security-audit'
+    });
+    hazardReportList.push({
+      id: 1002,
+      category: '消防安全',
+      second: '消防栓箱门开启不便',
+      desc: '消防栓箱门开启不便，需润滑',
+      region: '北部 / 北京省公司 / 北京',
+      time: '2026-03-19 14:20',
+      status: '已关闭',
+      closedLoop: true,
+      rectifyDesc: '已完成润滑，开启顺畅',
+      rectifyTime: '2026-03-19 16:00',
+      rectifyPerson: '管理员',
+      source: 'special-audit'
+    });
+
+    renderSecurityAuditRows();
+    renderSpecialAuditRows();
   }
 
   // ============ 转运中心风险分级表：风险上报工作流（总部评审） ============
