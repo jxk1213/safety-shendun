@@ -593,7 +593,36 @@
             '</div>' +
           '</div>' +
           '<div id="hazardSubPanelSelfcheck" class="hazard-sub-panel" style="display:none;">' +
-            '<div class="section-title">自查自纠任务</div>' +
+            '<div class="hazard-list-header">' +
+              '<div class="section-title">自查自纠报告</div>' +
+              '<div class="hazard-list-header-actions">' +
+                '<button class="btn btn-outline" id="selfcheckExportBtn" type="button">导出报表</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="data-table-wrapper">' +
+              '<div class="table-toolbar selfcheck-toolbar">' +
+                '<div class="hazard-toolbar-row hazard-toolbar-row--filters">' +
+                  '<div class="hazard-filter-item"><label>隐患类别</label><select id="selfcheckFilterCategory"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>状态</label><select id="selfcheckFilterStatus"><option value="">全部</option><option>待稽核</option><option>稽核通过</option><option>稽核不通过-待修正</option><option>待再次稽核</option><option>整改中</option><option>待验收</option><option>验收通过-关闭</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属片区</label><select id="selfcheckFilterArea"><option value="">全部</option><option value="北部">北部</option><option value="南部">南部</option><option value="中部">中部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属省区</label><select id="selfcheckFilterProvince"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-filter-item"><label>所属中心</label><select id="selfcheckFilterCenter"><option value="">全部</option></select></div>' +
+                  '<div class="hazard-toolbar-search hazard-toolbar-search--inline">' +
+                    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+                    '<input id="selfcheckSearchInput" type="text" placeholder="搜索问题描述/地点...">' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="data-table-scroll">' +
+                '<table class="data-table">' +
+                  '<thead><tr><th style="width:100px;">上报时间</th><th style="width:80px;">所属片区</th><th style="width:100px;">所属省区</th><th style="width:100px;">所属中心</th><th style="width:90px;">隐患类别</th><th style="width:160px;">隐患内容</th><th style="width:72px;">整改前照片</th><th style="width:200px;">具体问题描述</th><th style="width:100px;">整改时间</th><th style="width:90px;">整改后照片</th><th style="width:120px;">整改描述</th><th style="width:90px;">整改状态</th><th style="width:80px;">整改人</th><th style="width:100px;">操作</th><th style="width:72px;">是否闭环</th></tr></thead>' +
+                  '<tbody id="selfcheckReportsTbody">' +
+                    '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据</td></tr>' +
+                  '</tbody>' +
+                '</table>' +
+              '</div>' +
+            '</div>' +
+            '<div class="section-title" style="margin-top:24px;">巡检任务清单</div>' +
             '<p style="color:var(--text-secondary);margin-bottom:12px;">每周根据《中心安全检查表》至少完成一次中心场地安全巡检并上传巡检记录。</p>' +
             '<div class="data-table-wrapper">' +
               '<table class="data-table"><thead><tr><th>任务周期</th><th>截止时间</th><th>状态</th><th>操作</th></tr></thead>' +
@@ -736,7 +765,68 @@
     var filterArea = document.getElementById('hazardFilterArea');
     var filterProvince = document.getElementById('hazardFilterProvince');
     var filterCenter = document.getElementById('hazardFilterCenter');
+    var selfcheckFilterCategory = document.getElementById('selfcheckFilterCategory');
+    var selfcheckFilterStatus = document.getElementById('selfcheckFilterStatus');
+    var selfcheckFilterArea = document.getElementById('selfcheckFilterArea');
+    var selfcheckFilterProvince = document.getElementById('selfcheckFilterProvince');
+    var selfcheckFilterCenter = document.getElementById('selfcheckFilterCenter');
+    var selfcheckSearchInput = document.getElementById('selfcheckSearchInput');
 
+    function fillFilterLocationOptions() {
+      // Manual Hazard Filters
+      fillFilterProvinces(filterArea, filterProvince, filterCenter);
+      fillFilterCenters(filterProvince, filterCenter, filterArea);
+      // Self-check Filters
+      fillFilterProvinces(selfcheckFilterArea, selfcheckFilterProvince, selfcheckFilterCenter);
+      fillFilterCenters(selfcheckFilterProvince, selfcheckFilterCenter, selfcheckFilterArea);
+    }
+
+    function fillFilterProvinces(areaEl, provEl, centerEl) {
+      if (!provEl) return;
+      var areaVal = areaEl ? areaEl.value : '';
+      var current = provEl.value;
+      provEl.innerHTML = '<option value="">全部</option>';
+      var filtered = areaVal ? provincesData.filter(function(p) { return p.northSouth === areaVal; }) : provincesData;
+      filtered.forEach(function (p) {
+        var opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        provEl.appendChild(opt);
+      });
+      var exists = Array.prototype.some.call(provEl.options, function(o) { return o.value === current; });
+      if (exists) provEl.value = current;
+      else provEl.value = '';
+    }
+
+    function fillFilterCenters(provEl, centerEl, areaEl) {
+      if (!centerEl) return;
+      var provName = provEl ? provEl.value : '';
+      var areaVal = areaEl ? areaEl.value : '';
+      var current = centerEl.value;
+      centerEl.innerHTML = '<option value="">全部</option>';
+      
+      var filtered = [];
+      if (provName) {
+        var province = provincesData.find(function(p) { return p.name === provName; });
+        if (province) filtered = centersData.filter(function(c) { return c.provinceCode === province.code; });
+      } else if (areaVal) {
+        var areaProvinceCodes = provincesData.filter(function(p) { return p.northSouth === areaVal; }).map(function(p) { return p.code; });
+        filtered = centersData.filter(function(c) { return areaProvinceCodes.indexOf(c.provinceCode) !== -1; });
+      } else {
+        filtered = centersData;
+      }
+
+      filtered.forEach(function (c) {
+        var opt = document.createElement('option');
+        opt.value = c.shortName || c.name;
+        opt.textContent = c.shortName || c.name;
+        centerEl.appendChild(opt);
+      });
+
+      var exists = Array.prototype.some.call(centerEl.options, function(o) { return o.value === current; });
+      if (exists) centerEl.value = current;
+      else centerEl.value = '';
+    }
     function fillHazardSecondOptions(category) {
       var listContainer = document.getElementById('hazardFormSecondList');
       var changeBtn = document.getElementById('hazardSecondChangeBtn');
@@ -795,6 +885,15 @@
           filterSel.appendChild(opt);
         });
       }
+      if (selfcheckFilterCategory) {
+        selfcheckFilterCategory.innerHTML = '<option value="">全部</option>';
+        HAZARD_CATEGORY_LIST.forEach(function (c) {
+          var opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          selfcheckFilterCategory.appendChild(opt);
+        });
+      }
       if (formSel) {
         formSel.innerHTML = '<option value="">请选择</option>';
         HAZARD_CATEGORY_LIST.forEach(function (c) {
@@ -809,49 +908,7 @@
 
     function showHint(msg) { if (hintEl) hintEl.textContent = msg || ''; }
 
-    function fillFilterProvinces(areaVal) {
-      if (!filterProvince) return;
-      var current = filterProvince.value;
-      filterProvince.innerHTML = '<option value="">全部</option>';
-      var filtered = areaVal ? provincesData.filter(function(p) { return p.northSouth === areaVal; }) : provincesData;
-      filtered.forEach(function (p) {
-        var opt = document.createElement('option');
-        opt.value = p.name;
-        opt.textContent = p.name;
-        filterProvince.appendChild(opt);
-      });
-      var exists = Array.prototype.some.call(filterProvince.options, function(o) { return o.value === current; });
-      if (exists) filterProvince.value = current;
-      else filterProvince.value = '';
-    }
 
-    function fillFilterCenters(provName, areaVal) {
-      if (!filterCenter) return;
-      var current = filterCenter.value;
-      filterCenter.innerHTML = '<option value="">全部</option>';
-      
-      var filtered = [];
-      if (provName) {
-        var province = provincesData.find(function(p) { return p.name === provName; });
-        if (province) filtered = centersData.filter(function(c) { return c.provinceCode === province.code; });
-      } else if (areaVal) {
-        var areaProvinceCodes = provincesData.filter(function(p) { return p.northSouth === areaVal; }).map(function(p) { return p.code; });
-        filtered = centersData.filter(function(c) { return areaProvinceCodes.indexOf(c.provinceCode) !== -1; });
-      } else {
-        filtered = centersData;
-      }
-
-      filtered.forEach(function (c) {
-        var opt = document.createElement('option');
-        opt.value = c.shortName || c.name;
-        opt.textContent = c.shortName || c.name;
-        filterCenter.appendChild(opt);
-      });
-
-      var exists = Array.prototype.some.call(filterCenter.options, function(o) { return o.value === current; });
-      if (exists) filterCenter.value = current;
-      else filterCenter.value = '';
-    }
 
     function fillProvincesByNorthSouth(northSouthVal) {
       var sel = document.getElementById('hazardFormProvince');
@@ -938,15 +995,14 @@
       });
     }
 
-    function fillFilterLocationOptions() {
-      fillFilterProvinces(filterArea ? filterArea.value : '');
-      fillFilterCenters(filterProvince ? filterProvince.value : '', filterArea ? filterArea.value : '');
-    }
+
     (function loadLocationData() {
       if (typeof window.LOCATION_PROVINCES !== 'undefined' && typeof window.LOCATION_CENTERS !== 'undefined') {
         provincesData = window.LOCATION_PROVINCES;
         centersData = window.LOCATION_CENTERS;
         fillFilterLocationOptions();
+        populateHazardCategorySelects();
+        renderSelfcheckRows();
         return;
       }
       Promise.all([
@@ -956,6 +1012,8 @@
         provincesData = arr[0] || [];
         centersData = arr[1] || [];
         fillFilterLocationOptions();
+        populateHazardCategorySelects();
+        renderSelfcheckRows();
       });
     })();
 
@@ -991,18 +1049,37 @@
     if (filterStatus) filterStatus.addEventListener('change', applyHazardFilters);
     if (filterArea) {
       filterArea.addEventListener('change', function() {
-        fillFilterProvinces(filterArea.value);
-        fillFilterCenters(filterProvince.value, filterArea.value);
+        fillFilterProvinces(filterArea, filterProvince, filterCenter);
+        fillFilterCenters(filterProvince, filterCenter, filterArea);
         applyHazardFilters();
       });
     }
     if (filterProvince) {
       filterProvince.addEventListener('change', function() {
-        fillFilterCenters(filterProvince.value, filterArea.value);
+        fillFilterCenters(filterProvince, filterCenter, filterArea);
         applyHazardFilters();
       });
     }
     if (filterCenter) filterCenter.addEventListener('change', applyHazardFilters);
+
+    function applySelfcheckFilters() { renderSelfcheckRows(); }
+    if (selfcheckSearchInput) selfcheckSearchInput.addEventListener('input', applySelfcheckFilters);
+    if (selfcheckFilterCategory) selfcheckFilterCategory.addEventListener('change', applySelfcheckFilters);
+    if (selfcheckFilterStatus) selfcheckFilterStatus.addEventListener('change', applySelfcheckFilters);
+    if (selfcheckFilterArea) {
+      selfcheckFilterArea.addEventListener('change', function() {
+        fillFilterProvinces(selfcheckFilterArea, selfcheckFilterProvince, selfcheckFilterCenter);
+        fillFilterCenters(selfcheckFilterProvince, selfcheckFilterCenter, selfcheckFilterArea);
+        applySelfcheckFilters();
+      });
+    }
+    if (selfcheckFilterProvince) {
+      selfcheckFilterProvince.addEventListener('change', function() {
+        fillFilterCenters(selfcheckFilterProvince, selfcheckFilterCenter, selfcheckFilterArea);
+        applySelfcheckFilters();
+      });
+    }
+    if (selfcheckFilterCenter) selfcheckFilterCenter.addEventListener('change', applySelfcheckFilters);
 
     function readFilesAsDataUrls(files, callback) {
       var list = [];
@@ -1020,19 +1097,41 @@
     }
 
     function getFilteredHazardList() {
-      var searchEl = document.getElementById('hazardSearchInput');
-      var categoryFilterEl = document.getElementById('hazardFilterCategory');
-      var statusFilterEl = document.getElementById('hazardFilterStatus');
-      var areaFilterEl = document.getElementById('hazardFilterArea');
-      var provinceFilterEl = document.getElementById('hazardFilterProvince');
-      var centerFilterEl = document.getElementById('hazardFilterCenter');
-      var keyword = (searchEl && searchEl.value ? searchEl.value.trim() : '').toLowerCase();
-      var categoryVal = categoryFilterEl ? categoryFilterEl.value.trim() : '';
-      var statusVal = statusFilterEl ? statusFilterEl.value.trim() : '';
-      var areaVal = areaFilterEl ? areaFilterEl.value.trim() : '';
-      var provinceVal = provinceFilterEl ? provinceFilterEl.value.trim() : '';
-      var centerVal = centerFilterEl ? centerFilterEl.value.trim() : '';
+      var keyword = (searchInput && searchInput.value ? searchInput.value.trim() : '').toLowerCase();
+      var categoryVal = filterCategory ? filterCategory.value.trim() : '';
+      var statusVal = filterStatus ? filterStatus.value.trim() : '';
+      var areaVal = filterArea ? filterArea.value.trim() : '';
+      var provinceVal = filterProvince ? filterProvince.value.trim() : '';
+      var centerVal = filterCenter ? filterCenter.value.trim() : '';
       return hazardReportList.filter(function (r) {
+        if (r.source === 'self-check') return false;
+        if (categoryVal && r.category !== categoryVal) return false;
+        if (statusVal && (r.status || '待稽核') !== statusVal) return false;
+        var regionParts = (r.region || '').split(/\s*\/\s*/);
+        var area = (regionParts[0] || '').trim();
+        var province = (regionParts[1] || '').trim();
+        var center = (regionParts[2] || '').trim();
+        if (areaVal && area !== areaVal) return false;
+        if (provinceVal && province !== provinceVal) return false;
+        if (centerVal && center !== centerVal) return false;
+        if (!keyword) return true;
+        var region = (r.region || '').toLowerCase();
+        var desc = (r.desc || '').toLowerCase();
+        var cat = (r.category || '').toLowerCase();
+        var content = (r.second === '其他' ? (r.otherDesc || '') : (r.second || '')).toLowerCase();
+        return region.indexOf(keyword) !== -1 || desc.indexOf(keyword) !== -1 || cat.indexOf(keyword) !== -1 || content.indexOf(keyword) !== -1;
+      });
+    }
+
+    function getFilteredSelfcheckList() {
+      var keyword = (selfcheckSearchInput && selfcheckSearchInput.value ? selfcheckSearchInput.value.trim() : '').toLowerCase();
+      var categoryVal = selfcheckFilterCategory ? selfcheckFilterCategory.value.trim() : '';
+      var statusVal = selfcheckFilterStatus ? selfcheckFilterStatus.value.trim() : '';
+      var areaVal = selfcheckFilterArea ? selfcheckFilterArea.value.trim() : '';
+      var provinceVal = selfcheckFilterProvince ? selfcheckFilterProvince.value.trim() : '';
+      var centerVal = selfcheckFilterCenter ? selfcheckFilterCenter.value.trim() : '';
+      return hazardReportList.filter(function (r) {
+        if (r.source !== 'self-check') return false;
         if (categoryVal && r.category !== categoryVal) return false;
         if (statusVal && (r.status || '待稽核') !== statusVal) return false;
         var regionParts = (r.region || '').split(/\s*\/\s*/);
@@ -1055,11 +1154,27 @@
       if (!tbody) return;
       var filtered = getFilteredHazardList();
       if (!filtered.length) {
-        var hasData = hazardReportList.length > 0;
+        var hasData = hazardReportList.some(function(r) { return r.source !== 'self-check'; });
         tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">' + (hasData ? '无匹配结果，请调整搜索或筛选条件' : '暂无数据，可点击「新增隐患上报」提交') + '</td></tr>';
         return;
       }
-      var html = filtered.map(function (r) {
+      tbody.innerHTML = buildRowsHtml(filtered);
+    }
+
+    function renderSelfcheckRows() {
+      var selfTbody = document.getElementById('selfcheckReportsTbody');
+      if (!selfTbody) return;
+      var filtered = getFilteredSelfcheckList();
+      if (!filtered.length) {
+        var hasData = hazardReportList.some(function(r) { return r.source === 'self-check'; });
+        selfTbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">' + (hasData ? '无匹配结果' : '暂无自查自纠数据') + '</td></tr>';
+        return;
+      }
+      selfTbody.innerHTML = buildRowsHtml(filtered);
+    }
+
+    function buildRowsHtml(list) {
+      return list.map(function (r) {
         var beforeList = r.imageBefore || [];
         var afterList = r.imageAfter || [];
         var closed = !!r.closedLoop;
@@ -1092,58 +1207,66 @@
           '<td><button type="button" class="btn btn-outline btn-sm hazard-op-btn" data-id="' + r.id + '">' + opLabel + '</button></td>' +
           '<td>' + closedText + '</td></tr>';
       }).join('');
-      tbody.innerHTML = html;
     }
 
     var exportReportBtn = document.getElementById('hazardReportExportBtn');
     if (exportReportBtn) {
       exportReportBtn.addEventListener('click', function () {
-        var filtered = getFilteredHazardList();
-        function csvEscape(val) {
-          var s = String(val == null ? '' : val);
-          var normalized = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-          return '"' + normalized.replace(/"/g, '""') + '"';
-        }
-        var headers = ['上报时间', '所属片区', '所属省区', '所属中心', '隐患类别', '隐患内容', '整改前照片张数', '具体问题描述', '整改时间', '整改后照片张数', '整改描述', '整改状态', '整改人', '是否闭环'];
-        var lines = [];
-        lines.push(headers.map(csvEscape).join(','));
-        filtered.forEach(function (r) {
-          var regionParts = (r.region || '').split(/\s*\/\s*/);
-          var area = (regionParts[0] || '').trim() || '-';
-          var province = (regionParts[1] || '').trim() || '-';
-          var center = (regionParts[2] || '').trim() || '-';
-          var content = r.second === '其他' ? (r.otherDesc || '-') : (r.second || '-');
-          var beforeN = (r.imageBefore && r.imageBefore.length) ? String(r.imageBefore.length) : '0';
-          var afterN = (r.imageAfter && r.imageAfter.length) ? String(r.imageAfter.length) : '0';
-          var row = [
-            r.time ? String(r.time).replace('T', ' ') : '-',
-            area,
-            province,
-            center,
-            r.category || '-',
-            content,
-            beforeN,
-            r.desc || '-',
-            r.rectifyTime || '-',
-            afterN,
-            r.rectifyDesc || '-',
-            r.status || '待稽核',
-            r.rectifyPerson || '-',
-            r.closedLoop ? '是' : '否'
-          ];
-          lines.push(row.map(csvEscape).join(','));
-        });
-        var csv = '\ufeff' + lines.join('\n');
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = '隐患上报列表.csv';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
+        exportToCsv(getFilteredHazardList(), '隐患上报列表.csv');
       });
+    }
+    var selfcheckExportBtn = document.getElementById('selfcheckExportBtn');
+    if (selfcheckExportBtn) {
+      selfcheckExportBtn.addEventListener('click', function () {
+        exportToCsv(getFilteredSelfcheckList(), '自查自纠报告列表.csv');
+      });
+    }
+
+    function exportToCsv(filtered, filename) {
+      function csvEscape(val) {
+        var s = String(val == null ? '' : val);
+        var normalized = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        return '"' + normalized.replace(/"/g, '""') + '"';
+      }
+      var headers = ['上报时间', '所属片区', '所属省区', '所属中心', '隐患类别', '隐患内容', '整改前照片张数', '具体问题描述', '整改时间', '整改后照片张数', '整改描述', '整改状态', '整改人', '是否闭环'];
+      var lines = [];
+      lines.push(headers.map(csvEscape).join(','));
+      filtered.forEach(function (r) {
+        var regionParts = (r.region || '').split(/\s*\/\s*/);
+        var area = (regionParts[0] || '').trim() || '-';
+        var province = (regionParts[1] || '').trim() || '-';
+        var center = (regionParts[2] || '').trim() || '-';
+        var content = r.second === '其他' ? (r.otherDesc || '-') : (r.second || '-');
+        var beforeN = (r.imageBefore && r.imageBefore.length) ? String(r.imageBefore.length) : '0';
+        var afterN = (r.imageAfter && r.imageAfter.length) ? String(r.imageAfter.length) : '0';
+        var row = [
+          r.time ? String(r.time).replace('T', ' ') : '-',
+          area,
+          province,
+          center,
+          r.category || '-',
+          content,
+          beforeN,
+          r.desc || '-',
+          r.rectifyTime || '-',
+          afterN,
+          r.rectifyDesc || '-',
+          r.status || '待稽核',
+          r.rectifyPerson || '-',
+          r.closedLoop ? '是' : '否'
+        ];
+        lines.push(row.map(csvEscape).join(','));
+      });
+      var csv = '\ufeff' + lines.join('\n');
+      var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     }
 
     if (submitBtn && tbody) {
@@ -1303,6 +1426,44 @@
       var id = parseInt(btn.dataset.id, 10);
       if (id) openDetailModal(id);
     });
+    var selfTbody = document.getElementById('selfcheckReportsTbody');
+    if (selfTbody) {
+      selfTbody.addEventListener('click', function (e) {
+        var btn = e.target.closest('.hazard-op-btn');
+        if (!btn) return;
+        var id = parseInt(btn.dataset.id, 10);
+        if (id) openDetailModal(id);
+      });
+    }
+
+    // Add mock self-check data
+    hazardReportList.push({
+      id: 9001,
+      category: '标志标牌类',
+      second: '易发生高处坠落、物体打击、机械伤害等事故区域未设置安全警示标志',
+      desc: '分拣区二楼平台边缘警示牌破损',
+      region: '中部 / 浙江大区 / 义乌',
+      time: '2026-03-20 09:30',
+      status: '待稽核',
+      imageBefore: [],
+      imageAfter: [],
+      closedLoop: false,
+      source: 'self-check'
+    });
+    hazardReportList.push({
+      id: 9002,
+      category: '设备安全',
+      second: '分拣机电机散热风扇罩缺失',
+      desc: '3号分拣线末端电机风扇罩掉落',
+      region: '北部 / 北京省公司 / 北京',
+      time: '2026-03-20 10:15',
+      status: '待验收',
+      imageBefore: [],
+      imageAfter: [],
+      closedLoop: false,
+      source: 'self-check'
+    });
+    renderSelfcheckRows();
   }
 
   // ============ 转运中心风险分级表：风险上报工作流（总部评审） ============
