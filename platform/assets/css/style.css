@@ -818,6 +818,12 @@ input {
   margin-bottom: 0;
 }
 
+.hazard-list-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* 隐患上报列表工具栏：筛选项与搜索同一行 */
 .hazard-report-toolbar {
   flex-direction: column;
