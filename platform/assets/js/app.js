@@ -542,21 +542,20 @@
     return '' +
         '<div id="dualPreventionPanelHazard" class="dual-prevention-panel" style="display:none;">' +
           '<div class="stats-row">' +
-            buildStatCard('待稽核', '12', '待安全稽核', 'up',
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>', 'orange') +
-            buildStatCard('整改中', '8', '责任单位整改中', 'up',
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>', 'blue') +
-            buildStatCard('待验收', '5', '待验收关闭', 'up',
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>', 'green') +
-            buildStatCard('已关闭', '126', '验收通过关闭', 'up',
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>', 'green') +
+            buildStatCard('隐患上报', '56', '待处理隐患', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', 'orange') +
+            buildStatCard('自查自纠', '32', '本月自查报告', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14l2 2 4-4"/></svg>', 'blue') +
+            buildStatCard('安全稽核', '12', '季度稽核进度', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>', 'green') +
+            buildStatCard('专项稽查', '5', '进行中专项', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>', 'indigo') +
           '</div>' +
           '<div class="tab-nav hazard-sub-tab-nav" style="margin-top:20px;margin-bottom:12px;">' +
             '<div class="tab-item active" data-hazard-sub="report">隐患上报</div>' +
             '<div class="tab-item" data-hazard-sub="selfcheck">自查自纠</div>' +
             '<div class="tab-item" data-hazard-sub="audit">安全稽核</div>' +
             '<div class="tab-item" data-hazard-sub="special">专项稽查</div>' +
-            '<div class="tab-item" data-hazard-sub="remind">提醒推送</div>' +
           '</div>' +
           '<div id="hazardSubPanelReport" class="hazard-sub-panel">' +
             '<div class="hazard-list-header">' +
@@ -739,11 +738,6 @@
               '</div>' +
             '</div>' +
           '</div>' +
-          '<div id="hazardSubPanelRemind" class="hazard-sub-panel" style="display:none;">' +
-            '<div class="section-title">提醒推送</div>' +
-            '<p style="color:var(--text-secondary);margin-bottom:12px;">未完成关键节点提醒，超阈值通报主管。每次触达写入提醒推送记录。</p>' +
-            '<div class="panel" style="margin-top:12px;"><div class="panel-header"><div class="panel-title">提醒规则设置</div></div><div class="panel-body"><div class="form-grid"><div class="form-field"><div class="form-label">触发类型</div><select><option>自查自纠未提交</option><option>整改单未提交验收</option></select></div><div class="form-field"><div class="form-label">阈值（天）</div><input type="number" value="3" placeholder="T+N"></div><div class="form-field"><div class="form-label">升级策略</div><input type="text" value="提醒1 → 提醒2 → 通报主管" readonly style="background:var(--bg-body);"></div></div></div></div>' +
-            '<div class="panel" style="margin-top:12px;"><div class="panel-header"><div class="panel-title">提醒推送记录</div></div><div class="panel-body"><table class="data-table"><thead><tr><th>时间</th><th>触发类型</th><th>触达对象</th><th>是否升级</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:20px;">暂无记录</td></tr></tbody></table></div></div>' +
           '</div>' +
           '<div class="modal-overlay" id="hazardReportModalOverlay" style="display:none;">' +
             '<div class="modal modal-hazard-report" role="dialog" style="max-width:600px;">' +
