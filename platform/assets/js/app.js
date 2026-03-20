@@ -584,7 +584,7 @@
               '</div>' +
               '<div class="data-table-scroll">' +
                 '<table class="data-table">' +
-                  '<thead><tr><th style="width:100px;">上报时间</th><th style="width:80px;">所属片区</th><th style="width:100px;">所属省区</th><th style="width:100px;">所属中心</th><th style="width:90px;">隐患类别</th><th style="width:90px;">隐患内容</th><th style="width:72px;">整改前照片</th><th>具体问题描述</th><th style="width:100px;">整改时间</th><th style="width:90px;">整改后照片</th><th style="width:90px;">整改描述</th><th style="width:90px;">整改状态</th><th style="width:80px;">整改人</th><th style="width:100px;">操作</th><th style="width:72px;">是否闭环</th></tr></thead>' +
+                  '<thead><tr><th style="width:100px;">上报时间</th><th style="width:80px;">所属片区</th><th style="width:100px;">所属省区</th><th style="width:100px;">所属中心</th><th style="width:90px;">隐患类别</th><th style="width:160px;">隐患内容</th><th style="width:72px;">整改前照片</th><th style="width:200px;">具体问题描述</th><th style="width:100px;">整改时间</th><th style="width:90px;">整改后照片</th><th style="width:120px;">整改描述</th><th style="width:90px;">整改状态</th><th style="width:80px;">整改人</th><th style="width:100px;">操作</th><th style="width:72px;">是否闭环</th></tr></thead>' +
                   '<tbody id="hazardReportTbody">' +
                     '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>' +
                   '</tbody>' +
@@ -631,9 +631,13 @@
               '<div class="modal-body">' +
                 '<div class="form-grid form-grid-hazard">' +
                   '<div class="form-field span-2"><label class="form-label required">隐患类别</label><select id="hazardFormCategory" class="form-control"><option value="">请选择</option></select></div>' +
-                  '<div class="form-field span-2" id="hazardFormSecondWrap"><label class="form-label">二级隐患描述</label><select id="hazardFormSecond" class="form-control"><option value="">请选择</option></select></div>' +
+                  '<div class="form-field span-2" id="hazardFormSecondWrap">' +
+                    '<label class="form-label">二级隐患描述 <span id="hazardSecondGuide" style="font-size: 11px; font-weight: 400; color: var(--text-tertiary); margin-left: 8px;">(点击卡片选择对应的内容)</span><a id="hazardSecondChangeBtn" class="hazard-change-link" style="display:none;">[更改]</a></label>' +
+                    '<div id="hazardFormSecondList" class="hazard-second-list"></div>' +
+                    '<input type="hidden" id="hazardFormSecond" value="">' +
+                  '</div>' +
                   '<div class="form-field span-2" id="hazardFormOtherWrap" style="display:none;"><label class="form-label required">自填隐患描述</label><input type="text" id="hazardFormOtherDesc" class="form-control" placeholder="选择「其他」时必填"></div>' +
-                  '<div class="form-field span-2"><label class="form-label required">具体问题描述</label><textarea id="hazardFormDesc" class="form-control" rows="3" placeholder="请详细描述具体问题"></textarea></div>' +
+                  '<div class="form-field span-2"><label id="hazardFormDescLabel" class="form-label">具体问题描述</label><textarea id="hazardFormDesc" class="form-control" rows="3" placeholder="请详细描述具体问题"></textarea></div>' +
                   '<div class="form-field"><label class="form-label">南北部</label><select id="hazardFormNorthSouth" class="form-control"><option value="">请选择</option><option value="北部">北部</option><option value="南部">南部</option><option value="中部">中部</option></select></div>' +
                   '<div class="form-field"><label class="form-label">省区</label><select id="hazardFormProvince" class="form-control"><option value="">请选择</option></select></div>' +
                   '<div class="form-field span-2"><label class="form-label">中心</label><select id="hazardFormCenter" class="form-control"><option value="">请选择</option></select></div>' +
@@ -725,17 +729,57 @@
     var otherDescEl = document.getElementById('hazardFormOtherDesc');
     var descEl = document.getElementById('hazardFormDesc');
     var tbody = document.getElementById('hazardReportTbody');
+    var searchInput = document.getElementById('hazardSearchInput');
+    var filterCategory = document.getElementById('hazardFilterCategory');
+    var filterStatus = document.getElementById('hazardFilterStatus');
+    var filterArea = document.getElementById('hazardFilterArea');
+    var filterProvince = document.getElementById('hazardFilterProvince');
+    var filterCenter = document.getElementById('hazardFilterCenter');
 
     function fillHazardSecondOptions(category) {
-      if (!secondEl) return;
-      secondEl.innerHTML = '<option value="">请选择</option>';
+      var listContainer = document.getElementById('hazardFormSecondList');
+      var changeBtn = document.getElementById('hazardSecondChangeBtn');
+      var guide = document.getElementById('hazardSecondGuide');
+      if (!listContainer || !secondEl) return;
+      
+      listContainer.classList.remove('single-mode');
+      listContainer.innerHTML = '';
+      if (changeBtn) changeBtn.style.display = 'none';
+      if (guide) guide.style.display = '';
+      
+      secondEl.value = '';
+      secondEl.dispatchEvent(new Event('change'));
+      
       if (!category || !HAZARD_CATEGORY_CONTENT[category]) return;
+      
       HAZARD_CATEGORY_CONTENT[category].forEach(function (text) {
-        var opt = document.createElement('option');
-        opt.value = text;
-        opt.textContent = text;
-        secondEl.appendChild(opt);
+        var item = document.createElement('div');
+        item.className = 'hazard-second-item';
+        item.textContent = text;
+        item.onclick = function () {
+          listContainer.querySelectorAll('.hazard-second-item').forEach(function (el) { el.classList.remove('active'); });
+          item.classList.add('active');
+          listContainer.classList.add('single-mode');
+          if (changeBtn) changeBtn.style.display = '';
+          if (guide) guide.style.display = 'none';
+          
+          secondEl.value = text;
+          secondEl.dispatchEvent(new Event('change'));
+        };
+        listContainer.appendChild(item);
       });
+
+      if (changeBtn) {
+        changeBtn.onclick = function(e) {
+          e.preventDefault();
+          listContainer.classList.remove('single-mode');
+          listContainer.querySelectorAll('.hazard-second-item').forEach(function (el) { el.classList.remove('active'); });
+          changeBtn.style.display = 'none';
+          if (guide) guide.style.display = '';
+          secondEl.value = '';
+          secondEl.dispatchEvent(new Event('change'));
+        };
+      }
     }
 
     function populateHazardCategorySelects() {
@@ -764,6 +808,50 @@
 
     function showHint(msg) { if (hintEl) hintEl.textContent = msg || ''; }
 
+    function fillFilterProvinces(areaVal) {
+      if (!filterProvince) return;
+      var current = filterProvince.value;
+      filterProvince.innerHTML = '<option value="">全部</option>';
+      var filtered = areaVal ? provincesData.filter(function(p) { return p.northSouth === areaVal; }) : provincesData;
+      filtered.forEach(function (p) {
+        var opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        filterProvince.appendChild(opt);
+      });
+      var exists = Array.prototype.some.call(filterProvince.options, function(o) { return o.value === current; });
+      if (exists) filterProvince.value = current;
+      else filterProvince.value = '';
+    }
+
+    function fillFilterCenters(provName, areaVal) {
+      if (!filterCenter) return;
+      var current = filterCenter.value;
+      filterCenter.innerHTML = '<option value="">全部</option>';
+      
+      var filtered = [];
+      if (provName) {
+        var province = provincesData.find(function(p) { return p.name === provName; });
+        if (province) filtered = centersData.filter(function(c) { return c.provinceCode === province.code; });
+      } else if (areaVal) {
+        var areaProvinceCodes = provincesData.filter(function(p) { return p.northSouth === areaVal; }).map(function(p) { return p.code; });
+        filtered = centersData.filter(function(c) { return areaProvinceCodes.indexOf(c.provinceCode) !== -1; });
+      } else {
+        filtered = centersData;
+      }
+
+      filtered.forEach(function (c) {
+        var opt = document.createElement('option');
+        opt.value = c.shortName || c.name;
+        opt.textContent = c.shortName || c.name;
+        filterCenter.appendChild(opt);
+      });
+
+      var exists = Array.prototype.some.call(filterCenter.options, function(o) { return o.value === current; });
+      if (exists) filterCenter.value = current;
+      else filterCenter.value = '';
+    }
+
     function fillProvincesByNorthSouth(northSouthVal) {
       var sel = document.getElementById('hazardFormProvince');
       if (!sel) return;
@@ -778,6 +866,7 @@
         sel.appendChild(opt);
       });
     }
+
     function fillCentersByProvince(provinceCode) {
       var sel = document.getElementById('hazardFormCenter');
       if (!sel) return;
@@ -796,6 +885,10 @@
     function openModal() {
       if (categoryEl) categoryEl.value = '';
       fillHazardSecondOptions('');
+      if (secondEl) {
+        secondEl.value = '';
+        secondEl.dispatchEvent(new Event('change'));
+      }
       if (otherDescEl) otherDescEl.value = '';
       if (descEl) descEl.value = '';
       if (otherWrap) otherWrap.style.display = 'none';
@@ -814,6 +907,8 @@
       var fileText = document.getElementById('hazardFormFileText');
       if (fileEl) fileEl.value = '';
       if (fileText) fileText.textContent = '点击或拖拽上传';
+      var descLabel = document.getElementById('hazardFormDescLabel');
+      if (descLabel) descLabel.classList.remove('required');
       showHint('');
       if (overlay) overlay.style.display = 'flex';
     }
@@ -832,30 +927,17 @@
         fillHazardSecondOptions(categoryEl.value);
         if (otherWrap) otherWrap.style.display = 'none';
         if (otherDescEl) otherDescEl.value = '';
+        var descLabel = document.getElementById('hazardFormDescLabel');
+        if (descLabel) {
+          if (categoryEl.value === '其他') { descLabel.classList.add('required'); }
+          else { descLabel.classList.remove('required'); }
+        }
       });
     }
 
     function fillFilterLocationOptions() {
-      var provSel = document.getElementById('hazardFilterProvince');
-      var centerSel = document.getElementById('hazardFilterCenter');
-      if (provSel && provincesData.length) {
-        provSel.innerHTML = '<option value="">全部</option>';
-        provincesData.forEach(function (p) {
-          var opt = document.createElement('option');
-          opt.value = p.name;
-          opt.textContent = p.name;
-          provSel.appendChild(opt);
-        });
-      }
-      if (centerSel && centersData.length) {
-        centerSel.innerHTML = '<option value="">全部</option>';
-        centersData.forEach(function (c) {
-          var opt = document.createElement('option');
-          opt.value = c.shortName || c.name;
-          opt.textContent = c.shortName || c.name;
-          centerSel.appendChild(opt);
-        });
-      }
+      fillFilterProvinces(filterArea ? filterArea.value : '');
+      fillFilterCenters(filterProvince ? filterProvince.value : '', filterArea ? filterArea.value : '');
     }
     (function loadLocationData() {
       if (typeof window.LOCATION_PROVINCES !== 'undefined' && typeof window.LOCATION_CENTERS !== 'undefined') {
@@ -900,18 +982,23 @@
       });
     }
 
-    var searchInput = document.getElementById('hazardSearchInput');
-    var filterCategory = document.getElementById('hazardFilterCategory');
-    var filterStatus = document.getElementById('hazardFilterStatus');
-    var filterArea = document.getElementById('hazardFilterArea');
-    var filterProvince = document.getElementById('hazardFilterProvince');
-    var filterCenter = document.getElementById('hazardFilterCenter');
     function applyHazardFilters() { renderHazardRows(); }
     if (searchInput) searchInput.addEventListener('input', applyHazardFilters);
     if (filterCategory) filterCategory.addEventListener('change', applyHazardFilters);
     if (filterStatus) filterStatus.addEventListener('change', applyHazardFilters);
-    if (filterArea) filterArea.addEventListener('change', applyHazardFilters);
-    if (filterProvince) filterProvince.addEventListener('change', applyHazardFilters);
+    if (filterArea) {
+      filterArea.addEventListener('change', function() {
+        fillFilterProvinces(filterArea.value);
+        fillFilterCenters(filterProvince.value, filterArea.value);
+        applyHazardFilters();
+      });
+    }
+    if (filterProvince) {
+      filterProvince.addEventListener('change', function() {
+        fillFilterCenters(filterProvince.value, filterArea.value);
+        applyHazardFilters();
+      });
+    }
     if (filterCenter) filterCenter.addEventListener('change', applyHazardFilters);
 
     function readFilesAsDataUrls(files, callback) {
@@ -981,18 +1068,22 @@
         var afterHtml = afterList.length ? ('<div class="hazard-cell-imgs">' + afterList.slice(0, 2).map(function (src) { return '<img src="' + src + '" alt="整改后" class="hazard-thumb"/>'; }).join('') + (afterList.length > 2 ? '<span class="hazard-thumb-more">+' + (afterList.length - 2) + '</span>' : '') + '</div>') : '<span class="text-muted">未上传</span>';
         var closedText = closed ? '<span class="risk-badge success">是</span>' : '<span class="risk-badge gray">否</span>';
         var opLabel = closed ? '查看' : '处理';
-        var descShort = r.desc ? (r.desc.length > 40 ? r.desc.substring(0, 40) + '…' : r.desc) : '-';
+        var content = r.second === '其他' ? (r.otherDesc || '-') : (r.second || '-');
+        var contentShort = content.length > 30 ? content.substring(0, 30) + '...' : content;
+        var descLong = r.desc || '-';
+        var descShort = descLong.length > 40 ? descLong.substring(0, 40) + '...' : descLong;
         var rectifyTime = r.rectifyTime || '-';
         var rectifyDesc = r.rectifyDesc || '-';
+        var rectifyDescShort = rectifyDesc.length > 20 ? rectifyDesc.substring(0, 20) + '...' : rectifyDesc;
         var rectifyPerson = r.rectifyPerson || '-';
         return '<tr data-id="' + r.id + '">' +
           '<td>' + (r.time ? r.time.replace('T', ' ') : '-') + '</td>' +
           '<td>' + area + '</td><td>' + province + '</td><td>' + center + '</td>' +
           '<td>' + (r.category || '-') + '</td>' +
-          '<td>' + (r.second === '其他' ? (r.otherDesc || '-') : (r.second || '-')) + '</td>' +
+          '<td title="' + content + '">' + contentShort + '</td>' +
           '<td>' + beforeHtml + '</td>' +
-          '<td>' + descShort + '</td>' +
-          '<td>' + rectifyTime + '</td><td>' + afterHtml + '</td><td>' + rectifyDesc + '</td>' +
+          '<td title="' + descLong + '">' + descShort + '</td>' +
+          '<td>' + rectifyTime + '</td><td>' + afterHtml + '</td><td title="' + rectifyDesc + '">' + rectifyDescShort + '</td>' +
           '<td><span class="risk-badge ' + (closed ? 'green' : 'orange') + '">' + (r.status || '待稽核') + '</span></td>' +
           '<td>' + rectifyPerson + '</td>' +
           '<td><button type="button" class="btn btn-outline btn-sm hazard-op-btn" data-id="' + r.id + '">' + opLabel + '</button></td>' +
@@ -1060,7 +1151,7 @@
         var desc = descEl ? descEl.value.trim() : '';
         if (!category) { showHint('请选择隐患类别'); return; }
         if (!second) { showHint('请选择二级隐患描述'); return; }
-        if (!desc) { showHint('请填写具体问题描述'); return; }
+        if (category === '其他' && !desc) { showHint('请填写具体问题描述'); return; }
         if (second === '其他' && !otherDesc) { showHint('选择「其他」时请填写自填隐患描述'); return; }
         var nsEl = document.getElementById('hazardFormNorthSouth');
         var provEl = document.getElementById('hazardFormProvince');
