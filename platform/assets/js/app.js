@@ -19,6 +19,10 @@
       title: '事故与应急管理',
       breadcrumb: ['首页', '核心业务', '事故与应急管理']
     },
+    'accident-report': {
+      title: '事故上报',
+      breadcrumb: ['首页', '核心业务', '事故与应急管理', '事故上报']
+    },
     personnel: {
       title: '人员安全管理',
       breadcrumb: ['首页', '基础要素', '人员安全管理']
@@ -165,6 +169,12 @@
       const quickAction = e.target.closest('.quick-action-item[data-page]');
       if (quickAction) {
         navigateTo(quickAction.dataset.page);
+        return;
+      }
+
+      const featureCard = e.target.closest('.feature-card[data-page]');
+      if (featureCard) {
+        navigateTo(featureCard.dataset.page);
       }
     });
   }
@@ -210,11 +220,18 @@
         initDualPreventionRiskControlSimplePager();
         initDualPreventionHazardTab();
         break;
-      case 'accident-emergency': mainContent.innerHTML = renderAccidentEmergency(); break;
+      case 'accident-emergency':
+        mainContent.innerHTML = renderAccidentEmergency();
+        initAccidentEmergencyTab();
+        break;
       case 'personnel': mainContent.innerHTML = renderPersonnel(); break;
       case 'facility': mainContent.innerHTML = renderFacility(); break;
       case 'park': mainContent.innerHTML = renderPark(); break;
       case 'delivery-safety': mainContent.innerHTML = renderDeliverySafety(); break;
+      case 'accident-report':
+        mainContent.innerHTML = renderAccidentReport();
+        initAccidentReport();
+        break;
       case 'training': mainContent.innerHTML = renderTraining(); break;
       case 'data-center': mainContent.innerHTML = renderDataCenter(); break;
       case 'document': mainContent.innerHTML = renderDocument(); break;
@@ -805,6 +822,68 @@
       panelRisk.style.display = value === 'risk' ? '' : 'none';
       panelHazard.style.display = value === 'hazard' ? '' : 'none';
     });
+  }
+
+  function initAccidentEmergencyTab() {
+    const nav = document.getElementById('accidentEmergencyTabNav');
+    const panels = {
+      accident: document.getElementById('accidentPanel'),
+      emergency: document.getElementById('emergencyPanel'),
+      drill: document.getElementById('drillPanel'),
+      warning: document.getElementById('warningPanel')
+    };
+    if (!nav) return;
+    nav.addEventListener('click', function (e) {
+      const tab = e.target.closest('.tab-item[data-tab]');
+      if (!tab) return;
+      const key = tab.dataset.tab;
+      document.querySelectorAll('#accidentEmergencyTabNav .tab-item').forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      Object.keys(panels).forEach(function (k) {
+        const el = panels[k];
+        if (el) el.style.display = k === key ? '' : 'none';
+      });
+    });
+  }
+
+  function initAccidentReport() {
+    const form = document.getElementById('accidentReportForm');
+    if (!form) return;
+
+    // 处理文件上传预览
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+      input.addEventListener('change', function(e) {
+        const area = this.closest('.file-upload-area');
+        const text = area.querySelector('.file-upload-text');
+        if (this.files && this.files.length > 0) {
+          text.textContent = '已选择 ' + this.files.length + ' 个文件';
+          area.classList.add('has-files');
+        } else {
+          text.textContent = '点击或拖拽上传';
+          area.classList.remove('has-files');
+        }
+      });
+    });
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('事故上报提交成功！已进入审核流程。');
+      navigateTo('accident-emergency');
+    });
+
+    const resetBtn = form.querySelector('.btn-reset');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        if (confirm('确定要重置表单吗？')) {
+          form.reset();
+          form.querySelectorAll('.has-files').forEach(el => {
+            el.classList.remove('has-files');
+            el.querySelector('.file-upload-text').textContent = '点击或拖拽上传';
+          });
+        }
+      });
+    }
   }
 
   function initDualPreventionHazardTab() {
@@ -3017,22 +3096,39 @@
           '</div>' +
         '</div>' +
 
-        '<div class="tab-nav">' +
-          '<div class="tab-item active">事故管理</div>' +
-          '<div class="tab-item">应急预案</div>' +
-          '<div class="tab-item">演练记录</div>' +
-          '<div class="tab-item">预警中心</div>' +
+        '<div class="tab-nav" id="accidentEmergencyTabNav">' +
+          '<div class="tab-item active" data-tab="accident">事故管理</div>' +
+          '<div class="tab-item" data-tab="emergency">应急预案</div>' +
+          '<div class="tab-item" data-tab="drill">演练记录</div>' +
+          '<div class="tab-item" data-tab="warning">预警中心</div>' +
         '</div>' +
 
-        '<div class="feature-grid">' +
-          buildFeatureCard('事故上报', '快速上报安全事故，支持拍照取证与定位', 'var(--danger-light)', 'var(--danger)', '本月上报 2 起') +
-          buildFeatureCard('事故调查', '事故原因分析、责任认定与整改跟踪', 'var(--warning-light)', 'var(--warning)', '进行中 1 项') +
-          buildFeatureCard('事故统计', '多维度事故数据统计与趋势分析', 'var(--info-light)', 'var(--info)', '累计 23 起') +
-          buildFeatureCard('应急预案', '各类应急预案编制、审核与发布管理', 'var(--primary-light)', 'var(--primary)', '生效预案 15 个') +
-          buildFeatureCard('应急演练', '演练计划制定、执行记录与效果评估', 'var(--success-light)', 'var(--success)', '本季度 3 次') +
-          buildFeatureCard('天气预警', '气象灾害预警信息推送与应对措施', 'var(--warning-light)', 'var(--warning)', '当前预警 1 条') +
-          buildFeatureCard('车辆预警', '车辆安全状态监控与异常预警', 'var(--info-light)', 'var(--info)', '异常车辆 0 辆') +
-          buildFeatureCard('应急处置', '应急响应流程指导与资源调度协调', 'var(--danger-light)', 'var(--danger)', '本月处置 1 次') +
+        '<div id="accidentPanel" class="accident-emergency-panel">' +
+          '<div class="feature-grid">' +
+            buildFeatureCard('事故上报', '快速上报安全事故，支持拍照取证与定位', 'var(--danger-light)', 'var(--danger)', '本月上报 2 起', 'accident-report') +
+            buildFeatureCard('事故调查', '事故原因分析、责任认定与整改跟踪', 'var(--warning-light)', 'var(--warning)', '进行中 1 项') +
+            buildFeatureCard('事故统计', '多维度事故数据统计与趋势分析', 'var(--info-light)', 'var(--info)', '累计 23 起') +
+          '</div>' +
+        '</div>' +
+
+        '<div id="emergencyPanel" class="accident-emergency-panel" style="display:none;">' +
+          '<div class="feature-grid">' +
+            buildFeatureCard('应急预案', '各类应急预案编制、审核与发布管理', 'var(--primary-light)', 'var(--primary)', '生效预案 15 个') +
+            buildFeatureCard('应急处置', '应急响应流程指导与资源调度协调', 'var(--danger-light)', 'var(--danger)', '本月处置 1 次') +
+          '</div>' +
+        '</div>' +
+
+        '<div id="drillPanel" class="accident-emergency-panel" style="display:none;">' +
+          '<div class="feature-grid">' +
+            buildFeatureCard('应急演练', '演练计划制定、执行记录与效果评估', 'var(--success-light)', 'var(--success)', '本季度 3 次') +
+          '</div>' +
+        '</div>' +
+
+        '<div id="warningPanel" class="accident-emergency-panel" style="display:none;">' +
+          '<div class="feature-grid">' +
+            buildFeatureCard('天气预警', '气象灾害预警信息推送与应对措施', 'var(--warning-light)', 'var(--warning)', '当前预警 1 条') +
+            buildFeatureCard('车辆预警', '车辆安全状态监控与异常预警', 'var(--info-light)', 'var(--info)', '异常车辆 0 辆') +
+          '</div>' +
         '</div>' +
       '</div>';
   }
@@ -3542,9 +3638,113 @@
       '</div>';
   }
 
-  function buildFeatureCard(title, desc, bgColor, iconColor, stat) {
+  function renderAccidentReport() {
+    const today = new Date().toISOString().split('T')[0];
     return '' +
-      '<div class="feature-card">' +
+      '<div class="sub-page">' +
+        '<div class="page-header">' +
+          '<div>' +
+            '<div class="page-title">事故上报</div>' +
+            '<div class="page-desc">STO事故上报 - 请大家仔细填写，谢谢合作</div>' +
+          '</div>' +
+          '<div class="page-actions">' +
+            '<button class="btn btn-outline" onclick="window.history.back()">返回</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="report-form-container">' +
+          '<form id="accidentReportForm" class="premium-form">' +
+            '<div class="form-section">' +
+              '<div class="section-header">基础信息</div>' +
+              '<div class="form-grid">' +
+                '<div class="form-field span-1">' +
+                  '<label class="form-label required">1. 伤者</label>' +
+                  '<input type="text" class="form-input" placeholder="事故主体人员姓名/工号（没有填写“无”）" required>' +
+                '</div>' +
+                '<div class="form-field span-1">' +
+                  '<label class="form-label required">2. 所属单位（省+转运中心名称）</label>' +
+                  '<input type="text" class="form-input" placeholder="xx省区xx转运中心" required>' +
+                '</div>' +
+                '<div class="form-field span-1">' +
+                  '<label class="form-label required">3. 事故日期</label>' +
+                  '<input type="date" class="form-input" value="' + today + '" required>' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label required">4. 事故经过</label>' +
+                  '<textarea class="form-textarea" rows="4" placeholder="【时间+事故类型+事故概况+受伤部位】1月1日，xx转运中心发生1起设备夹伤事故。13: 14 出港操作人员张三进行北京流向分拣作业时，手被卷入接缝处，导致4只手指受伤。" required></textarea>' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label required">5. 损失预估</label>' +
+                  '<textarea class="form-textarea" rows="2" placeholder="人员医疗/设备损失预估" required></textarea>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="form-section">' +
+              '<div class="section-header">现场证据</div>' +
+              '<div class="form-grid">' +
+                '<div class="form-field span-1">' +
+                  '<label class="form-label">6. 事故现场图片</label>' +
+                  '<div class="file-upload-area">' +
+                    '<input type="file" multiple accept="image/*" class="file-input">' +
+                    '<div class="file-upload-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>' +
+                    '<div class="file-upload-text">添加图片</div>' +
+                    '<div class="file-upload-hint">最多选择9张</div>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="form-field span-1">' +
+                  '<label class="form-label">7. 事故现场视频</label>' +
+                  '<div class="file-upload-area">' +
+                    '<input type="file" multiple accept="video/*" class="file-input">' +
+                    '<div class="file-upload-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>' +
+                    '<div class="file-upload-text">添加视频</div>' +
+                    '<div class="file-upload-hint">支持 mp4, mov 等格式</div>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-hint" style="margin-top:12px; color:var(--text-tertiary); font-size:12px;">' +
+                '以上内容需在事故发生后第一时间上报，事故发生后1周内上报“四不放过”报告' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="form-section">' +
+              '<div class="section-header">后期补报</div>' +
+              '<div class="form-grid">' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">8. 四不放过处置</label>' +
+                  '<div class="file-upload-area attachment-upload">' +
+                    '<input type="file" class="file-input">' +
+                    '<div class="file-upload-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>' +
+                    '<div class="file-upload-content">' +
+                      '<div class="file-upload-text">添加附件</div>' +
+                      '<div class="file-upload-hint">只有发起人可以查看提交的文件</div>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="form-field span-1">' +
+                  '<label class="form-label">9. 恢复上班时间（后续补报）</label>' +
+                  '<input type="date" class="form-input">' +
+                '</div>' +
+                '<div class="form-field span-1">' +
+                  '<label class="form-label">10. 实际费用（后续补报）</label>' +
+                  '<input type="number" class="form-input" placeholder="请输入费用金额">' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="form-footer">' +
+              '<button type="button" class="btn btn-outline btn-reset">重置表单</button>' +
+              '<button type="submit" class="btn btn-primary">提交上报</button>' +
+            '</div>' +
+          '</form>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function buildFeatureCard(title, desc, bgColor, iconColor, stat, page) {
+    const dataPage = page ? ' data-page="' + page + '"' : '';
+    return '' +
+      '<div class="feature-card"' + dataPage + '>' +
         '<div class="feature-card-header">' +
           '<div class="feature-card-icon" style="background:' + bgColor + ';color:' + iconColor + '">' +
             '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/></svg>' +
