@@ -57,6 +57,27 @@
     }
   };
 
+  const BREADCRUMB_NAV_MAP = {
+    '首页': 'dashboard',
+    '核心业务': 'dual-prevention',
+    '基础要素': 'personnel',
+    '专项安全': 'delivery-safety',
+    '培训与文化': 'training',
+    '辅助运营': 'data-center',
+    '工作台': 'dashboard',
+    '双重预防机制': 'dual-prevention',
+    '事故与应急管理': 'accident-emergency',
+    '事故上报': 'accident-report',
+    '人员安全管理': 'personnel',
+    '场地与设施管理': 'facility',
+    '园区综合管理': 'park',
+    '寄递安全管理': 'delivery-safety',
+    '培训与宣教': 'training',
+    '数据与分析中心': 'data-center',
+    '制度与文档管理': 'document',
+    '系统与权限管理': 'system'
+  };
+
   /**
    * 隐患类别与二级描述（与《隐患及内容选项.xlsx》Sheet1 一致）
    * 分类 -> 内容选项列表
@@ -177,6 +198,13 @@
         navigateTo(featureCard.dataset.page);
       }
     });
+
+    breadcrumb.addEventListener('click', function (e) {
+      const item = e.target.closest('.breadcrumb-item[data-page]');
+      if (item) {
+        navigateTo(item.dataset.page);
+      }
+    });
   }
 
   function navigateTo(page) {
@@ -202,7 +230,13 @@
     items.forEach(function (item, index) {
       if (index > 0) html += '<span class="breadcrumb-separator">/</span>';
       const isLast = index === items.length - 1;
-      html += '<span class="breadcrumb-item' + (isLast ? ' active' : '') + '">' + item + '</span>';
+      const navPage = BREADCRUMB_NAV_MAP[item];
+      
+      if (navPage && !isLast) {
+        html += '<span class="breadcrumb-item clickable" data-page="' + navPage + '">' + item + '</span>';
+      } else {
+        html += '<span class="breadcrumb-item' + (isLast ? ' active' : '') + '">' + item + '</span>';
+      }
     });
     breadcrumb.innerHTML = html;
   }

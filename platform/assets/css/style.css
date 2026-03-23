@@ -2140,3 +2140,14 @@ input {
     padding: 20px;
   }
 }
+
+/* 面包屑点击效果 */
+.breadcrumb-item.clickable {
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.breadcrumb-item.clickable:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
