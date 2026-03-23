@@ -884,36 +884,116 @@
     const form = document.getElementById('accidentReportForm');
     if (!form) return;
 
-    // 处理文件上传预览
-    const fileInputs = form.querySelectorAll('input[type="file"]');
+    const submitBtn = document.getElementById('submitAccidentBtn');
+    const followUpSection = document.getElementById('followUpSection');
+    let currentStep = 1;
+
+    // 处理文件选择预览
+    const fileInputs = form.querySelectorAll('.file-input');
     fileInputs.forEach(input => {
-      input.addEventListener('change', function(e) {
+      input.addEventListener('change', function () {
         const area = this.closest('.file-upload-area');
-        const text = area.querySelector('.file-upload-text');
         if (this.files && this.files.length > 0) {
-          text.textContent = '已选择 ' + this.files.length + ' 个文件';
           area.classList.add('has-files');
+          const text = area.querySelector('.file-upload-text');
+          if (this.multiple) {
+            text.textContent = '已选择 ' + this.files.length + ' 个文件';
+          } else {
+            text.textContent = '已选择 ' + this.files[0].name;
+          }
         } else {
-          text.textContent = '点击或拖拽上传';
           area.classList.remove('has-files');
+          const originalText = area.querySelector('.file-upload-text');
+          if (area.closest('.attachment-upload')) {
+            originalText.textContent = '添加附件';
+          } else if (this.accept.includes('video')) {
+            originalText.textContent = '添加视频';
+          } else {
+            originalText.textContent = '添加图片';
+          }
         }
       });
     });
 
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function (e) {
       e.preventDefault();
-      alert('事故上报提交成功！已进入审核流程。');
-      navigateTo('accident-emergency');
+      
+      if (currentStep === 1) {
+        // 第一步：初次上报
+        alert('初次上报提交成功！请继续在“后期补报”中完善后续处理信息。');
+        
+        // 更新时间轴
+        const node1 = document.getElementById('node1');
+        const node2 = document.getElementById('node2');
+        const node3 = document.getElementById('node3');
+        
+        node1.classList.remove('status-active');
+        node1.classList.add('status-done');
+        node2.classList.remove('status-pending');
+        node2.classList.add('status-done'); // 模拟自动进入审核通过状态
+        
+        node3.classList.remove('status-pending');
+        node3.classList.add('status-active');
+        
+        // 展开后期补报
+        followUpSection.style.display = 'block';
+        followUpSection.scrollIntoView({ behavior: 'smooth' });
+        
+        // 修改按钮
+        submitBtn.textContent = '提交结案';
+        currentStep = 2;
+      } else {
+        // 第二步：后期补报
+        alert('事故补报提交成功！该事故已闭环并归档。');
+        
+        const node3 = document.getElementById('node3');
+        const node4 = document.getElementById('node4');
+        
+        node3.classList.remove('status-active');
+        node3.classList.add('status-done');
+        node4.classList.remove('status-pending');
+        node4.classList.add('status-done');
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = '已闭环归档';
+        submitBtn.style.opacity = '0.6';
+        
+        setTimeout(() => {
+          navigateTo('accident-emergency');
+        }, 2000);
+      }
     });
 
     const resetBtn = form.querySelector('.btn-reset');
     if (resetBtn) {
-      resetBtn.addEventListener('click', function() {
-        if (confirm('确定要重置表单吗？')) {
+      resetBtn.addEventListener('click', function () {
+        if (confirm('确定要重置表单内容吗？所有已填写内容将丢失。')) {
           form.reset();
-          form.querySelectorAll('.has-files').forEach(el => {
-            el.classList.remove('has-files');
-            el.querySelector('.file-upload-text').textContent = '点击或拖拽上传';
+          const areas = form.querySelectorAll('.file-upload-area');
+          areas.forEach(area => {
+            area.classList.remove('has-files');
+            const originalText = area.querySelector('.file-upload-text');
+            if (area.closest('.attachment-upload')) {
+              originalText.textContent = '添加附件';
+            } else if (area.querySelector('.file-input').accept.includes('video')) {
+              originalText.textContent = '添加视频';
+            } else {
+              originalText.textContent = '添加图片';
+            }
+          });
+          
+          // 重置状态
+          currentStep = 1;
+          followUpSection.style.display = 'none';
+          submitBtn.textContent = '提交上报';
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          
+          // 重置时间轴
+          document.querySelectorAll('.timeline-item').forEach((item, idx) => {
+            item.classList.remove('status-done', 'status-active');
+            if (idx === 0) item.classList.add('status-active');
+            else item.classList.add('status-pending');
           });
         }
       });
@@ -3686,91 +3766,128 @@
           '</div>' +
         '</div>' +
 
-        '<div class="report-form-container">' +
-          '<form id="accidentReportForm" class="premium-form">' +
-            '<div class="form-section">' +
-              '<div class="section-header">基础信息</div>' +
-              '<div class="form-grid">' +
-                '<div class="form-field span-1">' +
-                  '<label class="form-label required">1. 伤者</label>' +
-                  '<input type="text" class="form-input" placeholder="事故主体人员姓名/工号（没有填写“无”）" required>' +
-                '</div>' +
-                '<div class="form-field span-1">' +
-                  '<label class="form-label required">2. 所属单位（省+转运中心名称）</label>' +
-                  '<input type="text" class="form-input" placeholder="xx省区xx转运中心" required>' +
-                '</div>' +
-                '<div class="form-field span-1">' +
-                  '<label class="form-label required">3. 事故日期</label>' +
-                  '<input type="date" class="form-input" value="' + today + '" required>' +
-                '</div>' +
-                '<div class="form-field span-2">' +
-                  '<label class="form-label required">4. 事故经过</label>' +
-                  '<textarea class="form-textarea" rows="4" placeholder="【时间+事故类型+事故概况+受伤部位】1月1日，xx转运中心发生1起设备夹伤事故。13: 14 出港操作人员张三进行北京流向分拣作业时，手被卷入接缝处，导致4只手指受伤。" required></textarea>' +
-                '</div>' +
-                '<div class="form-field span-2">' +
-                  '<label class="form-label required">5. 损失预估</label>' +
-                  '<textarea class="form-textarea" rows="2" placeholder="人员医疗/设备损失预估" required></textarea>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-
-            '<div class="form-section">' +
-              '<div class="section-header">现场证据</div>' +
-              '<div class="form-grid">' +
-                '<div class="form-field span-1">' +
-                  '<label class="form-label">6. 事故现场图片</label>' +
-                  '<div class="file-upload-area">' +
-                    '<input type="file" multiple accept="image/*" class="file-input">' +
-                    '<div class="file-upload-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>' +
-                    '<div class="file-upload-text">添加图片</div>' +
-                    '<div class="file-upload-hint">最多选择9张</div>' +
+        '<div class="report-form-layout">' +
+          '<div class="form-main-content">' +
+            '<form id="accidentReportForm" class="premium-form">' +
+              '<div class="form-section">' +
+                '<div class="section-header">基础信息</div>' +
+                '<div class="form-grid">' +
+                  '<div class="form-field span-1">' +
+                    '<label class="form-label required">1. 伤者</label>' +
+                    '<input type="text" class="form-input" placeholder="事故主体人员姓名/工号（没有填写“无”）" required>' +
                   '</div>' +
-                '</div>' +
-                '<div class="form-field span-1">' +
-                  '<label class="form-label">7. 事故现场视频</label>' +
-                  '<div class="file-upload-area">' +
-                    '<input type="file" multiple accept="video/*" class="file-input">' +
-                    '<div class="file-upload-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>' +
-                    '<div class="file-upload-text">添加视频</div>' +
-                    '<div class="file-upload-hint">支持 mp4, mov 等格式</div>' +
+                  '<div class="form-field span-1">' +
+                    '<label class="form-label required">2. 所属单位（省+转运中心名称）</label>' +
+                    '<input type="text" class="form-input" placeholder="xx省区xx转运中心" required>' +
+                  '</div>' +
+                  '<div class="form-field span-1">' +
+                    '<label class="form-label required">3. 事故日期</label>' +
+                    '<input type="date" class="form-input" value="' + today + '" required>' +
+                  '</div>' +
+                  '<div class="form-field span-2">' +
+                    '<label class="form-label required">4. 事故经过</label>' +
+                    '<textarea class="form-textarea" rows="4" placeholder="【时间+事故类型+事故概况+受伤部位】1月1日，xx转运中心发生1起设备夹伤事故。13: 14 出港操作人员张三进行北京流向分拣作业时，手被卷入接缝处，导致4只手指受伤。" required></textarea>' +
+                  '</div>' +
+                  '<div class="form-field span-2">' +
+                    '<label class="form-label required">5. 损失预估</label>' +
+                    '<textarea class="form-textarea" rows="2" placeholder="人员医疗/设备损失预估" required></textarea>' +
                   '</div>' +
                 '</div>' +
               '</div>' +
-              '<div class="form-hint" style="margin-top:12px; color:var(--text-tertiary); font-size:12px;">' +
-                '以上内容需在事故发生后第一时间上报，事故发生后1周内上报“四不放过”报告' +
-              '</div>' +
-            '</div>' +
 
-            '<div class="form-section">' +
-              '<div class="section-header">后期补报</div>' +
-              '<div class="form-grid">' +
-                '<div class="form-field span-2">' +
-                  '<label class="form-label">8. 四不放过处置</label>' +
-                  '<div class="file-upload-area attachment-upload">' +
-                    '<input type="file" class="file-input">' +
-                    '<div class="file-upload-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>' +
-                    '<div class="file-upload-content">' +
-                      '<div class="file-upload-text">添加附件</div>' +
-                      '<div class="file-upload-hint">只有发起人可以查看提交的文件</div>' +
+              '<div class="form-section">' +
+                '<div class="section-header">现场证据</div>' +
+                '<div class="form-grid">' +
+                  '<div class="form-field span-1">' +
+                    '<label class="form-label">6. 事故现场图片</label>' +
+                    '<div class="file-upload-area">' +
+                      '<input type="file" multiple accept="image/*" class="file-input">' +
+                      '<div class="file-upload-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>' +
+                      '<div class="file-upload-text">添加图片</div>' +
+                      '<div class="file-upload-hint">最多选择9张</div>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="form-field span-1">' +
+                    '<label class="form-label">7. 事故现场视频</label>' +
+                    '<div class="file-upload-area">' +
+                      '<input type="file" multiple accept="video/*" class="file-input">' +
+                      '<div class="file-upload-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>' +
+                      '<div class="file-upload-text">添加视频</div>' +
+                      '<div class="file-upload-hint">支持 mp4, mov 等格式</div>' +
                     '</div>' +
                   '</div>' +
                 '</div>' +
-                '<div class="form-field span-1">' +
-                  '<label class="form-label">9. 恢复上班时间（后续补报）</label>' +
-                  '<input type="date" class="form-input">' +
+                '<div class="form-hint" style="margin-top:12px; color:var(--text-tertiary); font-size:12px;">' +
+                  '以上内容需在事故发生后第一时间上报，事故发生后1周内上报“四不放过”报告' +
                 '</div>' +
-                '<div class="form-field span-1">' +
-                  '<label class="form-label">10. 实际费用（后续补报）</label>' +
-                  '<input type="number" class="form-input" placeholder="请输入费用金额">' +
+              '</div>' +
+
+              '<div id="followUpSection" class="form-section" style="display: none">' +
+                '<div class="section-header">后期补报</div>' +
+                '<div class="form-grid">' +
+                  '<div class="form-field span-2">' +
+                    '<label class="form-label">8. 四不放过处置</label>' +
+                    '<div class="file-upload-area attachment-upload">' +
+                      '<input type="file" class="file-input">' +
+                      '<div class="file-upload-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>' +
+                      '<div class="file-upload-content">' +
+                        '<div class="file-upload-text">添加附件</div>' +
+                        '<div class="file-upload-hint">只有发起人可以查看提交的文件</div>' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="form-field span-1">' +
+                    '<label class="form-label">9. 恢复上班时间（后续补报）</label>' +
+                    '<input type="date" class="form-input">' +
+                  '</div>' +
+                  '<div class="form-field span-1">' +
+                    '<label class="form-label">10. 实际费用（后续补报）</label>' +
+                    '<input type="number" class="form-input" placeholder="请输入费用金额">' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+
+              '<div class="form-footer">' +
+                '<button type="button" class="btn btn-outline btn-reset">重置表单</button>' +
+                '<button type="submit" class="btn btn-primary" id="submitAccidentBtn">提交上报</button>' +
+              '</div>' +
+            '</form>' +
+          '</div>' +
+          '<div class="form-side-content">' +
+            '<div class="timeline-card">' +
+              '<div class="section-header" style="border-left:none; padding-left:0;">事故进展</div>' +
+              '<div class="timeline" id="accidentTimeline">' +
+                '<div class="timeline-item status-active" id="node1">' +
+                  '<div class="timeline-node">1</div>' +
+                  '<div class="timeline-content">' +
+                    '<div class="timeline-title">初次上报</div>' +
+                    '<div class="timeline-desc">填写事故基础信息与现场证据</div>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="timeline-item status-pending" id="node2">' +
+                  '<div class="timeline-node">2</div>' +
+                  '<div class="timeline-content">' +
+                    '<div class="timeline-title">平台审核</div>' +
+                    '<div class="timeline-desc">安全管理部门审核上报内容</div>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="timeline-item status-pending" id="node3">' +
+                  '<div class="timeline-node">3</div>' +
+                  '<div class="timeline-content">' +
+                    '<div class="timeline-title">后期补报</div>' +
+                    '<div class="timeline-desc">上传处理结果与实际费用</div>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="timeline-item status-pending" id="node4">' +
+                  '<div class="timeline-node">4</div>' +
+                  '<div class="timeline-content">' +
+                    '<div class="timeline-title">归档完成</div>' +
+                    '<div class="timeline-desc">事故档案已闭环入库</div>' +
+                  '</div>' +
                 '</div>' +
               '</div>' +
             '</div>' +
-
-            '<div class="form-footer">' +
-              '<button type="button" class="btn btn-outline btn-reset">重置表单</button>' +
-              '<button type="submit" class="btn btn-primary">提交上报</button>' +
-            '</div>' +
-          '</form>' +
+          '</div>' +
         '</div>' +
       '</div>';
   }
