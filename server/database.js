@@ -1,86 +1,94 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const moment = require('moment');
+const mysql = require('mysql2');
 
-// 数据库文件路径
-const DB_PATH = path.resolve(__dirname, 'data.sqlite');
-
-const db = new sqlite3.Database(DB_PATH, (err) => {
-  if (err) {
-    console.error('Error opening database:', err.message);
-  } else {
-    console.log('Connected to SQLite database.');
-    initializeTables();
-  }
+const pool = mysql.createPool({
+  host: '127.0.0.1',
+  user: 'shendun_user',
+  password: 'Shendun123!',
+  database: 'shendun',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  charset: 'utf8mb4'
 });
 
-function initializeTables() {
-  db.serialize(() => {
-    // 1. 风险上报表 (Risks)
-    db.run(`CREATE TABLE IF NOT EXISTS risks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+const promisePool = pool.promise();
+
+pool.getConnection((err, connection) => {
+  if (err) {
+    console.error('MySQL 连接失败:', err.message);
+    return;
+  }
+  console.log('已连接到 MySQL 数据库 (shendun)');
+  connection.release();
+  initializeTables();
+});
+
+async function initializeTables() {
+  try {
+    await promisePool.query(`CREATE TABLE IF NOT EXISTS risks (
+      id INT AUTO_INCREMENT PRIMARY KEY,
       risk_point TEXT NOT NULL,
       hazard_factors TEXT,
       accident_type TEXT,
-      l_value REAL DEFAULT 0,
-      e_value REAL DEFAULT 0,
-      c_value REAL DEFAULT 0,
-      d_value REAL DEFAULT 0,
-      risk_level TEXT,
-      status TEXT DEFAULT '待评审',
+      l_value DOUBLE DEFAULT 0,
+      e_value DOUBLE DEFAULT 0,
+      c_value DOUBLE DEFAULT 0,
+      d_value DOUBLE DEFAULT 0,
+      risk_level VARCHAR(50),
+      status VARCHAR(50) DEFAULT '待评审',
       reject_reason TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
-    // 2. 隐患下发任务表 (Dispatch Records / 下发记录)
-    db.run(`CREATE TABLE IF NOT EXISTS hazard_tasks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      type TEXT NOT NULL, -- 'self_check', 'security_audit', 'special_audit'
-      title TEXT NOT NULL,
+    await promisePool.query(`CREATE TABLE IF NOT EXISTS hazard_tasks (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      type VARCHAR(50) NOT NULL,
+      title VARCHAR(255) NOT NULL,
       dispatch_time DATETIME,
       deadline DATETIME,
-      template_file TEXT, -- 上传的模板文件路径 (上传文件存储)
-      status TEXT DEFAULT '进行中',
-      completion_rate REAL DEFAULT 0,
+      template_file VARCHAR(512),
+      status VARCHAR(50) DEFAULT '进行中',
+      completion_rate DOUBLE DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
-    // 3. 隐患记录与稽核报告内容 (Hazards / 稽核报告内容)
-    db.run(`CREATE TABLE IF NOT EXISTS hazards (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      task_id INTEGER, -- 关联下发任务
-      source_type TEXT DEFAULT 'manual', -- 'manual' (隐患上报), 'self_check' (自查自纠), 'audit' (安全稽核), 'special' (专项稽核)
+    await promisePool.query(`CREATE TABLE IF NOT EXISTS hazards (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      task_id INT,
+      source_type VARCHAR(50) DEFAULT 'manual',
       report_time DATETIME,
-      area TEXT,
-      province TEXT,
-      center TEXT,
-      category TEXT,
+      area VARCHAR(100),
+      province VARCHAR(100),
+      center VARCHAR(100),
+      category VARCHAR(100),
       content TEXT,
       photo_before TEXT,
       description TEXT,
       rectify_time DATETIME,
       photo_after TEXT,
       rectify_description TEXT,
-      status TEXT DEFAULT '待稽核',
-      rectifier TEXT,
-      is_closed BOOLEAN DEFAULT 0,
+      status VARCHAR(50) DEFAULT '待稽核',
+      rectifier VARCHAR(100),
+      is_closed TINYINT(1) DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (task_id) REFERENCES hazard_tasks (id)
-    )`);
+      FOREIGN KEY (task_id) REFERENCES hazard_tasks (id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
-    // 4. 隐患治理日志 (Hazard Logs / 闭环)
-    db.run(`CREATE TABLE IF NOT EXISTS hazard_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      hazard_id INTEGER NOT NULL,
-      action TEXT NOT NULL,
-      operator TEXT,
+    await promisePool.query(`CREATE TABLE IF NOT EXISTS hazard_logs (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      hazard_id INT NOT NULL,
+      action VARCHAR(100) NOT NULL,
+      operator VARCHAR(100),
       remark TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (hazard_id) REFERENCES hazards (id)
-    )`);
-    
-    console.log('Database tables updated: added tasks and enhanced hazard storage.');
-  });
+      FOREIGN KEY (hazard_id) REFERENCES hazards (id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+    console.log('MySQL 数据表初始化完成');
+  } catch (err) {
+    console.error('建表失败:', err.message);
+  }
 }
 
-module.exports = db;
+module.exports = pool;
+module.exports.promisePool = promisePool;

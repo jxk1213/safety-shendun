@@ -2,9 +2,6 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 
-/**
- * 1. 上报风险 (Risk Reporting)
- */
 router.post('/', (req, res) => {
   const { risk_point, hazard_factors, accident_type } = req.body;
   if (!risk_point) {
@@ -13,23 +10,27 @@ router.post('/', (req, res) => {
 
   const query = `
     INSERT INTO risks (risk_point, hazard_factors, accident_type, status, created_at)
-    VALUES (?, ?, ?, '待评审', CURRENT_TIMESTAMP)
+    VALUES (?, ?, ?, '待评审', NOW())
   `;
 
-  db.run(query, [risk_point, hazard_factors, accident_type], function(err) {
+  db.query(query, [risk_point, hazard_factors, accident_type], (err, results) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    res.status(201).json({ id: this.lastID, message: '风险已成功上报' });
+    res.status(201).json({ id: results.insertId, message: '风险已成功上报' });
   });
 });
 
-/**
- * 2. 获取风险列表 (Get Risk List)
- */
 router.get('/', (req, res) => {
-  const query = `SELECT * FROM risks ORDER BY created_at DESC`;
-  db.all(query, [], (err, rows) => {
+  const { status } = req.query;
+  let query = `SELECT * FROM risks`;
+  const params = [];
+  if (status) {
+    query += ` WHERE status = ?`;
+    params.push(status);
+  }
+  query += ` ORDER BY created_at DESC`;
+  db.query(query, params, (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -37,13 +38,10 @@ router.get('/', (req, res) => {
   });
 });
 
-/**
- * 3. 总部评审风险 (Review/Rank Risk)
- */
 router.patch('/:id/review', (req, res) => {
   const { id } = req.params;
   const { l_value, e_value, c_value, risk_level, status, reject_reason } = req.body;
-  
+
   const d_value = (l_value && e_value && c_value) ? (l_value * e_value * c_value) : 0;
 
   const query = `
@@ -52,11 +50,19 @@ router.patch('/:id/review', (req, res) => {
     WHERE id = ?
   `;
 
-  db.run(query, [l_value, e_value, c_value, d_value, risk_level, status, reject_reason, id], function(err) {
+  db.query(query, [l_value, e_value, c_value, d_value, risk_level, status, reject_reason, id], (err) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
     res.json({ message: '风险评审已更新', d_value, risk_level });
+  });
+});
+
+router.delete('/:id', (req, res) => {
+  const { id } = req.params;
+  db.query('DELETE FROM risks WHERE id = ?', [id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: '风险记录已删除' });
   });
 });
 

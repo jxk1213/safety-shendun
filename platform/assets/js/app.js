@@ -5,6 +5,45 @@
 (function () {
   'use strict';
 
+  // ============ API 配置 ============
+  var API_BASE = window.location.origin;
+
+  function apiGet(path) {
+    return fetch(API_BASE + path).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  function apiPost(path, body) {
+    return fetch(API_BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  function apiPatch(path, body) {
+    return fetch(API_BASE + path, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  function apiDelete(path) {
+    return fetch(API_BASE + path, { method: 'DELETE' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
   // ============ 页面配置 ============
   const PAGE_CONFIG = {
     dashboard: {
@@ -1002,9 +1041,45 @@
 
   function initDualPreventionHazardTab() {
     var hazardReportList = [];
-    var hazardIndex = 0;
+    var hazardIndex = 100000;
     var provincesData = [];
     var centersData = [];
+
+    function dbToFrontend(row) {
+      var regionParts = [row.area, row.province, row.center].filter(Boolean);
+      return {
+        id: row.id,
+        category: row.category || '',
+        second: row.content || '',
+        otherDesc: '',
+        desc: row.description || '',
+        region: regionParts.join(' / '),
+        time: row.report_time ? String(row.report_time).replace('T', ' ').substring(0, 16) : '',
+        status: row.status || '待稽核',
+        imageBefore: row.photo_before ? [row.photo_before] : [],
+        imageAfter: row.photo_after ? [row.photo_after] : [],
+        closedLoop: !!row.is_closed,
+        source: row.source_type === 'self_check' ? 'self-check' : (row.source_type === 'security_audit' ? 'security-audit' : (row.source_type === 'special' ? 'special-audit' : undefined)),
+        rectifyDesc: row.rectify_description || '',
+        rectifyTime: row.rectify_time ? String(row.rectify_time).replace('T', ' ').substring(0, 16) : '',
+        rectifyPerson: row.rectifier || ''
+      };
+    }
+
+    function loadHazardsFromAPI() {
+      apiGet('/api/hazards').then(function (rows) {
+        hazardReportList = rows.map(dbToFrontend);
+        if (hazardReportList.length > 0) {
+          hazardIndex = Math.max.apply(null, hazardReportList.map(function(r) { return r.id; })) + 1;
+        }
+        renderHazardRows();
+        renderSelfcheckRows();
+        if (typeof renderSecurityAuditRows === 'function') renderSecurityAuditRows();
+        if (typeof renderSpecialAuditRows === 'function') renderSpecialAuditRows();
+      }).catch(function (err) {
+        console.warn('从API加载隐患数据失败，使用本地模式:', err);
+      });
+    }
 
     var subNav = mainContent.querySelector('.hazard-sub-tab-nav');
     var panels = {
@@ -1602,22 +1677,52 @@
         }
         readFilesAsDataUrls(files, function (imageBefore) {
           showHint('');
-          hazardIndex += 1;
-          hazardReportList.push({
-            id: hazardIndex,
+          var timeVal2 = document.getElementById('hazardFormTime') ? document.getElementById('hazardFormTime').value || new Date().toISOString().slice(0, 16) : '';
+          var regionParts2 = region.split(/\s*\/\s*/);
+          var postData = {
+            area: (regionParts2[0] || '').trim(),
+            province: (regionParts2[1] || '').trim(),
+            center: (regionParts2[2] || '').trim(),
             category: category,
-            second: second,
-            otherDesc: otherDesc,
-            desc: desc,
-            region: region,
-            time: document.getElementById('hazardFormTime') ? document.getElementById('hazardFormTime').value || new Date().toISOString().slice(0, 16) : '',
-            status: '待稽核',
-            imageBefore: imageBefore || [],
-            imageAfter: [],
-            closedLoop: false
+            content: second,
+            description: desc || otherDesc,
+            source_type: 'manual'
+          };
+          apiPost('/api/hazards/report', postData).then(function (result) {
+            hazardReportList.push({
+              id: result.id,
+              category: category,
+              second: second,
+              otherDesc: otherDesc,
+              desc: desc,
+              region: region,
+              time: timeVal2,
+              status: '待稽核',
+              imageBefore: imageBefore || [],
+              imageAfter: [],
+              closedLoop: false
+            });
+            renderHazardRows();
+            closeModal();
+          }).catch(function (err) {
+            console.error('API保存失败:', err);
+            hazardIndex += 1;
+            hazardReportList.push({
+              id: hazardIndex,
+              category: category,
+              second: second,
+              otherDesc: otherDesc,
+              desc: desc,
+              region: region,
+              time: timeVal2,
+              status: '待稽核',
+              imageBefore: imageBefore || [],
+              imageAfter: [],
+              closedLoop: false
+            });
+            renderHazardRows();
+            closeModal();
           });
-          renderHazardRows();
-          closeModal();
         });
       });
     }
@@ -1711,6 +1816,18 @@
         r.closedLoop = true;
         r.status = '验收通过-关闭';
         if (detailHintEl) detailHintEl.textContent = '';
+
+        apiPost('/api/hazards/' + r.id + '/rectify', {
+          rectify_description: rectDesc,
+          rectifier: '管理员'
+        }).then(function () {
+          return apiPatch('/api/hazards/' + r.id + '/close', {
+            acceptanceResult: '验收通过'
+          });
+        }).catch(function (err) {
+          console.warn('闭环同步API失败:', err);
+        });
+
         renderHazardRows();
         closeDetailModal();
       });
@@ -1737,33 +1854,6 @@
       });
     }
 
-    // Add mock self-check data
-    hazardReportList.push({
-      id: 9001,
-      category: '标志标牌类',
-      second: '易发生高处坠落、物体打击、机械伤害等事故区域未设置安全警示标志',
-      desc: '分拣区二楼平台边缘警示牌破损',
-      region: '中部 / 浙江大区 / 义乌',
-      time: '2026-03-20 09:30',
-      status: '待稽核',
-      imageBefore: [],
-      imageAfter: [],
-      closedLoop: false,
-      source: 'self-check'
-    });
-    hazardReportList.push({
-      id: 9002,
-      category: '设备安全',
-      second: '分拣机电机散热风扇罩缺失',
-      desc: '3号分拣线末端电机风扇罩掉落',
-      region: '北部 / 北京省公司 / 北京',
-      time: '2026-03-20 10:15',
-      status: '待验收',
-      imageBefore: [],
-      imageAfter: [],
-      closedLoop: false,
-      source: 'self-check'
-    });
     renderSelfcheckRows();
     initSelfCheckTaskUpload();
 
@@ -1932,36 +2022,7 @@
     renderSecurityAuditRows();
     renderSpecialAuditRows();
 
-    // Add mock data for reports
-    hazardReportList.push({
-      id: 1001,
-      category: '标志标牌类',
-      second: '其他',
-      otherDesc: '分拣区二楼平台边缘警示牌破损',
-      desc: '分拣区二楼平台边缘警示牌破损',
-      region: '中部 / 浙江大区 / 义乌',
-      time: '2026-03-20 09:30',
-      status: '整改中',
-      closedLoop: false,
-      source: 'security-audit'
-    });
-    hazardReportList.push({
-      id: 1002,
-      category: '消防安全',
-      second: '消防栓箱门开启不便',
-      desc: '消防栓箱门开启不便，需润滑',
-      region: '北部 / 北京省公司 / 北京',
-      time: '2026-03-19 14:20',
-      status: '已关闭',
-      closedLoop: true,
-      rectifyDesc: '已完成润滑，开启顺畅',
-      rectifyTime: '2026-03-19 16:00',
-      rectifyPerson: '管理员',
-      source: 'special-audit'
-    });
-
-    renderSecurityAuditRows();
-    renderSpecialAuditRows();
+    loadHazardsFromAPI();
   }
 
   // ============ 转运中心风险分级表：风险上报工作流（总部评审） ============
@@ -2191,6 +2252,16 @@
       };
       upsertApprovedRow(approved);
 
+      apiPatch('/api/risks/' + report.id + '/review', {
+        l_value: L,
+        e_value: E,
+        c_value: C,
+        risk_level: riskLevelText,
+        status: '已评审'
+      }).catch(function (err) {
+        console.warn('风险评审同步API失败:', err);
+      });
+
       pendingReports = pendingReports.filter(function (r) { return r.id !== reviewActiveReportId; });
       renderPending();
       hideReview();
@@ -2204,11 +2275,18 @@
         return;
       }
 
-      // 当前版本为前端演示：记录驳回理由到控制台，实际接入接口时可提交到后端
       const report = pendingReports.find(function (r) { return r.id === reviewActiveReportId; });
       if (report) {
-        // eslint-disable-next-line no-console
-        console.log('[风险驳回]', { id: report.id, riskPoint: report.riskPoint, reason: reason });
+        apiPatch('/api/risks/' + report.id + '/review', {
+          l_value: 0,
+          e_value: 0,
+          c_value: 0,
+          risk_level: '',
+          status: '已驳回',
+          reject_reason: reason
+        }).catch(function (err) {
+          console.warn('风险驳回同步API失败:', err);
+        });
       }
 
       pendingReports = pendingReports.filter(function (r) { return r.id !== reviewActiveReportId; });
@@ -2236,19 +2314,45 @@
         return;
       }
 
-      const newRow = {
-        id: 'RP_' + Date.now() + '_' + Math.random().toString(16).slice(2),
-        riskPoint: riskPointText,
-        hazardFactors: hazardFactorsText,
-        accidentType: accidentTypeText
-      };
-
-      pendingReports.push(newRow);
-      renderPending();
-      hideModal();
+      apiPost('/api/risks', {
+        risk_point: riskPointText,
+        hazard_factors: hazardFactorsText,
+        accident_type: accidentTypeText
+      }).then(function (result) {
+        pendingReports.push({
+          id: String(result.id),
+          riskPoint: riskPointText,
+          hazardFactors: hazardFactorsText,
+          accidentType: accidentTypeText
+        });
+        renderPending();
+        hideModal();
+      }).catch(function (err) {
+        console.error('风险上报API失败:', err);
+        pendingReports.push({
+          id: 'RP_' + Date.now() + '_' + Math.random().toString(16).slice(2),
+          riskPoint: riskPointText,
+          hazardFactors: hazardFactorsText,
+          accidentType: accidentTypeText
+        });
+        renderPending();
+        hideModal();
+      });
     });
 
-    renderPending();
+    apiGet('/api/risks?status=待评审').then(function (rows) {
+      rows.forEach(function (r) {
+        pendingReports.push({
+          id: String(r.id),
+          riskPoint: r.risk_point || '',
+          hazardFactors: r.hazard_factors || '',
+          accidentType: r.accident_type || ''
+        });
+      });
+      renderPending();
+    }).catch(function () {
+      renderPending();
+    });
 
     function parseRiskTierRowsFromTbody(tbody) {
       const rows = [];
