@@ -685,13 +685,14 @@
                     '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
                     '<input id="hazardSearchInput" type="text" placeholder="搜索问题描述/地点...">' +
                   '</div>' +
+                  '<button class="btn btn-outline hazard-delete-btn" id="hazardDeleteToggleBtn" type="button">删除</button>' +
                 '</div>' +
               '</div>' +
               '<div class="data-table-scroll">' +
-                '<table class="data-table">' +
-                  '<thead><tr><th style="width:100px;">上报时间</th><th style="width:80px;">所属片区</th><th style="width:100px;">所属省区</th><th style="width:100px;">所属中心</th><th style="width:90px;">隐患类别</th><th style="width:160px;">隐患内容</th><th style="width:72px;">整改前照片</th><th style="width:200px;">具体问题描述</th><th style="width:100px;">整改时间</th><th style="width:90px;">整改后照片</th><th style="width:120px;">整改描述</th><th style="width:90px;">整改状态</th><th style="width:80px;">整改人</th><th style="width:100px;">操作</th><th style="width:72px;">是否闭环</th></tr></thead>' +
+                '<table class="data-table" id="hazardReportTable">' +
+                  '<thead><tr><th class="hazard-select-col"><input type="checkbox" id="hazardSelectAll" aria-label="全选隐患"></th><th style="width:100px;">上报时间</th><th style="width:80px;">所属片区</th><th style="width:100px;">所属省区</th><th style="width:100px;">所属中心</th><th style="width:90px;">隐患类别</th><th style="width:160px;">隐患内容</th><th style="width:72px;">整改前照片</th><th style="width:200px;">具体问题描述</th><th style="width:100px;">整改时间</th><th style="width:90px;">整改后照片</th><th style="width:120px;">整改描述</th><th style="width:90px;">整改状态</th><th style="width:80px;">整改人</th><th style="width:100px;">操作</th><th style="width:72px;">是否闭环</th></tr></thead>' +
                   '<tbody id="hazardReportTbody">' +
-                    '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>' +
+                    '<tr><td colspan="16" style="text-align:center;color:var(--text-secondary);padding:24px;">暂无数据，可点击「新增隐患上报」提交</td></tr>' +
                   '</tbody>' +
                 '</table>' +
               '</div>' +
@@ -1060,6 +1061,8 @@
     var hazardIndex = 100000;
     var provincesData = [];
     var centersData = [];
+    var hazardDeleteMode = false;
+    var selectedHazardIds = {};
 
     function dbToFrontend(row) {
       var regionParts = [row.area, row.province, row.center].filter(Boolean);
@@ -1137,6 +1140,9 @@
     var filterArea = document.getElementById('hazardFilterArea');
     var filterProvince = document.getElementById('hazardFilterProvince');
     var filterCenter = document.getElementById('hazardFilterCenter');
+    var deleteToggleBtn = document.getElementById('hazardDeleteToggleBtn');
+    var selectAllCheckbox = document.getElementById('hazardSelectAll');
+    var hazardReportTable = document.getElementById('hazardReportTable');
     var selfcheckFilterCategory = document.getElementById('selfcheckFilterCategory');
     var selfcheckFilterStatus = document.getElementById('selfcheckFilterStatus');
     var selfcheckFilterArea = document.getElementById('selfcheckFilterArea');
@@ -1588,12 +1594,25 @@
     function renderHazardRows() {
       if (!tbody) return;
       var filtered = getFilteredHazardList();
+      var filteredIds = filtered.map(function (item) { return item.id; });
+      var validSelected = {};
+      Object.keys(selectedHazardIds).forEach(function (idStr) {
+        var idNum = parseInt(idStr, 10);
+        if (filteredIds.indexOf(idNum) !== -1) validSelected[idNum] = true;
+      });
+      selectedHazardIds = validSelected;
       if (!filtered.length) {
         var hasData = hazardReportList.some(function(r) { return r.source !== 'self-check'; });
-        tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:var(--text-secondary);padding:24px;">' + (hasData ? '无匹配结果，请调整搜索或筛选条件' : '暂无数据，可点击「新增隐患上报」提交') + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:var(--text-secondary);padding:24px;">' + (hasData ? '无匹配结果，请调整搜索或筛选条件' : '暂无数据，可点击「新增隐患上报」提交') + '</td></tr>';
+        updateDeleteModeUI();
         return;
       }
-      tbody.innerHTML = buildRowsHtml(filtered);
+      tbody.innerHTML = buildRowsHtml(filtered, {
+        selectable: true,
+        deleteMode: hazardDeleteMode,
+        selectedIds: selectedHazardIds
+      });
+      updateDeleteModeUI();
     }
 
     function renderSelfcheckRows() {
@@ -1619,7 +1638,11 @@
       tbody.innerHTML = buildRowsHtml(filtered);
     }
 
-    function buildRowsHtml(list) {
+    function buildRowsHtml(list, opts) {
+      var options = opts || {};
+      var selectable = !!options.selectable;
+      var deleteMode = !!options.deleteMode;
+      var selectedIds = options.selectedIds || {};
       return list.map(function (r) {
         var beforeList = r.imageBefore || [];
         var afterList = r.imageAfter || [];
@@ -1640,7 +1663,10 @@
         var rectifyDesc = r.rectifyDesc || '-';
         var rectifyDescShort = rectifyDesc.length > 20 ? rectifyDesc.substring(0, 20) + '...' : rectifyDesc;
         var rectifyPerson = r.rectifyPerson || '-';
+        var checked = selectedIds[r.id] ? ' checked' : '';
+        var selectCell = selectable ? ('<td class="hazard-select-col"><input type="checkbox" class="hazard-row-check" data-id="' + r.id + '"' + checked + (deleteMode ? '' : ' disabled') + '></td>') : '';
         return '<tr data-id="' + r.id + '">' +
+          selectCell +
           '<td>' + (r.time ? r.time.replace('T', ' ') : '-') + '</td>' +
           '<td>' + area + '</td><td>' + province + '</td><td>' + center + '</td>' +
           '<td>' + (r.category || '-') + '</td>' +
@@ -1653,6 +1679,81 @@
           '<td><button type="button" class="btn btn-outline btn-sm hazard-op-btn" data-id="' + r.id + '">' + opLabel + '</button></td>' +
           '<td>' + closedText + '</td></tr>';
       }).join('');
+    }
+
+    function getSelectedCount() {
+      return Object.keys(selectedHazardIds).length;
+    }
+
+    function updateDeleteModeUI() {
+      if (hazardReportTable) {
+        hazardReportTable.classList.toggle('delete-mode', hazardDeleteMode);
+      }
+      if (deleteToggleBtn) {
+        var count = getSelectedCount();
+        deleteToggleBtn.textContent = hazardDeleteMode ? ('确认删除' + (count ? '(' + count + ')' : '')) : '删除';
+        deleteToggleBtn.classList.toggle('hazard-delete-btn--active', hazardDeleteMode);
+      }
+      if (selectAllCheckbox) {
+        if (!hazardDeleteMode) {
+          selectAllCheckbox.checked = false;
+          return;
+        }
+        var filteredIds = getFilteredHazardList().map(function (item) { return item.id; });
+        if (!filteredIds.length) {
+          selectAllCheckbox.checked = false;
+          return;
+        }
+        selectAllCheckbox.checked = filteredIds.every(function (id) { return !!selectedHazardIds[id]; });
+      }
+    }
+
+    function toggleHazardDeleteMode() {
+      if (!hazardDeleteMode) {
+        hazardDeleteMode = true;
+        selectedHazardIds = {};
+        renderHazardRows();
+        return;
+      }
+      var ids = Object.keys(selectedHazardIds).map(function (id) { return parseInt(id, 10); });
+      if (!ids.length) {
+        hazardDeleteMode = false;
+        renderHazardRows();
+        return;
+      }
+      if (!window.confirm('确认删除已勾选的 ' + ids.length + ' 条隐患记录吗？')) return;
+
+      Promise.all(ids.map(function (id) {
+        return apiDelete('/api/hazards/' + id).then(function () {
+          return { ok: true, id: id };
+        }).catch(function (err) {
+          // 与后端幂等删除保持一致：404 视为记录已不存在，也从前端列表移除
+          if (err && /HTTP 404/.test(String(err.message || ''))) {
+            return { ok: true, id: id, alreadyDeleted: true };
+          }
+          return { ok: false, id: id };
+        });
+      })).then(function (results) {
+        var successIds = [];
+        var failedIds = [];
+        results.forEach(function (result) {
+          if (result && result.ok) successIds.push(result.id);
+          else failedIds.push(result.id);
+        });
+        if (successIds.length) {
+          hazardReportList = hazardReportList.filter(function (row) {
+            return successIds.indexOf(row.id) === -1;
+          });
+        }
+        hazardDeleteMode = false;
+        selectedHazardIds = {};
+        renderHazardRows();
+        if (failedIds.length) {
+          alert('已删除 ' + successIds.length + ' 条，' + failedIds.length + ' 条删除失败。');
+          return;
+        }
+        alert('已成功删除 ' + successIds.length + ' 条隐患记录。');
+      });
     }
 
     var exportReportBtn = document.getElementById('hazardReportExportBtn');
@@ -1677,6 +1778,21 @@
     if (spExportBtn) {
       spExportBtn.addEventListener('click', function () {
         exportToCsv(getFilteredSpecialAuditList(), '专项稽查报告列表.csv');
+      });
+    }
+    if (deleteToggleBtn) {
+      deleteToggleBtn.addEventListener('click', toggleHazardDeleteMode);
+    }
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener('change', function () {
+        if (!hazardDeleteMode) return;
+        var filteredIds = getFilteredHazardList().map(function (item) { return item.id; });
+        if (this.checked) {
+          filteredIds.forEach(function (id) { selectedHazardIds[id] = true; });
+        } else {
+          filteredIds.forEach(function (id) { delete selectedHazardIds[id]; });
+        }
+        renderHazardRows();
       });
     }
 
@@ -1932,10 +2048,20 @@
     if (detailOverlay) detailOverlay.addEventListener('click', function (e) { if (e.target === detailOverlay) closeDetailModal(); });
 
     tbody.addEventListener('click', function (e) {
+      if (e.target.closest('.hazard-row-check')) return;
       var btn = e.target.closest('.hazard-op-btn');
       if (!btn) return;
       var id = parseInt(btn.dataset.id, 10);
       if (id) openDetailModal(id);
+    });
+    tbody.addEventListener('change', function (e) {
+      var checkbox = e.target.closest('.hazard-row-check');
+      if (!checkbox || !hazardDeleteMode) return;
+      var id = parseInt(checkbox.dataset.id, 10);
+      if (!id) return;
+      if (checkbox.checked) selectedHazardIds[id] = true;
+      else delete selectedHazardIds[id];
+      updateDeleteModeUI();
     });
     var selfTbody = document.getElementById('selfcheckReportsTbody');
     if (selfTbody) {

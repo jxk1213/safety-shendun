@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
+const { promisePool } = require('../database');
 const multer = require('multer');
 const path = require('path');
 const moment = require('moment');
@@ -152,12 +153,35 @@ router.get('/:id/logs', (req, res) => {
   });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
-  db.query('DELETE FROM hazards WHERE id = ?', [id], (err) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: '隐患记录已删除' });
-  });
+  const hazardId = Number(id);
+  if (!Number.isInteger(hazardId) || hazardId <= 0) {
+    return res.status(400).json({ error: '无效的隐患ID' });
+  }
+
+  const conn = await promisePool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // 兼容历史库：即便未配置 ON DELETE CASCADE，也能删除成功
+    await conn.query('DELETE FROM hazard_logs WHERE hazard_id = ?', [hazardId]);
+    const [result] = await conn.query('DELETE FROM hazards WHERE id = ?', [hazardId]);
+
+    if (!result.affectedRows) {
+      await conn.rollback();
+      // 幂等删除：前端重复删除或本地残留数据时，按“已删除”处理
+      return res.json({ message: '隐患记录不存在，视为已删除', id: hazardId, alreadyDeleted: true });
+    }
+
+    await conn.commit();
+    res.json({ message: '隐患记录已删除', id: hazardId });
+  } catch (err) {
+    await conn.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    conn.release();
+  }
 });
 
 module.exports = router;
