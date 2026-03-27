@@ -6,7 +6,13 @@
   'use strict';
 
   // ============ API 配置 ============
-  var API_BASE = window.location.origin;
+  var API_BASE = (function () {
+    var origin = window.location.origin;
+    if (!origin || origin === 'null' || origin === 'file://' || window.location.protocol === 'file:') {
+      return 'http://localhost:3000';
+    }
+    return origin;
+  })();
 
   function apiGet(path) {
     return fetch(API_BASE + path).then(function (r) {
@@ -1072,12 +1078,12 @@
         if (hazardReportList.length > 0) {
           hazardIndex = Math.max.apply(null, hazardReportList.map(function(r) { return r.id; })) + 1;
         }
-        renderHazardRows();
-        renderSelfcheckRows();
-        if (typeof renderSecurityAuditRows === 'function') renderSecurityAuditRows();
-        if (typeof renderSpecialAuditRows === 'function') renderSpecialAuditRows();
+        try { renderHazardRows(); } catch(e) { console.warn('renderHazardRows error:', e); }
+        try { renderSelfcheckRows(); } catch(e) { console.warn('renderSelfcheckRows error:', e); }
+        try { renderSecurityAuditRows(); } catch(e) { console.warn('renderSecurityAuditRows error:', e); }
+        try { renderSpecialAuditRows(); } catch(e) { console.warn('renderSpecialAuditRows error:', e); }
       }).catch(function (err) {
-        console.warn('从API加载隐患数据失败，使用本地模式:', err);
+        console.error('从API加载隐患数据失败:', err);
       });
     }
 
@@ -1485,6 +1491,72 @@
       var centerVal = selfcheckFilterCenter ? selfcheckFilterCenter.value.trim() : '';
       return hazardReportList.filter(function (r) {
         if (r.source !== 'self-check') return false;
+        if (categoryVal && r.category !== categoryVal) return false;
+        if (statusVal && (r.status || '待稽核') !== statusVal) return false;
+        var regionParts = (r.region || '').split(/\s*\/\s*/);
+        var area = (regionParts[0] || '').trim();
+        var province = (regionParts[1] || '').trim();
+        var center = (regionParts[2] || '').trim();
+        if (areaVal && area !== areaVal) return false;
+        if (provinceVal && province !== provinceVal) return false;
+        if (centerVal && center !== centerVal) return false;
+        if (!keyword) return true;
+        var region = (r.region || '').toLowerCase();
+        var desc = (r.desc || '').toLowerCase();
+        var cat = (r.category || '').toLowerCase();
+        var content = (r.second === '其他' ? (r.otherDesc || '') : (r.second || '')).toLowerCase();
+        return region.indexOf(keyword) !== -1 || desc.indexOf(keyword) !== -1 || cat.indexOf(keyword) !== -1 || content.indexOf(keyword) !== -1;
+      });
+    }
+
+    function getFilteredSecurityAuditList() {
+      var searchEl = document.getElementById('securityAuditSearchInput');
+      var keyword = (searchEl && searchEl.value ? searchEl.value.trim() : '').toLowerCase();
+      var catEl = document.getElementById('securityAuditFilterCategory');
+      var statusEl = document.getElementById('securityAuditFilterStatus');
+      var areaEl = document.getElementById('securityAuditFilterArea');
+      var provEl = document.getElementById('securityAuditFilterProvince');
+      var centEl = document.getElementById('securityAuditFilterCenter');
+      var categoryVal = catEl ? catEl.value.trim() : '';
+      var statusVal = statusEl ? statusEl.value.trim() : '';
+      var areaVal = areaEl ? areaEl.value.trim() : '';
+      var provinceVal = provEl ? provEl.value.trim() : '';
+      var centerVal = centEl ? centEl.value.trim() : '';
+      return hazardReportList.filter(function (r) {
+        if (r.source !== 'security-audit') return false;
+        if (categoryVal && r.category !== categoryVal) return false;
+        if (statusVal && (r.status || '待稽核') !== statusVal) return false;
+        var regionParts = (r.region || '').split(/\s*\/\s*/);
+        var area = (regionParts[0] || '').trim();
+        var province = (regionParts[1] || '').trim();
+        var center = (regionParts[2] || '').trim();
+        if (areaVal && area !== areaVal) return false;
+        if (provinceVal && province !== provinceVal) return false;
+        if (centerVal && center !== centerVal) return false;
+        if (!keyword) return true;
+        var region = (r.region || '').toLowerCase();
+        var desc = (r.desc || '').toLowerCase();
+        var cat = (r.category || '').toLowerCase();
+        var content = (r.second === '其他' ? (r.otherDesc || '') : (r.second || '')).toLowerCase();
+        return region.indexOf(keyword) !== -1 || desc.indexOf(keyword) !== -1 || cat.indexOf(keyword) !== -1 || content.indexOf(keyword) !== -1;
+      });
+    }
+
+    function getFilteredSpecialAuditList() {
+      var searchEl = document.getElementById('specialAuditSearchInput');
+      var keyword = (searchEl && searchEl.value ? searchEl.value.trim() : '').toLowerCase();
+      var catEl = document.getElementById('specialAuditFilterCategory');
+      var statusEl = document.getElementById('specialAuditFilterStatus');
+      var areaEl = document.getElementById('specialAuditFilterArea');
+      var provEl = document.getElementById('specialAuditFilterProvince');
+      var centEl = document.getElementById('specialAuditFilterCenter');
+      var categoryVal = catEl ? catEl.value.trim() : '';
+      var statusVal = statusEl ? statusEl.value.trim() : '';
+      var areaVal = areaEl ? areaEl.value.trim() : '';
+      var provinceVal = provEl ? provEl.value.trim() : '';
+      var centerVal = centEl ? centEl.value.trim() : '';
+      return hazardReportList.filter(function (r) {
+        if (r.source !== 'special-audit') return false;
         if (categoryVal && r.category !== categoryVal) return false;
         if (statusVal && (r.status || '待稽核') !== statusVal) return false;
         var regionParts = (r.region || '').split(/\s*\/\s*/);
