@@ -38,7 +38,13 @@ router.post('/report', upload.single('photo_before'), (req, res) => {
       }
     );
 
-    res.status(201).json({ id: hazardId, message: '数据已保存', status: '待稽核' });
+    res.status(201).json({
+      id: hazardId,
+      message: '数据已保存',
+      status: '待稽核',
+      photo_before,
+      report_time
+    });
   });
 });
 
@@ -92,7 +98,7 @@ router.post('/:id/rectify', upload.single('photo_after'), (req, res) => {
 
   const query = `
     UPDATE hazards
-    SET photo_after = ?, rectify_description = ?, rectify_time = ?, rectifier = ?, status = '待验收'
+    SET photo_after = COALESCE(?, photo_after), rectify_description = ?, rectify_time = ?, rectifier = ?, status = '待验收'
     WHERE id = ?
   `;
 
@@ -107,7 +113,12 @@ router.post('/:id/rectify', upload.single('photo_after'), (req, res) => {
       }
     );
 
-    res.json({ message: '整改记录已提交，等待验收', status: '待验收' });
+    res.json({
+      message: '整改记录已提交，等待验收',
+      status: '待验收',
+      photo_after,
+      rectify_time
+    });
   });
 });
 

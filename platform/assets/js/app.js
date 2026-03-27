@@ -32,6 +32,16 @@
     });
   }
 
+  function apiPostForm(path, formData) {
+    return fetch(API_BASE + path, {
+      method: 'POST',
+      body: formData
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
   function apiPatch(path, body) {
     return fetch(API_BASE + path, {
       method: 'PATCH',
@@ -1751,16 +1761,16 @@
           showHint('');
           var timeVal2 = document.getElementById('hazardFormTime') ? document.getElementById('hazardFormTime').value || new Date().toISOString().slice(0, 16) : '';
           var regionParts2 = region.split(/\s*\/\s*/);
-          var postData = {
-            area: (regionParts2[0] || '').trim(),
-            province: (regionParts2[1] || '').trim(),
-            center: (regionParts2[2] || '').trim(),
-            category: category,
-            content: second,
-            description: desc || otherDesc,
-            source_type: 'manual'
-          };
-          apiPost('/api/hazards/report', postData).then(function (result) {
+          var formData = new FormData();
+          formData.append('area', (regionParts2[0] || '').trim());
+          formData.append('province', (regionParts2[1] || '').trim());
+          formData.append('center', (regionParts2[2] || '').trim());
+          formData.append('category', category);
+          formData.append('content', second);
+          formData.append('description', desc || otherDesc);
+          formData.append('source_type', 'manual');
+          if (files && files.length) formData.append('photo_before', files[0]);
+          apiPostForm('/api/hazards/report', formData).then(function (result) {
             hazardReportList.push({
               id: result.id,
               category: category,
@@ -1768,9 +1778,9 @@
               otherDesc: otherDesc,
               desc: desc,
               region: region,
-              time: timeVal2,
+              time: result.report_time ? String(result.report_time).replace('T', ' ').substring(0, 16) : timeVal2,
               status: '待稽核',
-              imageBefore: imageBefore || [],
+              imageBefore: result.photo_before ? [result.photo_before] : (imageBefore || []),
               imageAfter: [],
               closedLoop: false
             });
@@ -1813,6 +1823,7 @@
     var detailRectifyDescEl = document.getElementById('hazardDetailRectifyDesc');
     var currentDetailId = null;
     var pendingAfterUrls = [];
+    var pendingAfterFiles = [];
 
     var detailOnlyCloseBtn = document.getElementById('hazardDetailOnlyCloseBtn');
     var detailAfterSection = document.getElementById('hazardDetailAfterSection');
@@ -1822,6 +1833,7 @@
       if (!r) return;
       currentDetailId = id;
       pendingAfterUrls = (r.imageAfter && r.imageAfter.length) ? r.imageAfter.slice() : [];
+      pendingAfterFiles = [];
       if (detailInfoEl) {
         detailInfoEl.innerHTML = '<div class="hazard-detail-row"><span class="label">隐患类别</span><span>' + (r.category || '-') + '</span></div>' +
           '<div class="hazard-detail-row"><span class="label">具体问题描述</span><span>' + (r.desc || '-') + '</span></div>' +
@@ -1851,6 +1863,7 @@
     function closeDetailModal() {
       currentDetailId = null;
       pendingAfterUrls = [];
+      pendingAfterFiles = [];
       if (detailOverlay) detailOverlay.style.display = 'none';
     }
 
@@ -1859,6 +1872,7 @@
       detailAfterFile.addEventListener('change', function () {
         var files = this.files;
         if (!files || !files.length) return;
+        pendingAfterFiles = pendingAfterFiles.concat(Array.prototype.slice.call(files));
         readFilesAsDataUrls(files, function (urls) {
           pendingAfterUrls = pendingAfterUrls.concat(urls);
           if (detailAfterImgs) detailAfterImgs.innerHTML = pendingAfterUrls.map(function (src) { return '<img src="' + src + '" alt="整改后" class="hazard-detail-img"/>'; }).join('');
@@ -1889,10 +1903,17 @@
         r.status = '验收通过-关闭';
         if (detailHintEl) detailHintEl.textContent = '';
 
-        apiPost('/api/hazards/' + r.id + '/rectify', {
-          rectify_description: rectDesc,
-          rectifier: '管理员'
-        }).then(function () {
+        var rectifyFormData = new FormData();
+        rectifyFormData.append('rectify_description', rectDesc);
+        rectifyFormData.append('rectifier', '管理员');
+        if (pendingAfterFiles.length) rectifyFormData.append('photo_after', pendingAfterFiles[0]);
+        apiPostForm('/api/hazards/' + r.id + '/rectify', rectifyFormData).then(function (result) {
+          if (result && result.photo_after) {
+            r.imageAfter = [result.photo_after];
+          }
+          if (result && result.rectify_time) {
+            r.rectifyTime = String(result.rectify_time).replace('T', ' ').substring(0, 16);
+          }
           return apiPatch('/api/hazards/' + r.id + '/close', {
             acceptanceResult: '验收通过'
           });
