@@ -62,6 +62,13 @@ async function initializeTables() {
       }
     }
 
+    await promisePool.query(`CREATE TABLE IF NOT EXISTS checklists (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      filename VARCHAR(255) NOT NULL,
+      filepath VARCHAR(512),
+      uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
     await promisePool.query(`CREATE TABLE IF NOT EXISTS hazard_tasks (
       id INT AUTO_INCREMENT PRIMARY KEY,
       type VARCHAR(50) NOT NULL,
@@ -69,10 +76,26 @@ async function initializeTables() {
       dispatch_time DATETIME,
       deadline DATETIME,
       template_file VARCHAR(512),
+      target_area VARCHAR(100),
+      target_province VARCHAR(100),
+      target_center VARCHAR(100),
       status VARCHAR(50) DEFAULT '进行中',
       completion_rate DOUBLE DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+    
+    const taskColumnsToAdd = [
+      "ALTER TABLE hazard_tasks ADD COLUMN target_area VARCHAR(100)",
+      "ALTER TABLE hazard_tasks ADD COLUMN target_province VARCHAR(100)",
+      "ALTER TABLE hazard_tasks ADD COLUMN target_center VARCHAR(100)"
+    ];
+    for (const ddl of taskColumnsToAdd) {
+      try {
+        await promisePool.query(ddl);
+      } catch (e) {
+        if (e.code !== 'ER_DUP_FIELDNAME') console.warn('新增 hazard_tasks 列失败:', e.message);
+      }
+    }
 
     await promisePool.query(`CREATE TABLE IF NOT EXISTS hazards (
       id INT AUTO_INCREMENT PRIMARY KEY,

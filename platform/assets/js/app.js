@@ -666,7 +666,7 @@
             '<div class="data-table-wrapper">' +
               '<table class="data-table"><thead><tr><th>任务名称</th><th>下发时间</th><th>截止时间</th><th>文件名</th><th>状态</th><th>完成率</th><th>操作</th></tr></thead>' +
               '<tbody id="selfcheckTaskTbody">' +
-                '<tr><td>2026年第12周中心自查自纠</td><td>2026-03-20 10:00</td><td>2026-03-27 10:00</td><td><a href="javascript:void(0)" class="file-link">中心安全检查表_2026W12.xlsx</a></td><td><span class="risk-badge blue">进行中</span></td><td><span style="color:var(--primary);font-weight:600;">65%</span></td><td><button type="button" class="btn btn-outline btn-sm selfcheck-remind-btn">提醒完成</button></td></tr>' +
+                '<tr><td colspan="7" style="text-align:center;color:var(--text-tertiary);padding:30px;">加载中...</td></tr>' +
               '</tbody></table>' +
             '</div>' +
 
@@ -2079,10 +2079,48 @@
       });
     }
 
-    var uploadedChecklists = [];
+    loadSelfcheckTasks();
     renderSelfcheckRows();
     initSelfCheckTaskUpload();
     initSelfCheckTaskDispatch();
+
+    function loadSelfcheckTasks() {
+      var tbody = document.getElementById('selfcheckTaskTbody');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-tertiary);padding:30px;">加载中...</td></tr>';
+      
+      apiGet('/api/tasks?type=自查自纠').then(function(tasks) {
+        if (!tasks || tasks.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-tertiary);padding:30px;">暂无数据</td></tr>';
+          return;
+        }
+        tbody.innerHTML = '';
+        tasks.forEach(function(task) {
+          var tr = document.createElement('tr');
+          var targetDesc = task.target_area || '全网';
+          if (task.target_province) {
+            targetDesc += ' - ' + task.target_province;
+            if (task.target_center) {
+              targetDesc += ' - ' + task.target_center;
+            }
+          }
+          
+          var dispatchTime = task.dispatch_time ? String(task.dispatch_time).replace('T', ' ').substring(0, 16) : '';
+          var deadline = task.deadline ? String(task.deadline).replace('T', ' ').substring(0, 16) : '';
+          
+          tr.innerHTML = '<td>' + task.title + ' <span class="selfcheck-target-suffix">' + targetDesc + '</span></td>' +
+                         '<td>' + dispatchTime + '</td>' +
+                         '<td>' + deadline + '</td>' +
+                         '<td><a href="javascript:void(0)" class="file-link">' + (task.template_file || '-') + '</a></td>' +
+                         '<td><span class="risk-badge blue">' + task.status + '</span></td>' +
+                         '<td><span style="color:var(--primary);font-weight:600;">' + (task.completion_rate || 0) + '%</span></td>' +
+                         '<td><button type="button" class="btn btn-outline btn-sm selfcheck-remind-btn">提醒完成</button></td>';
+          tbody.appendChild(tr);
+        });
+      }).catch(function(err) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:30px;">加载失败</td></tr>';
+      });
+    }
 
     function initSelfCheckTaskUpload() {
       var selfcheckTaskUploadBtn = document.getElementById('selfcheckTaskUploadBtn');
@@ -2097,9 +2135,23 @@
         var files = this.files;
         if (!files || !files.length) return;
         var file = files[0];
-        uploadedChecklists.push(file.name);
-        alert('检查表「' + file.name + '」上传成功！现在可以点击「下发任务」进行分发。');
-        this.value = '';
+        
+        var formData = new FormData();
+        formData.append('template_file', file);
+        
+        var uploadBtnText = selfcheckTaskUploadBtn.innerHTML;
+        selfcheckTaskUploadBtn.innerHTML = '上传中...';
+        selfcheckTaskUploadBtn.disabled = true;
+
+        apiPostForm('/api/checklists', formData).then(function(res) {
+          alert('检查表「' + file.name + '」上传成功！现在可以点击「下发任务」进行分发。');
+          selfcheckTaskFileInput.value = '';
+        }).catch(function(err) {
+          alert('上传失败: ' + err.message);
+        }).finally(function() {
+          selfcheckTaskUploadBtn.innerHTML = uploadBtnText;
+          selfcheckTaskUploadBtn.disabled = false;
+        });
       });
     }
 
@@ -2122,15 +2174,19 @@
 
       function updateChecklistOptions() {
         if (!checklistSelect) return;
-        checklistSelect.innerHTML = '<option value="">请选择检查表</option>';
-        if (uploadedChecklists.length === 0) {
-          checklistSelect.innerHTML = '<option value="">请先上传检查表</option>';
-        }
-        uploadedChecklists.forEach(function(name) {
-          var opt = document.createElement('option');
-          opt.value = name;
-          opt.textContent = name;
-          checklistSelect.appendChild(opt);
+        checklistSelect.innerHTML = '<option value="">加载中...</option>';
+        apiGet('/api/checklists').then(function(list) {
+          checklistSelect.innerHTML = '<option value="">请选择检查表</option>';
+          if (!list || list.length === 0) {
+            checklistSelect.innerHTML = '<option value="">请先上传检查表</option>';
+            return;
+          }
+          list.forEach(function(item) {
+            var opt = document.createElement('option');
+            opt.value = item.filename;
+            opt.textContent = item.filename;
+            checklistSelect.appendChild(opt);
+          });
         });
       }
 
@@ -2200,37 +2256,38 @@
           return;
         }
 
-        var now = new Date();
-        var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-        var deadlineStr = deadline.replace('T', ' ');
-
-        var tbody = document.getElementById('selfcheckTaskTbody');
-        var tr = document.createElement('tr');
-        var targetDesc = (areaSelect && areaSelect.value) ? areaSelect.value : '全网';
+        var targetArea = areaSelect ? areaSelect.value : '';
+        var targetProvince = '';
+        var targetCenter = '';
         if (provSelect && provSelect.value) {
-          var provName = provSelect.options[provSelect.selectedIndex].text;
-          targetDesc += ' - ' + provName;
+          targetProvince = provSelect.options[provSelect.selectedIndex].text;
           if (centerSelect && centerSelect.value) {
-            var centerName = centerSelect.options[centerSelect.selectedIndex].text;
-            targetDesc += ' - ' + centerName;
+            targetCenter = centerSelect.options[centerSelect.selectedIndex].text;
           }
         }
 
-        tr.innerHTML = '<td>' + name + ' <span class="selfcheck-target-suffix">' + targetDesc + '</span></td>' +
-                       '<td>' + timeStr + '</td>' +
-                       '<td>' + deadlineStr + '</td>' +
-                       '<td><a href="javascript:void(0)" class="file-link">' + checklist + '</a></td>' +
-                       '<td><span class="risk-badge blue">进行中</span></td>' +
-                       '<td><span style="color:var(--primary);font-weight:600;">0%</span></td>' +
-                       '<td><button type="button" class="btn btn-outline btn-sm selfcheck-remind-btn">提醒完成</button></td>';
-        
-        if (tbody) {
-          if (tbody.innerHTML.includes('暂无数据')) tbody.innerHTML = '';
-          tbody.insertBefore(tr, tbody.firstChild);
-        }
-        
-        alert('任务下发成功！');
-        closeModal();
+        var btnText = submitBtn.textContent;
+        submitBtn.textContent = '提交中...';
+        submitBtn.disabled = true;
+
+        apiPost('/api/tasks/dispatch', {
+          type: '自查自纠',
+          title: name,
+          deadline: deadline.replace('T', ' '),
+          template_file: checklist,
+          target_area: targetArea,
+          target_province: targetProvince,
+          target_center: targetCenter
+        }).then(function(res) {
+          alert('任务下发成功！');
+          closeModal();
+          loadSelfcheckTasks();
+        }).catch(function(err) {
+          if (hintEl) hintEl.textContent = '下发失败: ' + err.message;
+        }).finally(function() {
+          submitBtn.textContent = btnText;
+          submitBtn.disabled = false;
+        });
       });
     }
 

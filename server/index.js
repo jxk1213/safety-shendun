@@ -28,10 +28,12 @@ app.use('/uploads', express.static(uploadPath));
 const riskRoutes = require('./routes/risks');
 const hazardRoutes = require('./routes/hazards');
 const taskRoutes = require('./routes/tasks');
+const checklistRoutes = require('./routes/checklists');
 
 app.use('/api/risks', riskRoutes);
 app.use('/api/hazards', hazardRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/checklists', checklistRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'platform')));
 

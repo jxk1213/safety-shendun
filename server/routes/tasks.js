@@ -5,19 +5,8 @@ const multer = require('multer');
 const path = require('path');
 const moment = require('moment');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '..', 'uploads', 'templates'));
-  },
-  filename: (req, file, cb) => {
-    cb(null, 'template_' + Date.now() + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage });
-
-router.post('/dispatch', upload.single('template_file'), (req, res) => {
-  const { type, title, deadline } = req.body;
-  const template_file = req.file ? `/uploads/templates/${req.file.filename}` : null;
+router.post('/dispatch', (req, res) => {
+  const { type, title, deadline, template_file, target_area, target_province, target_center } = req.body;
   const dispatch_time = moment().format('YYYY-MM-DD HH:mm:ss');
 
   if (!type || !title) {
@@ -25,11 +14,16 @@ router.post('/dispatch', upload.single('template_file'), (req, res) => {
   }
 
   const query = `
-    INSERT INTO hazard_tasks (type, title, dispatch_time, deadline, template_file, status, completion_rate, created_at)
-    VALUES (?, ?, ?, ?, ?, '进行中', 0, NOW())
+    INSERT INTO hazard_tasks (type, title, dispatch_time, deadline, template_file, target_area, target_province, target_center, status, completion_rate, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, '进行中', 0, NOW())
   `;
 
-  db.query(query, [type, title, dispatch_time, deadline, template_file], (err, results) => {
+  const params = [
+    type, title, dispatch_time, deadline || null, template_file || null,
+    target_area || null, target_province || null, target_center || null
+  ];
+
+  db.query(query, params, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.status(201).json({ id: results.insertId, message: '任务下发成功', dispatch_time });
   });
