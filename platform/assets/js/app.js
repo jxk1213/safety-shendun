@@ -651,14 +651,18 @@
             '<div class="hazard-list-header">' +
               '<div class="section-title">中心自查自纠任务下发</div>' +
               '<div class="hazard-list-header-actions">' +
-                '<button class="btn btn-primary" id="selfcheckTaskUploadBtn">' +
+                '<button class="btn btn-outline" id="selfcheckTaskUploadBtn">' +
                   '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
-                  '上传检查表并下发任务' +
+                  '上传检查表' +
+                '</button>' +
+                '<button class="btn btn-primary" id="selfcheckTaskDispatchBtn">' +
+                  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7-7-7"/><path d="M5 12h14"/></svg>' +
+                  '下发任务' +
                 '</button>' +
                 '<input type="file" id="selfcheckTaskFileInput" style="display:none;" accept=".xlsx,.xls,.doc,.docx,.pdf">' +
               '</div>' +
             '</div>' +
-            '<p style="color:var(--text-secondary);margin-bottom:12px;">上传《中心安全检查表》文件，下发给相关中心开展自查自纠任务。</p>' +
+            '<p style="color:var(--text-secondary);margin-bottom:12px;">首先上传《中心安全检查表》，然后选择目标中心下发自查自纠任务。</p>' +
             '<div class="data-table-wrapper">' +
               '<table class="data-table"><thead><tr><th>任务名称</th><th>下发时间</th><th>截止时间</th><th>文件名</th><th>状态</th><th>完成率</th><th>操作</th></tr></thead>' +
               '<tbody id="selfcheckTaskTbody">' +
@@ -841,6 +845,59 @@
                 '<button class="btn btn-outline" id="hazardDetailModalCancel" type="button">取消</button>' +
                 '<button class="btn btn-primary" id="hazardDetailCloseLoopBtn" type="button">确认闭环</button>' +
                 '<button class="btn btn-outline" id="hazardDetailOnlyCloseBtn" type="button" style="display:none;">关闭</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="modal-overlay" id="selfcheckTaskDispatchModalOverlay" style="display:none;">' +
+            '<div class="modal" role="dialog" aria-modal="true" style="max-width:550px;">' +
+              '<div class="modal-header">' +
+                '<div class="modal-title">下发自查自纠任务</div>' +
+                '<button class="modal-close" id="selfcheckDispatchModalClose" type="button">×</button>' +
+              '</div>' +
+              '<div class="modal-body">' +
+                '<div class="form-grid">' +
+                  '<div class="form-field span-2">' +
+                    '<label class="form-label required">任务名称</label>' +
+                    '<input type="text" id="selfcheckDispatchName" class="form-control" placeholder="输入任务名称">' +
+                  '</div>' +
+                  '<div class="form-field span-2">' +
+                    '<label class="form-label required">选择检查表</label>' +
+                    '<select id="selfcheckDispatchChecklist" class="form-control">' +
+                      '<option value="">请先上传检查表</option>' +
+                    '</select>' +
+                  '</div>' +
+                  '<div class="form-field">' +
+                    '<label class="form-label required">下发片区</label>' +
+                    '<select id="selfcheckDispatchArea" class="form-control">' +
+                      '<option value="">全部</option>' +
+                      '<option value="北部">北部</option>' +
+                      '<option value="南部">南部</option>' +
+                      '<option value="中部">中部</option>' +
+                    '</select>' +
+                  '</div>' +
+                  '<div class="form-field">' +
+                    '<label class="form-label">下发省区</label>' +
+                    '<select id="selfcheckDispatchProvince" class="form-control">' +
+                      '<option value="">全部</option>' +
+                    '</select>' +
+                  '</div>' +
+                  '<div class="form-field span-2">' +
+                    '<label class="form-label">下发中心</label>' +
+                    '<select id="selfcheckDispatchCenter" class="form-control">' +
+                      '<option value="">全部</option>' +
+                    '</select>' +
+                  '</div>' +
+                  '<div class="form-field span-2">' +
+                    '<label class="form-label required">截止日期</label>' +
+                    '<input type="datetime-local" id="selfcheckDispatchDeadline" class="form-control">' +
+                  '</div>' +
+                '</div>' +
+                '<div id="selfcheckDispatchHint" style="margin-top:10px; color:var(--danger); font-size:13px;"></div>' +
+              '</div>' +
+              '<div class="modal-footer">' +
+                '<button class="btn btn-outline" id="selfcheckDispatchCancel" type="button">取消</button>' +
+                '<button class="btn btn-primary" id="selfcheckDispatchSubmit" type="button">确认下发</button>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -2022,63 +2079,158 @@
       });
     }
 
+    var uploadedChecklists = [];
     renderSelfcheckRows();
     initSelfCheckTaskUpload();
+    initSelfCheckTaskDispatch();
 
     function initSelfCheckTaskUpload() {
       var selfcheckTaskUploadBtn = document.getElementById('selfcheckTaskUploadBtn');
       var selfcheckTaskFileInput = document.getElementById('selfcheckTaskFileInput');
-      var selfcheckTaskTbody = document.getElementById('selfcheckTaskTbody');
-
-      if (!selfcheckTaskUploadBtn || !selfcheckTaskFileInput || !selfcheckTaskTbody) return;
+      if (!selfcheckTaskUploadBtn || !selfcheckTaskFileInput) return;
 
       selfcheckTaskUploadBtn.addEventListener('click', function () {
         selfcheckTaskFileInput.click();
       });
 
-      // Event delegation for remind buttons
-      selfcheckTaskTbody.addEventListener('click', function (e) {
-        if (e.target.classList.contains('selfcheck-remind-btn')) {
-          alert('提醒已发送！已通过钉钉和系统通知督促相关负责人。');
-        }
-      });
-
       selfcheckTaskFileInput.addEventListener('change', function () {
         var files = this.files;
         if (!files || !files.length) return;
-        
         var file = files[0];
-        var now = new Date();
-        var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-        
-        // Calculate deadline (T+7)
-        var deadlineDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        var deadlineStr = deadlineDate.getFullYear() + '-' + String(deadlineDate.getMonth() + 1).padStart(2, '0') + '-' + String(deadlineDate.getDate()).padStart(2, '0') + ' ' + String(deadlineDate.getHours()).padStart(2, '0') + ':' + String(deadlineDate.getMinutes()).padStart(2, '0');
+        uploadedChecklists.push(file.name);
+        alert('检查表「' + file.name + '」上传成功！现在可以点击「下发任务」进行分发。');
+        this.value = '';
+      });
+    }
 
-        function getWeekNumber(d) {
-          d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-          d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-          var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-          var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-          return weekNo;
+    function initSelfCheckTaskDispatch() {
+      var dispatchBtn = document.getElementById('selfcheckTaskDispatchBtn');
+      var modal = document.getElementById('selfcheckTaskDispatchModalOverlay');
+      var closeBtn = document.getElementById('selfcheckDispatchModalClose');
+      var cancelBtn = document.getElementById('selfcheckDispatchCancel');
+      var submitBtn = document.getElementById('selfcheckDispatchSubmit');
+      
+      var nameInput = document.getElementById('selfcheckDispatchName');
+      var checklistSelect = document.getElementById('selfcheckDispatchChecklist');
+      var areaSelect = document.getElementById('selfcheckDispatchArea');
+      var provSelect = document.getElementById('selfcheckDispatchProvince');
+      var centerSelect = document.getElementById('selfcheckDispatchCenter');
+      var deadlineInput = document.getElementById('selfcheckDispatchDeadline');
+      var hintEl = document.getElementById('selfcheckDispatchHint');
+
+      if (!dispatchBtn || !modal) return;
+
+      function updateChecklistOptions() {
+        if (!checklistSelect) return;
+        checklistSelect.innerHTML = '<option value="">请选择检查表</option>';
+        if (uploadedChecklists.length === 0) {
+          checklistSelect.innerHTML = '<option value="">请先上传检查表</option>';
+        }
+        uploadedChecklists.forEach(function(name) {
+          var opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          checklistSelect.appendChild(opt);
+        });
+      }
+
+      function fillProvinces(area) {
+        if (!provSelect) return;
+        provSelect.innerHTML = '<option value="">全部</option>';
+        centerSelect.innerHTML = '<option value="">全部</option>';
+        if (!area) return;
+        var filtered = provincesData.filter(function(p) { return p.northSouth === area; });
+        filtered.forEach(function(p) {
+          var opt = document.createElement('option');
+          opt.value = p.code;
+          opt.textContent = p.name;
+          provSelect.appendChild(opt);
+        });
+      }
+
+      function fillCenters(prov) {
+        if (!centerSelect) return;
+        centerSelect.innerHTML = '<option value="">全部</option>';
+        if (!prov) return;
+        var filtered = centersData.filter(function(c) { return c.provinceCode === prov; });
+        filtered.forEach(function(c) {
+          var opt = document.createElement('option');
+          opt.value = c.code;
+          opt.textContent = c.shortName || c.name;
+          centerSelect.appendChild(opt);
+        });
+      }
+
+      if (areaSelect) areaSelect.addEventListener('change', function() { fillProvinces(this.value); });
+      if (provSelect) provSelect.addEventListener('change', function() { fillCenters(this.value); });
+
+      dispatchBtn.addEventListener('click', function() {
+        updateChecklistOptions();
+        if (nameInput) {
+          var now = new Date();
+          function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+          }
+          nameInput.value = now.getFullYear() + '年第' + getWeekNumber(now) + '周中心自查自纠';
+        }
+        if (deadlineInput) {
+          var d = new Date();
+          d.setDate(d.getDate() + 7);
+          deadlineInput.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + 'T18:00';
+        }
+        if (hintEl) hintEl.textContent = '';
+        modal.style.display = 'flex';
+      });
+
+      function closeModal() { modal.style.display = 'none'; }
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', function(e) { if(e.target === modal) closeModal(); });
+
+      submitBtn.addEventListener('click', function() {
+        var name = nameInput.value.trim();
+        var checklist = checklistSelect.value;
+        var deadline = deadlineInput.value;
+        
+        if (!name || !checklist || !deadline) {
+          if (hintEl) hintEl.textContent = '请完整填写必填项（名称、检查表、截止日期）';
+          return;
         }
 
-        var taskName = now.getFullYear() + '年第' + getWeekNumber(now) + '周中心自查自纠';
-        
+        var now = new Date();
+        var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        var deadlineStr = deadline.replace('T', ' ');
+
+        var tbody = document.getElementById('selfcheckTaskTbody');
         var tr = document.createElement('tr');
-        tr.innerHTML = '<td>' + taskName + '</td>' +
+        var targetDesc = (areaSelect && areaSelect.value) ? areaSelect.value : '全网';
+        if (provSelect && provSelect.value) {
+          var provName = provSelect.options[provSelect.selectedIndex].text;
+          targetDesc += ' - ' + provName;
+          if (centerSelect && centerSelect.value) {
+            var centerName = centerSelect.options[centerSelect.selectedIndex].text;
+            targetDesc += ' - ' + centerName;
+          }
+        }
+
+        tr.innerHTML = '<td>' + name + ' <span class="selfcheck-target-suffix">' + targetDesc + '</span></td>' +
                        '<td>' + timeStr + '</td>' +
                        '<td>' + deadlineStr + '</td>' +
-                       '<td><a href="javascript:void(0)" class="file-link">' + file.name + '</a></td>' +
+                       '<td><a href="javascript:void(0)" class="file-link">' + checklist + '</a></td>' +
                        '<td><span class="risk-badge blue">进行中</span></td>' +
                        '<td><span style="color:var(--primary);font-weight:600;">0%</span></td>' +
                        '<td><button type="button" class="btn btn-outline btn-sm selfcheck-remind-btn">提醒完成</button></td>';
         
-        selfcheckTaskTbody.insertBefore(tr, selfcheckTaskTbody.firstChild);
+        if (tbody) {
+          if (tbody.innerHTML.includes('暂无数据')) tbody.innerHTML = '';
+          tbody.insertBefore(tr, tbody.firstChild);
+        }
         
-        // Reset file input
-        this.value = '';
         alert('任务下发成功！');
+        closeModal();
       });
     }
 
@@ -2918,12 +3070,15 @@
           csvLines.push(row.map(csvEscape).join(','));
         });
 
+        const activeTab = document.querySelector('#riskDomainTabNav .tab-item.active');
+        const activeDomain = activeTab ? activeTab.dataset.domain : '转运中心';
+
         const csv = csvLines.join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = '转运中心风险评估分级表.csv';
+        a.download = activeDomain + '风险评估分级表.csv';
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -3167,12 +3322,15 @@
           csvLines.push(row.map(csvEscape).join(','));
         });
 
+        const activeTab = document.querySelector('#riskDomainTabNav .tab-item.active');
+        const activeDomain = activeTab ? activeTab.dataset.domain : '转运中心';
+
         const csv = csvLines.join('\n');
         const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = '转运中心风险辨识管控清单.csv';
+        a.download = activeDomain + '风险辨识管控清单.csv';
         document.body.appendChild(a);
         a.click();
         a.remove();
