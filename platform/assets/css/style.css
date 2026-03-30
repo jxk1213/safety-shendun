@@ -494,81 +494,50 @@ input {
 .stat-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 24px;
   box-shadow: var(--shadow-card);
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   border: 1px solid var(--border-light);
-  transition: box-shadow var(--transition);
+  transition: all var(--transition);
+  color: var(--text-primary);
 }
 
 .stat-card:hover {
   box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
+
+.stat-card.red { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.stat-card.orange { background: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+.stat-card.yellow { background: #fef9c3; color: #854d0e; border-color: #fef08a; }
+.stat-card.blue { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
 
 .stat-info {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .stat-label {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: inherit;
+  opacity: 0.8;
 }
 
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: inherit;
   line-height: 1;
 }
 
-.stat-change {
-  font-size: 12px;
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.stat-change.up {
-  color: var(--success);
-}
-
-.stat-change.down {
-  color: var(--danger);
-}
-
-.stat-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.stat-icon.blue {
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-.stat-icon.green {
-  background: var(--success-light);
-  color: var(--success);
-}
-
-.stat-icon.orange {
-  background: var(--warning-light);
-  color: var(--warning);
-}
-
-.stat-icon.red {
-  background: var(--danger-light);
-  color: var(--danger);
+/* Classes for old change and icon elements removed from HTML */
+.stat-change, .stat-icon {
+  display: none;
 }
 
 /* 模块卡片 */

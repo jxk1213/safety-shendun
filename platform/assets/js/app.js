@@ -444,14 +444,10 @@
 
         '<div id="dualPreventionPanelRisk" class="dual-prevention-panel">' +
         '<div class="stats-row">' +
-          buildStatCard('重大风险', '2', '较上月持平', 'up',
-            '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>', 'red') +
-          buildStatCard('较大风险', '8', '较上月 -2', 'up',
-            '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', 'orange') +
-          buildStatCard('一般风险', '35', '较上月 +5', 'down',
-            '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>', 'blue') +
-          buildStatCard('低风险', '126', '风险总量 171', 'up',
-            '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>', 'green') +
+          buildStatCard('红色风险', '0', 'red', 'statCountRed') +
+          buildStatCard('橙色风险', '0', 'orange', 'statCountOrange') +
+          buildStatCard('黄色风险', '0', 'yellow', 'statCountYellow') +
+          buildStatCard('蓝色风险', '0', 'blue', 'statCountBlue') +
         '</div>' +
 
         '<div class="tab-nav" id="riskDomainTabNav" style="margin-top:28px;">' +
@@ -468,7 +464,15 @@
               '</button>' +
               '<div class="table-filter">' +
                 '<span>风险等级：</span>' +
-                '<select id="riskTierRiskLevelSelect"><option>全部</option><option>重大风险</option><option>较大风险</option><option>一般风险</option><option>低风险</option></select>' +
+                '<select id="riskTierRiskLevelSelect"><option>全部</option><option>红色</option><option>橙色</option><option>黄色</option><option>蓝色</option></select>' +
+              '</div>' +
+              '<div class="table-filter">' +
+                '<span>风险区域：</span>' +
+                '<select id="riskTierAreaSelect"><option>全部</option></select>' +
+              '</div>' +
+              '<div class="table-filter">' +
+                '<span>管控层级：</span>' +
+                '<select id="riskTierControlLevelSelect"><option>全部</option></select>' +
               '</div>' +
             '</div>' +
             '<div class="table-search" style="flex-direction:column;align-items:flex-start;gap:8px;">' +
@@ -2537,6 +2541,10 @@
 
         let html1 = '';
         let count = 0;
+        let redCount = 0;
+        let orangeCount = 0;
+        let yellowCount = 0;
+        let blueCount = 0;
 
         rows.forEach(function (r, i) {
           if ((r.domain || '转运中心') !== activeDomain) return;
@@ -2554,10 +2562,19 @@
           const rl = escapeHtml(r.risk_level || '');
 
           let badgeClass = 'blue';
-          if (rl === '重大风险' || rl === '重大' || rl === '红色') badgeClass = 'red';
-          else if (rl === '较大风险' || rl === '较大' || rl === '橙色') badgeClass = 'orange';
-          else if (rl === '一般风险' || rl === '一般' || rl === '黄色') badgeClass = 'yellow';
-          else if (rl === '低风险' || rl === '低' || rl === '蓝色') badgeClass = 'blue';
+          if (rl === '重大风险' || rl === '重大' || rl === '红色') {
+            badgeClass = 'red';
+            redCount++;
+          } else if (rl === '较大风险' || rl === '较大' || rl === '橙色') {
+            badgeClass = 'orange';
+            orangeCount++;
+          } else if (rl === '一般风险' || rl === '一般' || rl === '黄色') {
+            badgeClass = 'yellow';
+            yellowCount++;
+          } else if (rl === '低风险' || rl === '低' || rl === '蓝色') {
+            badgeClass = 'blue';
+            blueCount++;
+          }
           
           html1 += '<tr>' +
             '<td>' + count + '</td>' +
@@ -2577,6 +2594,49 @@
 
         tbody1.innerHTML = html1;
 
+        // Update top stats
+        const elRed = document.getElementById('statCountRed');
+        const elOrange = document.getElementById('statCountOrange');
+        const elYellow = document.getElementById('statCountYellow');
+        const elBlue = document.getElementById('statCountBlue');
+        if (elRed) elRed.textContent = redCount;
+        if (elOrange) elOrange.textContent = orangeCount;
+        if (elYellow) elYellow.textContent = yellowCount;
+        if (elBlue) elBlue.textContent = blueCount;
+
+        // Populate area and control level filters
+        const areas = new Set();
+        const controlLevels = new Set();
+        rows.forEach(function (r) {
+          if ((r.domain || '转运中心') === activeDomain) {
+            if (r.risk_area) areas.add(r.risk_area);
+            if (r.control_level) controlLevels.add(r.control_level);
+          }
+        });
+
+        const areaSelect = document.getElementById('riskTierAreaSelect');
+        const controlLevelSelect = document.getElementById('riskTierControlLevelSelect');
+        if (areaSelect) {
+          const currentArea = areaSelect.value;
+          areaSelect.innerHTML = '<option>全部</option>';
+          Array.from(areas).sort().forEach(function (a) {
+            const opt = document.createElement('option');
+            opt.textContent = a;
+            areaSelect.appendChild(opt);
+          });
+          areaSelect.value = Array.from(areaSelect.options).some(function (o) { return o.value === currentArea; }) ? currentArea : '全部';
+        }
+        if (controlLevelSelect) {
+          const currentCtrl = controlLevelSelect.value;
+          controlLevelSelect.innerHTML = '<option>全部</option>';
+          Array.from(controlLevels).sort().forEach(function (c) {
+            const opt = document.createElement('option');
+            opt.textContent = c;
+            controlLevelSelect.appendChild(opt);
+          });
+          controlLevelSelect.value = Array.from(controlLevelSelect.options).some(function (o) { return o.value === currentCtrl; }) ? currentCtrl : '全部';
+        }
+
         const search1 = document.getElementById('riskTierSearchInput');
         if (search1) search1.dispatchEvent(new Event('input'));
       }).catch(console.error);
@@ -2589,12 +2649,14 @@
   function initDualPreventionRiskTierTablePager() {
     const searchInput = document.getElementById('riskTierSearchInput');
     const riskLevelSelect = document.getElementById('riskTierRiskLevelSelect');
+    const areaSelect = document.getElementById('riskTierAreaSelect');
+    const controlLevelSelect = document.getElementById('riskTierControlLevelSelect');
     const tbodyEl = document.getElementById('riskTierTbody');
     const totalCountEl = document.getElementById('riskTierTotalCount');
     const paginationBtnsWrap = document.getElementById('riskTierPaginationBtns');
     const paginationEl = paginationBtnsWrap && paginationBtnsWrap.closest ? paginationBtnsWrap.closest('.table-pagination') : null;
 
-    if (!searchInput || !riskLevelSelect || !tbodyEl || !totalCountEl || !paginationBtnsWrap || !paginationEl) return;
+    if (!searchInput || !riskLevelSelect || !areaSelect || !controlLevelSelect || !tbodyEl || !totalCountEl || !paginationBtnsWrap || !paginationEl) return;
 
     const PAGE_SIZE = 5;
     let currentPage = 1;
@@ -2619,15 +2681,45 @@
       return (riskDesc + ' ' + riskLevel + ' ' + controlMeasures).toLowerCase();
     }
 
-    function matchesRow(tr, keyword, levelFilter) {
-      const riskLevelText = getRiskLevelTextFromTr(tr);
+    function matchesRow(tr, keyword, levelFilter, areaFilter, ctrlFilter) {
+      const tds = tr.querySelectorAll('td');
+      if (!tds || tds.length < 9) return false;
 
+      // 风险区域 (Index 1), 风险等级 (Index 7), 管控层级 (Index 8)
+      const areaText = String(tds[1].textContent || '').trim();
+      const levelText = String(tds[7].textContent || '').trim();
+      const ctrlText = String(tds[8].textContent || '').trim();
+
+      // 1. 风险等级过滤
       if (levelFilter && levelFilter !== '全部') {
-        if (String(riskLevelText || '').indexOf(levelFilter) === -1) return false;
+        const levelMap = {
+          '红色': ['重大风险', '重大', '红色'],
+          '橙色': ['较大风险', '较大', '橙色'],
+          '黄色': ['一般风险', '一般', '黄色'],
+          '蓝色': ['低风险', '低', '蓝色']
+        };
+        const allowed = levelMap[levelFilter] || [levelFilter];
+        let match = false;
+        for (const a of allowed) {
+          if (levelText.indexOf(a) !== -1) { match = true; break; }
+        }
+        if (!match) return false;
       }
 
+      // 2. 风险区域过滤
+      if (areaFilter && areaFilter !== '全部') {
+        if (areaText !== areaFilter) return false;
+      }
+
+      // 3. 管控层级过滤
+      if (ctrlFilter && ctrlFilter !== '全部') {
+        if (ctrlText !== ctrlFilter) return false;
+      }
+
+      // 4. 关键字过滤
       if (keyword) {
-        const hay = getRowKeywordTextFromTr(tr);
+        // 搜索：风险描述(2) + 区域(1) + 等级(7) + 管控措施(9)
+        const hay = (String(tds[2].textContent || '') + ' ' + areaText + ' ' + levelText + ' ' + String(tds[9].textContent || '')).toLowerCase();
         if (hay.indexOf(keyword) === -1) return false;
       }
 
@@ -2719,10 +2811,12 @@
 
       const keyword = normalizeText(searchInput.value);
       const levelFilter = riskLevelSelect.value;
+      const areaFilter = areaSelect.value;
+      const ctrlFilter = controlLevelSelect.value;
 
       const matchingRows = [];
       rowEls.forEach(function (tr) {
-        if (matchesRow(tr, keyword, levelFilter)) matchingRows.push(tr);
+        if (matchesRow(tr, keyword, levelFilter, areaFilter, ctrlFilter)) matchingRows.push(tr);
       });
 
       totalCountEl.textContent = '共 ' + matchingRows.length + ' 条记录';
@@ -2753,12 +2847,15 @@
       }, 300);
     }
 
-    searchInput.addEventListener('input', scheduleApplyResetPage);
-    riskLevelSelect.addEventListener('change', function () {
-      currentPage = 1;
-      apply();
+    searchInput.addEventListener("input", scheduleApplyResetPage);
+    [riskLevelSelect, areaSelect, controlLevelSelect].forEach(function (sel) {
+      if (sel) {
+        sel.addEventListener("change", function () {
+          currentPage = 1;
+          apply();
+        });
+      }
     });
-
     paginationBtnsWrap.addEventListener('click', function (e) {
       const btn = e.target.closest('button.pagination-btn');
       if (!btn) return;
@@ -2777,10 +2874,12 @@
         const rowEls = Array.from(tbodyEl.querySelectorAll('tr'));
         const keyword = normalizeText(searchInput.value);
         const levelFilter = riskLevelSelect.value;
+        const areaFilter = areaSelect.value;
+        const ctrlFilter = controlLevelSelect.value;
 
         const matchingRows = [];
         rowEls.forEach(function (tr) {
-          if (matchesRow(tr, keyword, levelFilter)) matchingRows.push(tr);
+          if (matchesRow(tr, keyword, levelFilter, areaFilter, ctrlFilter)) matchingRows.push(tr);
         });
 
         function tdToText(tdEl) {
@@ -3992,15 +4091,14 @@
   }
 
   // ============ 构建辅助函数 ============
-  function buildStatCard(label, value, change, direction, iconSvg, colorClass) {
+  function buildStatCard(label, value, colorClass, valueId) {
+    const idAttr = valueId ? ' id="' + valueId + '"' : '';
     return '' +
-      '<div class="stat-card">' +
+      '<div class="stat-card ' + colorClass + '">' +
         '<div class="stat-info">' +
           '<div class="stat-label">' + label + '</div>' +
-          '<div class="stat-value">' + value + '</div>' +
-          '<div class="stat-change ' + direction + '">' + change + '</div>' +
+          '<div class="stat-value"' + idAttr + '>' + value + '</div>' +
         '</div>' +
-        '<div class="stat-icon ' + colorClass + '">' + iconSvg + '</div>' +
       '</div>';
   }
 
