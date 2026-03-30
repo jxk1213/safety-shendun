@@ -483,6 +483,7 @@
             '<thead>' +
               '<tr>' +
                 '<th style="width:60px;">序号</th>' +
+                '<th style="width:100px;">风险区域</th>' +
                 '<th style="width:250px;">风险点描述</th>' +
                 '<th>L</th>' +
                 '<th>E</th>' +
@@ -494,7 +495,7 @@
               '</tr>' +
             '</thead>' +
             '<tbody id="riskTierTbody">' +
-              '<tr><td colspan="9" style="text-align:center;color:var(--text-secondary);padding:24px;">加载中...</td></tr>' +
+              '<tr><td colspan="10" style="text-align:center;color:var(--text-secondary);padding:24px;">加载中...</td></tr>' +
             '</tbody>' +
           '</table>' +
           '<div class="table-pagination">' +
@@ -511,7 +512,7 @@
             '<div id="riskTierPendingEmpty" style="padding:18px 0;color:var(--text-secondary);text-align:center;">暂无待评审风险</div>' +
             '<div id="riskTierPendingTableWrap" style="display:none;">' +
               '<table class="data-table">' +
-                '<thead><tr><th>风险点</th><th>危险因素</th><th>可能发生事故类型</th><th>操作</th></tr></thead>' +
+                '<thead><tr><th style="width:250px;">风险描述</th><th style="width:120px;">风险区域</th><th>管控措施</th><th style="width:140px;">操作</th></tr></thead>' +
                 '<tbody id="riskTierPendingTbody"></tbody>' +
               '</table>' +
             '</div>' +
@@ -527,13 +528,9 @@
               '<div class="form-grid">' +
                 '<div class="form-field span-2"><div class="form-label">所属领域</div>' +
                   '<select id="riskTierReportDomain"><option>转运中心</option><option>网点</option><option>车队</option></select></div>' +
-                '<div class="form-field span-2"><div class="form-label">风险点</div><input type="text" id="riskTierReportRiskPoint" placeholder="例如 物品临时放置区..."></div>' +
-                '<div class="form-field span-2"><div class="form-label">危险因素</div><textarea id="riskTierReportHazardFactors" rows="4" placeholder="逐条填写（回车换行）"></textarea></div>' +
-                '<div class="form-field span-2"><div class="form-label">可能发生事故类型</div><textarea id="riskTierReportAccidentType" rows="3" placeholder="例如 物体打击 / 车辆伤害"></textarea></div>' +
-                '<div class="form-field span-2"><div class="form-label">控制措施</div><textarea id="riskTierReportControlMeasures" rows="3" placeholder="例如 1. 严格加强管理物品堆放规范。"></textarea></div>' +
-                '<div class="form-field span-2"><div class="form-label">应急措施</div><textarea id="riskTierReportEmergencyMeasures" rows="3" placeholder="例如 1. 脱离现场；2. 止血包扎。"></textarea></div>' +
-                '<div class="form-field"><div class="form-label">管控层级</div><input type="text" id="riskTierReportControlLevel" placeholder="例如 岗位级 / 班组级"></div>' +
-                '<div class="form-field"><div class="form-label">责任人/联系方式</div><input type="text" id="riskTierReportPersonInCharge" placeholder="例如 张三 138xxxx"></div>' +
+                '<div class="form-field span-2"><div class="form-label">风险区域</div><input type="text" id="riskTierReportRiskArea" placeholder="例如 一楼分拣区 / A栋转运中心..."></div>' +
+                '<div class="form-field span-2"><div class="form-label">风险描述</div><textarea id="riskTierReportRiskPoint" rows="3" placeholder="请详细描述具体的风险点..."></textarea></div>' +
+                '<div class="form-field span-2"><div class="form-label">管控措施</div><textarea id="riskTierReportControlMeasures" rows="3" placeholder="例如 1. 严格加强管理物品堆放规范。"></textarea></div>' +
               '</div>' +
               '<div class="modal-hint" id="riskTierReportFormHint" style="margin-top:12px;color:var(--text-secondary);font-size:13px;"></div>' +
             '</div>' +
@@ -552,8 +549,8 @@
             '<div class="modal-body">' +
               '<div class="form-grid">' +
                 '<div class="form-field span-2"><div class="form-label">风险点（只读）</div><input type="text" id="riskTierReviewRiskPoint" readonly></div>' +
-                '<div class="form-field span-2"><div class="form-label">危险因素（只读）</div><textarea id="riskTierReviewHazardFactors" rows="4" readonly></textarea></div>' +
-                '<div class="form-field span-2"><div class="form-label">可能发生事故类型（只读）</div><textarea id="riskTierReviewAccidentType" rows="3" readonly></textarea></div>' +
+                '<div class="form-field span-2"><div class="form-label">风险区域（只读）</div><input type="text" id="riskTierReviewRiskArea" readonly></div>' +
+                '<div class="form-field span-2"><div class="form-label">管控措施（只读）</div><textarea id="riskTierReviewControlMeasures" rows="3" readonly></textarea></div>' +
 
                 '<div class="form-field"><div class="form-label">L（可能性）</div><input type="number" step="0.1" min="0" id="riskTierReviewL" placeholder="例如 3"></div>' +
                 '<div class="form-field"><div class="form-label">E（暴露频次）</div><input type="number" step="0.1" min="0" id="riskTierReviewE" placeholder="例如 6"></div>' +
@@ -2215,17 +2212,18 @@
     }
 
     const riskPointEl = document.getElementById('riskTierReportRiskPoint');
-    const hazardFactorsEl = document.getElementById('riskTierReportHazardFactors');
-    const accidentTypeEl = document.getElementById('riskTierReportAccidentType');
+    const riskAreaEl = document.getElementById('riskTierReportRiskArea');
+    const domainEl = document.getElementById('riskTierReportDomain');
+    const controlMeasuresEl = document.getElementById('riskTierReportControlMeasures');
     const hintEl = document.getElementById('riskTierReportFormHint');
 
-    if (!riskPointEl || !hazardFactorsEl || !accidentTypeEl || !hintEl) {
+    if (!riskPointEl || !riskAreaEl || !controlMeasuresEl || !hintEl) {
       return;
     }
 
     const reviewRiskPointEl = document.getElementById('riskTierReviewRiskPoint');
-    const reviewHazardFactorsEl = document.getElementById('riskTierReviewHazardFactors');
-    const reviewAccidentTypeEl = document.getElementById('riskTierReviewAccidentType');
+    const reviewRiskAreaEl = document.getElementById('riskTierReviewRiskArea');
+    const reviewControlMeasuresEl = document.getElementById('riskTierReviewControlMeasures');
     const reviewLEl = document.getElementById('riskTierReviewL');
     const reviewEEl = document.getElementById('riskTierReviewE');
     const reviewCEl = document.getElementById('riskTierReviewC');
@@ -2234,7 +2232,7 @@
     const reviewHintEl = document.getElementById('riskTierReviewHint');
     const reviewRejectReasonEl = document.getElementById('riskTierReviewRejectReason');
 
-    if (!reviewRiskPointEl || !reviewHazardFactorsEl || !reviewAccidentTypeEl || !reviewLEl || !reviewEEl || !reviewCEl || !reviewDEl || !reviewRiskBadgeEl || !reviewHintEl || !reviewRejectReasonEl) {
+    if (!reviewRiskPointEl || !reviewRiskAreaEl || !reviewControlMeasuresEl || !reviewLEl || !reviewEEl || !reviewCEl || !reviewDEl || !reviewRiskBadgeEl || !reviewHintEl || !reviewRejectReasonEl) {
       return;
     }
 
@@ -2253,19 +2251,10 @@
     }
 
     function resetForm() {
-      const d = document.getElementById('riskTierReportDomain');
-      if (d) d.selectedIndex = 0;
-      riskPointEl.value = '';
-      hazardFactorsEl.value = '';
-      accidentTypeEl.value = '';
-      const cm = document.getElementById('riskTierReportControlMeasures');
-      const em = document.getElementById('riskTierReportEmergencyMeasures');
-      const cl = document.getElementById('riskTierReportControlLevel');
-      const pic = document.getElementById('riskTierReportPersonInCharge');
-      if(cm) cm.value = '';
-      if(em) em.value = '';
-      if(cl) cl.value = '';
-      if(pic) pic.value = '';
+      if (domainEl) domainEl.selectedIndex = 0;
+      if (riskPointEl) riskPointEl.value = '';
+      if (riskAreaEl) riskAreaEl.value = '';
+      if (controlMeasuresEl) controlMeasuresEl.value = '';
     }
 
     function nextSeq() {
@@ -2287,8 +2276,8 @@
       reviewActiveReportId = report.id;
       reviewOverlay.style.display = 'flex';
       reviewRiskPointEl.value = report.riskPoint || '';
-      reviewHazardFactorsEl.value = report.hazardFactors || '';
-      reviewAccidentTypeEl.value = report.accidentType || '';
+      reviewRiskAreaEl.value = report.riskArea || '';
+      reviewControlMeasuresEl.value = report.controlMeasures || '';
       reviewLEl.value = '';
       reviewEEl.value = '';
       reviewCEl.value = '';
@@ -2335,8 +2324,8 @@
         return '' +
           '<tr data-report-id="' + escapeHtml(r.id) + '">' +
           '<td>' + escapeHtml(r.riskPoint) + '</td>' +
-          '<td>' + nl2br(r.hazardFactors) + '</td>' +
-          '<td>' + nl2br(r.accidentType) + '</td>' +
+          '<td>' + escapeHtml(r.riskArea || '') + '</td>' +
+          '<td>' + nl2br(escapeHtml(r.controlMeasures || '')) + '</td>' +
           '<td>' +
           '<button type="button" class="btn btn-primary risk-action-btn risk-approve-btn" data-report-id="' + escapeHtml(r.id) + '">评审</button>' +
           '<button type="button" class="btn btn-outline risk-action-btn risk-reject-btn" data-report-id="' + escapeHtml(r.id) + '" style="margin-left:8px;">驳回</button>' +
@@ -2471,42 +2460,28 @@
     });
 
     submitBtn.addEventListener('click', function () {
-      const riskPointText = String(riskPointEl.value || '').trim();
-      const hazardFactorsText = String(hazardFactorsEl.value || '').trim().replace(/\r\n/g, '\n');
-      const accidentTypeText = String(accidentTypeEl.value || '').trim().replace(/\r\n/g, '\n');
+      const riskPointText = String(riskPointEl.value || '').trim().replace(/\r\n/g, '\n');
+      const riskAreaText = String(riskAreaEl.value || '').trim();
+      const controlMeasuresText = String(controlMeasuresEl.value || '').trim().replace(/\r\n/g, '\n');
 
-      if (!riskPointText || !hazardFactorsText || !accidentTypeText) {
-        hintEl.textContent = '请完整填写：风险点、危险因素、可能发生事故类型';
+      if (!riskPointText || !riskAreaText) {
+        hintEl.textContent = '请完整填写：风险区域、风险描述';
         return;
       }
 
-      const controlMeasuresEl = document.getElementById('riskTierReportControlMeasures');
-      const emergencyMeasuresEl = document.getElementById('riskTierReportEmergencyMeasures');
-      const controlLevelEl = document.getElementById('riskTierReportControlLevel');
-      const personInChargeEl = document.getElementById('riskTierReportPersonInCharge');
-      const domainEl = document.getElementById('riskTierReportDomain');
-
-      const controlMeasuresText = controlMeasuresEl ? String(controlMeasuresEl.value || '').trim().replace(/\r\n/g, '\n') : '';
-      const emergencyMeasuresText = emergencyMeasuresEl ? String(emergencyMeasuresEl.value || '').trim().replace(/\r\n/g, '\n') : '';
-      const controlLevelText = controlLevelEl ? String(controlLevelEl.value || '').trim() : '';
-      const personInChargeText = personInChargeEl ? String(personInChargeEl.value || '').trim() : '';
       const domainText = domainEl ? String(domainEl.value || '').trim() : '转运中心';
 
       apiPost('/api/risks', {
         domain: domainText,
+        risk_area: riskAreaText,
         risk_point: riskPointText,
-        hazard_factors: hazardFactorsText,
-        accident_type: accidentTypeText,
-        control_measures: controlMeasuresText,
-        emergency_measures: emergencyMeasuresText,
-        control_level: controlLevelText,
-        person_in_charge: personInChargeText
+        control_measures: controlMeasuresText
       }).then(function (result) {
         pendingReports.push({
           id: String(result.id),
           riskPoint: riskPointText,
-          hazardFactors: hazardFactorsText,
-          accidentType: accidentTypeText
+          riskArea: riskAreaText,
+          controlMeasures: controlMeasuresText
         });
         renderPending();
         hideModal();
@@ -2515,8 +2490,8 @@
         pendingReports.push({
           id: 'RP_' + Date.now() + '_' + Math.random().toString(16).slice(2),
           riskPoint: riskPointText,
-          hazardFactors: hazardFactorsText,
-          accidentType: accidentTypeText
+          riskArea: riskAreaText,
+          controlMeasures: controlMeasuresText
         });
         renderPending();
         hideModal();
@@ -2579,12 +2554,14 @@
           const rl = escapeHtml(r.risk_level || '');
 
           let badgeClass = 'blue';
-          if (rl === '重大风险' || rl === '重大') badgeClass = 'red';
-          else if (rl === '较大风险' || rl === '较大') badgeClass = 'orange';
-          else if (rl === '一般风险' || rl === '一般') badgeClass = 'yellow';
+          if (rl === '重大风险' || rl === '重大' || rl === '红色') badgeClass = 'red';
+          else if (rl === '较大风险' || rl === '较大' || rl === '橙色') badgeClass = 'orange';
+          else if (rl === '一般风险' || rl === '一般' || rl === '黄色') badgeClass = 'yellow';
+          else if (rl === '低风险' || rl === '低' || rl === '蓝色') badgeClass = 'blue';
           
           html1 += '<tr>' +
             '<td>' + count + '</td>' +
+            '<td>' + escapeHtml(r.risk_area || '-') + '</td>' +
             '<td>' + descHtml + '</td>' +
             '<td>' + L + '</td>' +
             '<td>' + E + '</td>' +
@@ -2596,7 +2573,7 @@
             '</tr>';
         });
 
-        if (!html1) html1 = '<tr><td colspan="9" style="text-align:center;">暂无数据</td></tr>';
+        if (!html1) html1 = '<tr><td colspan="10" style="text-align:center;">暂无数据</td></tr>';
 
         tbody1.innerHTML = html1;
 

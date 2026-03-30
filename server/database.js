@@ -42,6 +42,7 @@ async function initializeTables() {
       control_level VARCHAR(100),
       person_in_charge VARCHAR(100),
       domain VARCHAR(50) DEFAULT '转运中心',
+      risk_area VARCHAR(255),
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
@@ -50,7 +51,8 @@ async function initializeTables() {
       "ALTER TABLE risks ADD COLUMN emergency_measures TEXT",
       "ALTER TABLE risks ADD COLUMN control_level VARCHAR(100)",
       "ALTER TABLE risks ADD COLUMN person_in_charge VARCHAR(100)",
-      "ALTER TABLE risks ADD COLUMN domain VARCHAR(50) DEFAULT '转运中心'"
+      "ALTER TABLE risks ADD COLUMN domain VARCHAR(50) DEFAULT '转运中心'",
+      "ALTER TABLE risks ADD COLUMN risk_area VARCHAR(255)"
     ];
     for (const ddl of columnsToAdd) {
       try {

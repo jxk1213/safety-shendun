@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS risks (
   control_level VARCHAR(100),
   person_in_charge VARCHAR(100),
   domain VARCHAR(50) DEFAULT '转运中心',
+  risk_area VARCHAR(255),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

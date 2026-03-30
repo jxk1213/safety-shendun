@@ -34,9 +34,31 @@ async function importData() {
 
             let headerFound = false;
             let count = 0;
+            let currentRiskArea = '';
 
             for (let i = 0; i < data.length; i++) {
                 const row = data[i];
+                
+                // Keep track of section headers
+                if (row && typeof row[0] === 'string' && !row[1]) {
+                    if (/^[一二三四五六七八九十]+、/.test(row[0]) || /第[一二三四五六七八九十]+部分/.test(row[0])) {
+                        let rawArea = row[0].replace(/^[一二三四五六七八九十]+、/g, '')
+                                            .replace(/^第[一二三四五六七八九十]+部分\s*/g, '')
+                                            .replace(/（\d+条）/g, '')
+                                            .replace(/风险$/g, '')
+                                            .replace(/安全$/g, '')
+                                            .trim();
+                        // Clean up per user spec
+                        if (rawArea === '中心作业现场' || rawArea === '网点作业现场') rawArea = '作业现场';
+                        if (rawArea === '中心宿舍') rawArea = '宿舍';
+                        if (rawArea === '网点人员管理') rawArea = '人员管理';
+                        if (rawArea === '网点车辆管理') rawArea = '车辆管理';
+                        
+                        currentRiskArea = rawArea;
+                        continue;
+                    }
+                }
+
                 // Check if row matches header structure (contains '序号' or '风险点描述')
                 if (!headerFound) {
                     if (row && row.length > 1 && typeof row[1] === 'string' && row[1].includes('风险点描述')) {
@@ -70,8 +92,9 @@ async function importData() {
                         control_level,
                         control_measures,
                         domain,
+                        risk_area,
                         status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '已评审')`,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '已评审')`,
                     [
                         risk_point,
                         l_value,
@@ -81,7 +104,8 @@ async function importData() {
                         risk_level,
                         control_level,
                         control_measures,
-                        domain
+                        domain,
+                        currentRiskArea
                     ]
                 );
                 count++;
