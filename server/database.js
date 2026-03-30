@@ -66,6 +66,7 @@ async function initializeTables() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       filename VARCHAR(255) NOT NULL,
       filepath VARCHAR(512),
+      type VARCHAR(50) DEFAULT 'self-check',
       uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
@@ -79,6 +80,9 @@ async function initializeTables() {
       target_area VARCHAR(100),
       target_province VARCHAR(100),
       target_center VARCHAR(100),
+      executor_area VARCHAR(100),
+      executor_province VARCHAR(100),
+      executor_center VARCHAR(100),
       status VARCHAR(50) DEFAULT '进行中',
       completion_rate DOUBLE DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -87,13 +91,27 @@ async function initializeTables() {
     const taskColumnsToAdd = [
       "ALTER TABLE hazard_tasks ADD COLUMN target_area VARCHAR(100)",
       "ALTER TABLE hazard_tasks ADD COLUMN target_province VARCHAR(100)",
-      "ALTER TABLE hazard_tasks ADD COLUMN target_center VARCHAR(100)"
+      "ALTER TABLE hazard_tasks ADD COLUMN target_center VARCHAR(100)",
+      "ALTER TABLE hazard_tasks ADD COLUMN executor_area VARCHAR(100)",
+      "ALTER TABLE hazard_tasks ADD COLUMN executor_province VARCHAR(100)",
+      "ALTER TABLE hazard_tasks ADD COLUMN executor_center VARCHAR(100)"
     ];
     for (const ddl of taskColumnsToAdd) {
       try {
         await promisePool.query(ddl);
       } catch (e) {
         if (e.code !== 'ER_DUP_FIELDNAME') console.warn('新增 hazard_tasks 列失败:', e.message);
+      }
+    }
+
+    const checklistColumnsToAdd = [
+      "ALTER TABLE checklists ADD COLUMN type VARCHAR(50) DEFAULT 'self-check'"
+    ];
+    for (const ddl of checklistColumnsToAdd) {
+      try {
+        await promisePool.query(ddl);
+      } catch (e) {
+        if (e.code !== 'ER_DUP_FIELDNAME') console.warn('新增 checklists 列失败:', e.message);
       }
     }
 

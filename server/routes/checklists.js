@@ -25,17 +25,19 @@ router.post('/', upload.single('template_file'), (req, res) => {
     return res.status(400).json({ error: '请上传检查表文件' });
   }
 
+  const { type } = req.body;
   const filename = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
   const filepath = `/uploads/templates/${req.file.filename}`;
   
-  const query = `INSERT INTO checklists (filename, filepath) VALUES (?, ?)`;
+  const query = `INSERT INTO checklists (filename, filepath, type) VALUES (?, ?, ?)`;
   
-  db.query(query, [filename, filepath], (err, results) => {
+  db.query(query, [filename, filepath, type || 'self-check'], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.status(201).json({
       id: results.insertId,
       filename,
       filepath,
+      type: type || 'self-check',
       message: '检查表上传成功'
     });
   });
@@ -43,9 +45,18 @@ router.post('/', upload.single('template_file'), (req, res) => {
 
 // GET: List all checklists
 router.get('/', (req, res) => {
-  const query = `SELECT * FROM checklists ORDER BY uploaded_at DESC`;
+  const { type } = req.query;
+  let query = `SELECT * FROM checklists WHERE 1=1 `;
+  const params = [];
+
+  if (type) {
+    query += ` AND type = ? `;
+    params.push(type);
+  }
+
+  query += ` ORDER BY uploaded_at DESC`;
   
-  db.query(query, [], (err, rows) => {
+  db.query(query, params, (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });

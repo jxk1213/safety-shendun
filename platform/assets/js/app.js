@@ -704,18 +704,22 @@
             '<div class="hazard-list-header">' +
               '<div class="section-title">安全稽核任务下发</div>' +
               '<div class="hazard-list-header-actions">' +
-                '<button class="btn btn-primary" id="securityAuditTaskUploadBtn">' +
+                '<button class="btn btn-outline" id="securityAuditTaskUploadBtn">' +
                   '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
-                  '上传稽核表并下发任务' +
+                  '上传稽核表' +
+                '</button>' +
+                '<button class="btn btn-primary" id="securityAuditTaskDispatchBtn">' +
+                  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7-7-7"/><path d="M5 12h14"/></svg>' +
+                  '下发任务' +
                 '</button>' +
                 '<input type="file" id="securityAuditTaskFileInput" style="display:none;" accept=".xlsx,.xls,.doc,.docx,.pdf">' +
               '</div>' +
             '</div>' +
-            '<p style="color:var(--text-secondary);margin-bottom:12px;">每季度开展一次全覆盖安全稽核，上传《安全稽核表》并下发给相关中心。</p>' +
+            '<p style="color:var(--text-secondary);margin-bottom:12px;">首先上传《安全稽核表》，然后选择部门下发稽核任务。支持总部直查或指派省区互查。</p>' +
             '<div class="data-table-wrapper">' +
               '<table class="data-table"><thead><tr><th>任务名称</th><th>下发时间</th><th>截止时间</th><th>文件名</th><th>状态</th><th>完成率</th><th>操作</th></tr></thead>' +
               '<tbody id="securityAuditTaskTbody">' +
-                '<tr><td>2026年第1季度安全稽核</td><td>2026-01-10 09:00</td><td>2026-03-31 18:00</td><td><a href="javascript:void(0)" class="file-link">2026Q1安全稽核表.xlsx</a></td><td><span class="risk-badge blue">进行中</span></td><td><span style="color:var(--primary);font-weight:600;">85%</span></td><td><button type="button" class="btn btn-outline btn-sm security-audit-remind-btn">提醒完成</button></td></tr>' +
+                '<tr><td colspan="7" style="text-align:center;color:var(--text-tertiary);padding:30px;">加载中...</td></tr>' +
               '</tbody></table>' +
             '</div>' +
 
@@ -898,6 +902,63 @@
               '<div class="modal-footer">' +
                 '<button class="btn btn-outline" id="selfcheckDispatchCancel" type="button">取消</button>' +
                 '<button class="btn btn-primary" id="selfcheckDispatchSubmit" type="button">确认下发</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="modal-overlay" id="securityAuditTaskDispatchModalOverlay" style="display:none;">' +
+            '<div class="modal" role="dialog" aria-modal="true" style="max-width:800px;">' +
+              '<div class="modal-header">' +
+                '<div class="modal-title">下发安全稽核任务</div>' +
+                '<button class="modal-close" id="securityAuditDispatchModalClose" type="button">×</button>' +
+              '</div>' +
+              '<div class="modal-body">' +
+                '<div class="form-grid">' +
+                  '<div class="form-field span-2">' +
+                    '<label class="form-label required">任务名称</label>' +
+                    '<input type="text" id="securityAuditDispatchName" class="form-control" placeholder="输入任务名称">' +
+                  '</div>' +
+                  '<div class="form-field span-2">' +
+                    '<label class="form-label required">选择稽核表</label>' +
+                    '<select id="securityAuditDispatchChecklist" class="form-control">' +
+                      '<option value="">请先上传稽核表</option>' +
+                    '</select>' +
+                  '</div>' +
+                  
+                  '<div class="form-field span-2" style="border-bottom: 1px solid var(--border); margin: 5px 0 15px 0; padding-bottom: 5px; font-weight: 600; color: var(--primary);">被审单位 (目标)</div>' +
+                  '<div class="form-field">' +
+                    '<label class="form-label required">片区</label>' +
+                    '<select id="securityAuditDispatchTargetArea" class="form-control"><option value="">全部</option><option value="北部">北部</option><option value="南部">南部</option><option value="中部">中部</option></select>' +
+                  '</div>' +
+                  '<div class="form-field">' +
+                    '<label class="form-label">省区</label>' +
+                    '<select id="securityAuditDispatchTargetProvince" class="form-control"><option value="">全部</option></select>' +
+                  '</div>' +
+                  '<div class="form-field span-2">' +
+                    '<label class="form-label">中心</label>' +
+                    '<select id="securityAuditDispatchTargetCenter" class="form-control"><option value="">全部</option></select>' +
+                  '</div>' +
+
+                  '<div class="form-field span-2" style="border-bottom: 1px solid var(--border); margin: 15px 0; padding-bottom: 5px; font-weight: 600; color: var(--success);">主审单位 (执行人)</div>' +
+                  '<div class="form-field">' +
+                    '<label class="form-label">片区</label>' +
+                    '<select id="securityAuditDispatchExecutorArea" class="form-control"><option value="">总部</option><option value="北部">北部</option><option value="南部">南部</option><option value="中部">中部</option></select>' +
+                  '</div>' +
+                  '<div class="form-field">' +
+                    '<label class="form-label">省区</label>' +
+                    '<select id="securityAuditDispatchExecutorProvince" class="form-control"><option value="">全部</option></select>' +
+                  '</div>' +
+
+                  '<div class="form-field span-2" style="margin-top: 15px;">' +
+                    '<label class="form-label required">截止日期</label>' +
+                    '<input type="datetime-local" id="securityAuditDispatchDeadline" class="form-control">' +
+                  '</div>' +
+                '</div>' +
+                '<div id="securityAuditDispatchHint" style="margin-top:10px; color:var(--danger); font-size:13px;"></div>' +
+              '</div>' +
+              '<div class="modal-footer">' +
+                '<button class="btn btn-outline" id="securityAuditDispatchCancel" type="button">取消</button>' +
+                '<button class="btn btn-primary" id="securityAuditDispatchSubmit" type="button">确认下发</button>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -2080,9 +2141,12 @@
     }
 
     loadSelfcheckTasks();
+    loadSecurityAuditTasks();
     renderSelfcheckRows();
     initSelfCheckTaskUpload();
     initSelfCheckTaskDispatch();
+    initSecurityAuditTaskUpload();
+    initSecurityAuditTaskDispatch();
 
     function loadSelfcheckTasks() {
       var tbody = document.getElementById('selfcheckTaskTbody');
@@ -2293,52 +2357,234 @@
 
     initSecurityAuditTaskUpload();
 
+    function loadSecurityAuditTasks() {
+      var tbody = document.getElementById('securityAuditTaskTbody');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-tertiary);padding:30px;">加载中...</td></tr>';
+      
+      apiGet('/api/tasks?type=安全稽核').then(function(tasks) {
+        if (!tasks || tasks.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-tertiary);padding:30px;">暂无数据</td></tr>';
+          return;
+        }
+        tbody.innerHTML = '';
+        tasks.forEach(function(task) {
+          var tr = document.createElement('tr');
+          
+          var targetDesc = task.target_area || '全网';
+          if (task.target_province) targetDesc += ' - ' + task.target_province;
+          if (task.target_center) targetDesc += ' - ' + task.target_center;
+          
+          var executorDesc = task.executor_area || '总部';
+          if (task.executor_province) executorDesc += ' - ' + task.executor_province;
+          if (task.executor_center) executorDesc += ' - ' + task.executor_center;
+          
+          var dispatchTime = task.dispatch_time ? String(task.dispatch_time).replace('T', ' ').substring(0, 16) : '';
+          var deadline = task.deadline ? String(task.deadline).replace('T', ' ').substring(0, 16) : '';
+          
+          tr.innerHTML = '<td>' + task.title + ' <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;"><span style="color:var(--success);">' + executorDesc + '</span> → <span style="color:var(--primary);">' + targetDesc + '</span></div></td>' +
+                         '<td>' + dispatchTime + '</td>' +
+                         '<td>' + deadline + '</td>' +
+                         '<td><a href="javascript:void(0)" class="file-link">' + (task.template_file || '-') + '</a></td>' +
+                         '<td><span class="risk-badge blue">' + task.status + '</span></td>' +
+                         '<td><span style="color:var(--primary);font-weight:600;">' + (task.completion_rate || 0) + '%</span></td>' +
+                         '<td><button type="button" class="btn btn-outline btn-sm security-audit-remind-btn">提醒完成</button></td>';
+          tbody.appendChild(tr);
+        });
+      }).catch(function(err) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:30px;">加载失败</td></tr>';
+      });
+    }
+
     function initSecurityAuditTaskUpload() {
       var uploadBtn = document.getElementById('securityAuditTaskUploadBtn');
       var fileInput = document.getElementById('securityAuditTaskFileInput');
-      var tbody = document.getElementById('securityAuditTaskTbody');
-
-      if (!uploadBtn || !fileInput || !tbody) return;
+      if (!uploadBtn || !fileInput) return;
 
       uploadBtn.addEventListener('click', function () {
         fileInput.click();
       });
 
-      tbody.addEventListener('click', function (e) {
-        if (e.target.classList.contains('security-audit-remind-btn')) {
-          alert('提醒已发送！已通过钉钉和系统通知督促相关负责人。');
-        }
-      });
-
       fileInput.addEventListener('change', function () {
         var files = this.files;
         if (!files || !files.length) return;
-        
         var file = files[0];
-        var now = new Date();
-        var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
         
-        // Calculate deadline (Quarterly - end of Q)
-        var q = Math.floor(now.getMonth() / 3) + 1;
-        var deadlineYear = now.getFullYear();
-        var deadlineMonth = q * 3; // 3, 6, 9, 12
-        var lastDay = new Date(deadlineYear, deadlineMonth, 0).getDate();
-        var deadlineStr = deadlineYear + '-' + String(deadlineMonth).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0') + ' 18:00';
+        var formData = new FormData();
+        formData.append('template_file', file);
+        formData.append('type', 'security-audit');
+        
+        var uploadBtnText = uploadBtn.innerHTML;
+        uploadBtn.innerHTML = '上传中...';
+        uploadBtn.disabled = true;
 
-        var taskName = now.getFullYear() + '年第' + q + '季度安全稽核';
+        apiPostForm('/api/checklists', formData).then(function(res) {
+          alert('稽核表「' + file.name + '」上传成功！现在可以点击「下发任务」进行分发。');
+          fileInput.value = '';
+        }).catch(function(err) {
+          alert('上传失败: ' + err.message);
+        }).finally(function() {
+          uploadBtn.innerHTML = uploadBtnText;
+          uploadBtn.disabled = false;
+        });
+      });
+
+      var tbody = document.getElementById('securityAuditTaskTbody');
+      if (tbody) {
+        tbody.addEventListener('click', function (e) {
+          if (e.target.classList.contains('security-audit-remind-btn')) {
+            alert('提醒已发送！已通过钉钉和系统通知督促相关负责人。');
+          }
+        });
+      }
+    }
+
+    function initSecurityAuditTaskDispatch() {
+      var dispatchBtn = document.getElementById('securityAuditTaskDispatchBtn');
+      var modal = document.getElementById('securityAuditTaskDispatchModalOverlay');
+      var closeBtn = document.getElementById('securityAuditDispatchModalClose');
+      var cancelBtn = document.getElementById('securityAuditDispatchCancel');
+      var submitBtn = document.getElementById('securityAuditDispatchSubmit');
+      
+      var nameInput = document.getElementById('securityAuditDispatchName');
+      var checklistSelect = document.getElementById('securityAuditDispatchChecklist');
+      var deadlineInput = document.getElementById('securityAuditDispatchDeadline');
+      var hintEl = document.getElementById('securityAuditDispatchHint');
+
+      // Target selection elements
+      var targetAreaSelect = document.getElementById('securityAuditDispatchTargetArea');
+      var targetProvSelect = document.getElementById('securityAuditDispatchTargetProvince');
+      var targetCenterSelect = document.getElementById('securityAuditDispatchTargetCenter');
+
+      // Executor selection elements
+      var executorAreaSelect = document.getElementById('securityAuditDispatchExecutorArea');
+      var executorProvSelect = document.getElementById('securityAuditDispatchExecutorProvince');
+
+      if (!dispatchBtn || !modal) return;
+
+      function updateChecklistOptions() {
+        if (!checklistSelect) return;
+        checklistSelect.innerHTML = '<option value="">加载中...</option>';
+        apiGet('/api/checklists?type=security-audit').then(function(list) {
+          checklistSelect.innerHTML = '<option value="">请选择稽核表</option>';
+          if (!list || list.length === 0) {
+            checklistSelect.innerHTML = '<option value="">请先上传稽核表</option>';
+            return;
+          }
+          list.forEach(function(item) {
+            var opt = document.createElement('option');
+            opt.value = item.filename;
+            opt.textContent = item.filename;
+            checklistSelect.appendChild(opt);
+          });
+        });
+      }
+
+      function fillProvinces(area, provSelect, centerSelect) {
+        if (!provSelect) return;
+        provSelect.innerHTML = '<option value="">全部</option>';
+        if (centerSelect) centerSelect.innerHTML = '<option value="">全部</option>';
+        if (!area || area === '总部') return;
+        var filtered = provincesData.filter(function(p) { return p.northSouth === area; });
+        filtered.forEach(function(p) {
+          var opt = document.createElement('option');
+          opt.value = p.code;
+          opt.textContent = p.name;
+          provSelect.appendChild(opt);
+        });
+      }
+
+      function fillCenters(prov, centerSelect) {
+        if (!centerSelect) return;
+        centerSelect.innerHTML = '<option value="">全部</option>';
+        if (!prov) return;
+        var filtered = centersData.filter(function(c) { return c.provinceCode === prov; });
+        filtered.forEach(function(c) {
+          var opt = document.createElement('option');
+          opt.value = c.code;
+          opt.textContent = c.shortName || c.name;
+          centerSelect.appendChild(opt);
+        });
+      }
+
+      if (targetAreaSelect) targetAreaSelect.addEventListener('change', function() { fillProvinces(this.value, targetProvSelect, targetCenterSelect); });
+      if (targetProvSelect) targetProvSelect.addEventListener('change', function() { fillCenters(this.value, targetCenterSelect); });
+      
+      if (executorAreaSelect) executorAreaSelect.addEventListener('change', function() { fillProvinces(this.value, executorProvSelect); });
+
+      dispatchBtn.addEventListener('click', function() {
+        updateChecklistOptions();
+        if (nameInput) {
+          var now = new Date();
+          var q = Math.floor(now.getMonth() / 3) + 1;
+          nameInput.value = now.getFullYear() + '年第' + q + '季度安全稽核';
+        }
+        if (deadlineInput) {
+          var d = new Date();
+          var q = Math.floor(d.getMonth() / 3) + 1;
+          var deadlineMonth = q * 3;
+          var lastDay = new Date(d.getFullYear(), deadlineMonth, 0).getDate();
+          deadlineInput.value = d.getFullYear() + '-' + String(deadlineMonth).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0') + 'T18:00';
+        }
+        if (hintEl) hintEl.textContent = '';
+        modal.style.display = 'flex';
+      });
+
+      function closeModal() { modal.style.display = 'none'; }
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', function(e) { if(e.target === modal) closeModal(); });
+
+      submitBtn.addEventListener('click', function() {
+        var name = nameInput.value.trim();
+        var checklist = checklistSelect.value;
+        var deadline = deadlineInput.value;
         
-        var tr = document.createElement('tr');
-        tr.innerHTML = '<td>' + taskName + '</td>' +
-                       '<td>' + timeStr + '</td>' +
-                       '<td>' + deadlineStr + '</td>' +
-                       '<td><a href="javascript:void(0)" class="file-link">' + file.name + '</a></td>' +
-                       '<td><span class="risk-badge blue">进行中</span></td>' +
-                       '<td><span style="color:var(--primary);font-weight:600;">0%</span></td>' +
-                       '<td><button type="button" class="btn btn-outline btn-sm security-audit-remind-btn">提醒完成</button></td>';
-        
-        tbody.insertBefore(tr, tbody.firstChild);
-        this.value = '';
-        alert('稽核任务下发成功！');
+        if (!name || !checklist || !deadline) {
+          if (hintEl) hintEl.textContent = '请完整填写必填项（名称、稽核表、截止日期）';
+          return;
+        }
+
+        var targetArea = targetAreaSelect ? targetAreaSelect.value : '';
+        var targetProvince = '';
+        var targetCenter = '';
+        if (targetProvSelect && targetProvSelect.value) {
+          targetProvince = targetProvSelect.options[targetProvSelect.selectedIndex].text;
+          if (targetCenterSelect && targetCenterSelect.value) {
+            targetCenter = targetCenterSelect.options[targetCenterSelect.selectedIndex].text;
+          }
+        }
+
+        var executorArea = executorAreaSelect ? executorAreaSelect.value : '总部';
+        var executorProvince = '';
+        if (executorProvSelect && executorProvSelect.value) {
+          executorProvince = executorProvSelect.options[executorProvSelect.selectedIndex].text;
+        }
+
+        var btnText = submitBtn.textContent;
+        submitBtn.textContent = '提交中...';
+        submitBtn.disabled = true;
+
+        apiPost('/api/tasks/dispatch', {
+          type: '安全稽核',
+          title: name,
+          deadline: deadline.replace('T', ' '),
+          template_file: checklist,
+          target_area: targetArea,
+          target_province: targetProvince,
+          target_center: targetCenter,
+          executor_area: executorArea,
+          executor_province: executorProvince
+        }).then(function(res) {
+          alert('稽核任务下发成功！');
+          closeModal();
+          loadSecurityAuditTasks();
+        }).catch(function(err) {
+          if (hintEl) hintEl.textContent = '下发失败: ' + err.message;
+        }).finally(function() {
+          submitBtn.textContent = btnText;
+          submitBtn.disabled = false;
+        });
       });
     }
 

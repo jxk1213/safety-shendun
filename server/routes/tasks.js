@@ -6,7 +6,11 @@ const path = require('path');
 const moment = require('moment');
 
 router.post('/dispatch', (req, res) => {
-  const { type, title, deadline, template_file, target_area, target_province, target_center } = req.body;
+  const { 
+    type, title, deadline, template_file, 
+    target_area, target_province, target_center,
+    executor_area, executor_province, executor_center
+  } = req.body;
   const dispatch_time = moment().format('YYYY-MM-DD HH:mm:ss');
 
   if (!type || !title) {
@@ -14,13 +18,19 @@ router.post('/dispatch', (req, res) => {
   }
 
   const query = `
-    INSERT INTO hazard_tasks (type, title, dispatch_time, deadline, template_file, target_area, target_province, target_center, status, completion_rate, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, '进行中', 0, NOW())
+    INSERT INTO hazard_tasks (
+      type, title, dispatch_time, deadline, template_file, 
+      target_area, target_province, target_center,
+      executor_area, executor_province, executor_center,
+      status, completion_rate, created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '进行中', 0, NOW())
   `;
 
   const params = [
     type, title, dispatch_time, deadline || null, template_file || null,
-    target_area || null, target_province || null, target_center || null
+    target_area || null, target_province || null, target_center || null,
+    executor_area || null, executor_province || null, executor_center || null
   ];
 
   db.query(query, params, (err, results) => {
