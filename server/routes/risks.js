@@ -3,17 +3,17 @@ const router = express.Router();
 const db = require('../database');
 
 router.post('/', (req, res) => {
-  const { risk_point, hazard_factors, accident_type } = req.body;
+  const { risk_point, hazard_factors, accident_type, control_measures, emergency_measures, control_level, person_in_charge, domain } = req.body;
   if (!risk_point) {
     return res.status(400).json({ error: '风险点是必填项' });
   }
 
   const query = `
-    INSERT INTO risks (risk_point, hazard_factors, accident_type, status, created_at)
-    VALUES (?, ?, ?, '待评审', NOW())
+    INSERT INTO risks (risk_point, hazard_factors, accident_type, control_measures, emergency_measures, control_level, person_in_charge, domain, status, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, '待评审', NOW())
   `;
 
-  db.query(query, [risk_point, hazard_factors, accident_type], (err, results) => {
+  db.query(query, [risk_point, hazard_factors, accident_type, control_measures, emergency_measures, control_level, person_in_charge, domain || '转运中心'], (err, results) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }

@@ -37,8 +37,28 @@ async function initializeTables() {
       risk_level VARCHAR(50),
       status VARCHAR(50) DEFAULT '待评审',
       reject_reason TEXT,
+      control_measures TEXT,
+      emergency_measures TEXT,
+      control_level VARCHAR(100),
+      person_in_charge VARCHAR(100),
+      domain VARCHAR(50) DEFAULT '转运中心',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+    const columnsToAdd = [
+      "ALTER TABLE risks ADD COLUMN control_measures TEXT",
+      "ALTER TABLE risks ADD COLUMN emergency_measures TEXT",
+      "ALTER TABLE risks ADD COLUMN control_level VARCHAR(100)",
+      "ALTER TABLE risks ADD COLUMN person_in_charge VARCHAR(100)",
+      "ALTER TABLE risks ADD COLUMN domain VARCHAR(50) DEFAULT '转运中心'"
+    ];
+    for (const ddl of columnsToAdd) {
+      try {
+        await promisePool.query(ddl);
+      } catch (e) {
+        if (e.code !== 'ER_DUP_FIELDNAME') console.warn('新增列失败:', e.message);
+      }
+    }
 
     await promisePool.query(`CREATE TABLE IF NOT EXISTS hazard_tasks (
       id INT AUTO_INCREMENT PRIMARY KEY,

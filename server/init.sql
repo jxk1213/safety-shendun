@@ -17,6 +17,11 @@ CREATE TABLE IF NOT EXISTS risks (
   risk_level VARCHAR(50),
   status VARCHAR(50) DEFAULT '待评审',
   reject_reason TEXT,
+  control_measures TEXT,
+  emergency_measures TEXT,
+  control_level VARCHAR(100),
+  person_in_charge VARCHAR(100),
+  domain VARCHAR(50) DEFAULT '转运中心',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

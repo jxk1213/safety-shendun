@@ -454,7 +454,11 @@
             '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>', 'green') +
         '</div>' +
 
-        '<div class="section-title" style="margin-top:28px;">转运中心风险评估分级表</div>' +
+        '<div class="tab-nav" id="riskDomainTabNav" style="margin-top:28px;">' +
+          '<div class="tab-item active" data-domain="转运中心">转运中心</div>' +
+          '<div class="tab-item" data-domain="网点">网点</div>' +
+          '<div class="tab-item" data-domain="车队">车队</div>' +
+        '</div>' +
         '<div class="data-table-wrapper">' +
           '<div class="table-toolbar">' +
             '<div class="table-toolbar-left">' +
@@ -464,13 +468,13 @@
               '</button>' +
               '<div class="table-filter">' +
                 '<span>风险等级：</span>' +
-                '<select id="riskTierRiskLevelSelect"><option>全部</option><option>重大</option><option>较大</option><option>一般</option><option>低</option></select>' +
+                '<select id="riskTierRiskLevelSelect"><option>全部</option><option>重大风险</option><option>较大风险</option><option>一般风险</option><option>低风险</option></select>' +
               '</div>' +
             '</div>' +
             '<div class="table-search" style="flex-direction:column;align-items:flex-start;gap:8px;">' +
               '<div style="display:flex;align-items:center;gap:10px;width:100%;">' +
                 '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
-                '<input id="riskTierSearchInput" type="text" placeholder="搜索风险点/危险因素..." style="flex:1;min-width:220px;">' +
+                '<input id="riskTierSearchInput" type="text" placeholder="搜索风险点描述/管控措施..." style="flex:1;min-width:220px;">' +
                 '<button class="btn btn-outline" id="riskTierExportBtn" type="button">导出报表</button>' +
               '</div>' +
             '</div>' +
@@ -478,87 +482,25 @@
           '<table class="data-table risk-tier-table">' +
             '<thead>' +
               '<tr>' +
-                '<th rowspan="2">序 号</th>' +
-                '<th rowspan="2">风险点</th>' +
-                '<th rowspan="2">危险因素</th>' +
-                '<th rowspan="2">可能发生<br>事故类型</th>' +
-                '<th colspan="4">危险值<br><span style="font-weight:500;">D=L×E×C</span></th>' +
-                '<th rowspan="2">危险性<br>程度</th>' +
-              '</tr>' +
-              '<tr>' +
+                '<th style="width:60px;">序号</th>' +
+                '<th style="width:250px;">风险点描述</th>' +
                 '<th>L</th>' +
                 '<th>E</th>' +
                 '<th>C</th>' +
                 '<th>D</th>' +
+                '<th style="width:140px;">风险等级</th>' +
+                '<th style="width:110px;">管控层级</th>' +
+                '<th style="width:360px;">管控措施</th>' +
               '</tr>' +
             '</thead>' +
             '<tbody id="riskTierTbody">' +
-              '<tr>' +
-                '<td>1</td>' +
-                '<td>装卸平台</td>' +
-                '<td>1.物品在装卸车过程中抛掷伤人。<br>2.物品意外掉落砸伤操作人员。</td>' +
-                '<td>物体打击</td>' +
-                '<td>1</td>' +
-                '<td>6</td>' +
-                '<td>3</td>' +
-                '<td>18</td>' +
-                '<td><span class="risk-badge blue">低风险</span></td>' +
-              '</tr>' +
-              '<tr>' +
-                '<td>2</td>' +
-                '<td>装卸平台</td>' +
-                '<td>1.未采取可靠的防止车辆异常动作或防溜车的措施。<br>2.车辆倒车时未注意观察现场环境，人员违规停留。<br>3.驾驶员未听从指挥人员指令。<br>4.车辆未按照要求，超速行驶。</td>' +
-                '<td>车辆伤害</td>' +
-                '<td>3</td>' +
-                '<td>6</td>' +
-                '<td>7</td>' +
-                '<td>126</td>' +
-                '<td><span class="risk-badge yellow">一般风险</span></td>' +
-              '</tr>' +
-              '<tr>' +
-                '<td>3</td>' +
-                '<td>物品临时放置区</td>' +
-                '<td>1.物品超高堆放意外倾斜倒塌。<br>2.推放物品时违章操作。</td>' +
-                '<td>坍塌</td>' +
-                '<td>1</td>' +
-                '<td>6</td>' +
-                '<td>3</td>' +
-                '<td>18</td>' +
-                '<td><span class="risk-badge blue">低风险</span></td>' +
-              '</tr>' +
-              '<tr>' +
-                '<td>4</td>' +
-                '<td>物品临时放置区</td>' +
-                '<td>1.货架物品堆放不整齐，掉落砸伤操作人员。<br>2.传递物品时违规抛掷砸伤。<br>3.操作人员未穿防砸靴等劳动防护用品。</td>' +
-                '<td>物体打击</td>' +
-                '<td>1</td>' +
-                '<td>6</td>' +
-                '<td>3</td>' +
-                '<td>18</td>' +
-                '<td><span class="risk-badge blue">低风险</span></td>' +
-              '</tr>' +
-              '<tr>' +
-                '<td>5</td>' +
-                '<td>物品临时放置区</td>' +
-                '<td>1.电气设施未定期检查老化短路。<br>2.货物堆放距离配电设施过近。</td>' +
-                '<td>火灾</td>' +
-                '<td>1</td>' +
-                '<td>3</td>' +
-                '<td>15</td>' +
-                '<td>45</td>' +
-                '<td><span class="risk-badge blue">低风险</span></td>' +
-              '</tr>' +
+              '<tr><td colspan="9" style="text-align:center;color:var(--text-secondary);padding:24px;">加载中...</td></tr>' +
             '</tbody>' +
           '</table>' +
           '<div class="table-pagination">' +
             '<span id="riskTierTotalCount">共 0 条记录</span>' +
             '<div class="pagination-btns" id="riskTierPaginationBtns"></div>' +
           '</div>' +
-        '</div>' +
-        '<div class="section-title" style="margin-top:22px;">转运中心风险辨识管控清单（设施、部位、场所、区域）</div><div class="data-table-wrapper" style="margin-top:0;"><div class="table-toolbar"><div class="table-toolbar-left"><div class="table-filter"><span>风险分级：</span><select id="riskControlRiskLevelSelect"><option>全部</option><option>重大风险</option><option>较大风险</option><option>一般风险</option><option>低风险</option></select></div></div><div class="table-search" style="flex-direction:column;align-items:flex-start;gap:8px;"><div style="display:flex;align-items:center;gap:10px;width:100%;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input id="riskControlSearchInput" type="text" placeholder="搜索风险点/控制措施..." style="flex:1;min-width:220px;"><button class="btn btn-outline" id="riskControlExportBtn" type="button">导出报表</button></div></div></div><table class="data-table"><thead><tr><th style="width:60px;">序号</th><th style="width:200px;">风险点</th><th style="width:190px;">可能发生事故类型</th><th style="width:140px;">风险等级</th><th style="width:360px;">控制措施</th><th style="width:360px;">应急措施</th><th style="width:110px;">管控层级</th><th style="width:190px;">责任人/联系方式</th></tr></thead><tbody id="riskControlTbody"><tr><td>1</td><td>装卸平台</td><td>物体打击</td><td><span class="risk-badge blue">低风险</span></td><td>1.物品在装卸车过程中禁止抛掷，规范传递。<br>2.操作人员穿防砸鞋，规范操作。</td><td>停止操作查看伤情，伤情较轻，可休息；如果伤者有出血情况，应进行医疗救护。</td><td>岗位级</td><td></td></tr><tr><td>2</td><td>装卸平台</td><td>车辆伤害</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.车辆停放时拉紧手刹，防止车辆溜车。<br>2.车辆倒车时，驾驶员注意观察现场环境，无关人员禁止停留。<br>3.驾驶员听从指挥人员指令。<br>4.严格按照规定路线行驶。</td><td>1.止血包扎：如果伤者有出血情况， 应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>2.骨折处理：应采取夹板临时固定后小心将伤者置于担架上；<br>3.联系急救：拨打120急救电话，联系急救车辆进行专业救护。</td><td>班组级</td><td></td></tr><tr><td>3</td><td>物品临时放置区</td><td>坍塌</td><td><span class="risk-badge blue">低风险</span></td><td>1.严格加强管理物品堆放规范。<br>2.推放物品时禁止抛掷。</td><td>1.脱离现场：让伤者脱离危险现场；<br>2.止血包扎：如果伤者有出血情况，应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>3.联系急救：拨打120急救电话，进行专业救护。</td><td>岗位级</td><td></td></tr><tr><td>4</td><td>物品临时放置区</td><td>物体打击</td><td><span class="risk-badge blue">低风险</span></td><td>1.物品堆放整齐。<br>2.禁止抛掷，规范传递。<br>3.操作人员穿防砸靴等劳动防护用品。</td><td>1.止血包扎：如果伤者有出血情况，应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>2.联系急救：拨打120急救电话，进行专业救护。</td><td>岗位级</td><td></td></tr><tr><td>5</td><td>物品临时放置区</td><td>火灾</td><td><span class="risk-badge blue">低风险</span></td><td>1.电气设施定期检查，发现问题及时处理。<br>2.配电设施周边禁止堆放物品。<br>3.区域内严禁明火操作。</td><td>1.火灾扑救：立即切断电源；火灾较小时，使用灭火器、消防栓对准火源根部进行灭火；<br>2.人员疏散：立即疏散至安全地带。</td><td>班组级</td><td></td></tr><tr><td>6</td><td>称重扫描设备</td><td>触电</td><td><span class="risk-badge blue">低风险</span></td><td>1.规范布置设备电气线路。<br>2.电气设施定期检查，发生问题及时处理。<br>3.确保电气设施安装的漏电保护完好。</td><td>1.脱离电源：立即断开电源、使用绝缘工具拉开触电者或挑开电源电线；<br>2.人员救护：使伤者脱离危险区域，根据伤者情况在现场不间断进行心肺复苏急救，同时立即拨打120急救电话联系急救。</td><td>岗位级</td><td></td></tr><tr><td>7</td><td>输送设备</td><td>机械伤害</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.操作时，员工按要求穿戴工作服，女工将长发盘起。<br>2.设备开启前，进行试运转；发现异常及时停机维修。<br>3.操作人员进行检维修时，挂牌操作。<br>4.加强培训，确保规范操作。<br>5.定期对设备润滑，隔离防护设施，对易损部件进行检查、维护。<br>6.设备旋转部位设置明显的警示标识。</td><td>1.脱离现场：关闭机械设备，让伤者脱离危险现场；<br>2.止血包扎：如果伤者有出血情况，应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>3.联系急救：拨打120急救电话，进行专业救护。</td><td>班组级</td><td></td></tr><tr><td>8</td><td>输送设备</td><td>触电</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.定期检查设备电气线路及开关。<br>2.设备进行可靠的接地保护。<br>3.电气设备的操作严格按照操作规程进行。<br>4.电气设施存在触电危险部位需张贴安全警示标志。</td><td>1.脱离电源：立即断开电源、使用绝缘工具拉开触电者或挑开电源电线；<br>2.人员救护：使伤者脱离危险区域，根据伤者情况在现场不间断进行心肺复苏急救，同时立即拨打120急救电话联系急救。</td><td>班组级</td><td></td></tr><tr><td>9</td><td>输送设备</td><td>火灾</td><td><span class="risk-badge blue">低风险</span></td><td>1.设备严禁过载运行，防止电气设施发热起火。<br>2.定期检查电气线路防止老化短路。</td><td>1.火灾扑救：立即切断电源；火灾较小时，使用灭火器对准火源根部进行灭火；<br>2.人员疏散：立即疏散至安全地带。</td><td>岗位级</td><td></td></tr><tr><td>10</td><td>分拣设备</td><td>机械伤害</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.操作时，员工按要求穿戴工作服，女工将长发盘起。<br>2.设备开启前，进行试运转；发现异常及时停机维修。<br>3.操作人员进行检修、维修时，挂牌操作。<br>4.加强培训确保规范操作。<br>5.定期对设备润滑、隔离防护设施、易损、部件进行检查、维护。<br>6.设备旋转部位设置明显的警示标识。</td><td>1.脱离现场：关闭机械设备，让伤者脱离危险现场；<br>2.止血包扎：如果伤者有出血情况，应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>3.联系急救：拨打120急救电话，进行专业救护。</td><td>班组级</td><td></td></tr><tr><td>11</td><td>分拣设备</td><td>触电</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.定期检查设备电气线路及开关。<br>2.设备进行可靠的接地保护。<br>3.电气设备的操作严格按照操作规程进行。<br>4.电气设施存在触电危险部位需张贴安全警示标志。</td><td>1.脱离电源：立即断开电源、使用绝缘工具拉开触电者或挑开电源电线；<br>2.人员救护：使伤者脱离危险区域，根据伤者情况在现场不间断进行心肺复苏急救，同时立即拨打120急救电话联系急救；<br>3.注意事项：在未确认切断电源前禁止用手或其他导电体接触伤者；在120到达之前应持续不间断进行心肺复苏急救。</td><td>班组级</td><td></td></tr><tr><td>12</td><td>分拣设备</td><td>火灾</td><td><span class="risk-badge blue">低风险</span></td><td>1.设备严禁过载运行，防止电气设施发热起火。<br>2.定期检查电气线路防止老化短路。</td><td>1.火灾扑救：立即切断电源；火灾较小时，使用灭火器对准火源根部进行灭火；<br>2.人员疏散：立即疏散至安全地带。</td><td>岗位级</td><td></td></tr><tr><td>13</td><td>装车区</td><td>车辆伤害</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.厂区入口及主要道路、车间设置明显的限速标志。<br>2.严格要求驾驶员按照规定路线行驶。<br>3.驾驶员听从现场指挥人员指令。<br>4.车辆定期进行检维修。<br>5.操作人员经过培训持证上岗。<br>6.车辆严禁超载、带病行驶。</td><td>1.止血包扎：如果伤者有出血情况，应根据出血量和出血部位采取指压、加压包扎或止血带进行止血；<br>2.骨折处理：应采取夹板临时固定后小心将伤者置于担架上；<br>3.联系急救：拨打120急救电话，联系急救车辆进行专业救护。</td><td>班组级</td><td></td></tr><tr><td>14</td><td>配电设施</td><td>触电</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.电气线路由专业电工规范安装。<br>2.电气线路定期检查，防止破损漏电。<br>3.规范接线，防止裸露。<br>4.配电箱箱门与箱体进行跨接。</td><td>1.脱离电源：立即断开电源、使用绝缘工具拉开触电者或挑开电源电线；<br>2.人员救护：使伤者脱离危险区域，根据伤者情况在现场不间断进行心肺复苏急救，同时立即拨打120急救电话联系急救。</td><td>班组级</td><td></td></tr><tr><td>15</td><td>配电设施</td><td>火灾</td><td><span class="risk-badge yellow">一般风险</span></td><td>1.合理布置、规范使用、严禁超负荷使用、定期检查。<br>2.定期检查配电线路，防止老化短路起火。</td><td>1.火灾扑救：立即切断电源；火灾较小时，使用灭火器对准火源根部进行灭火；<br>2.人员疏散：立即疏散至安全地带。</td><td>班组级</td><td></td></tr></tbody></table></div>' +
-        '<div class="table-pagination">' +
-          '<span id="riskControlTotalCount">共 0 条记录</span>' +
-          '<div class="pagination-btns" id="riskControlPaginationBtns"></div>' +
         '</div>' +
         '<div class="panel" style="margin-top:16px;">' +
           '<div class="panel-header">' +
@@ -583,9 +525,15 @@
             '</div>' +
             '<div class="modal-body">' +
               '<div class="form-grid">' +
+                '<div class="form-field span-2"><div class="form-label">所属领域</div>' +
+                  '<select id="riskTierReportDomain"><option>转运中心</option><option>网点</option><option>车队</option></select></div>' +
                 '<div class="form-field span-2"><div class="form-label">风险点</div><input type="text" id="riskTierReportRiskPoint" placeholder="例如 物品临时放置区..."></div>' +
                 '<div class="form-field span-2"><div class="form-label">危险因素</div><textarea id="riskTierReportHazardFactors" rows="4" placeholder="逐条填写（回车换行）"></textarea></div>' +
                 '<div class="form-field span-2"><div class="form-label">可能发生事故类型</div><textarea id="riskTierReportAccidentType" rows="3" placeholder="例如 物体打击 / 车辆伤害"></textarea></div>' +
+                '<div class="form-field span-2"><div class="form-label">控制措施</div><textarea id="riskTierReportControlMeasures" rows="3" placeholder="例如 1. 严格加强管理物品堆放规范。"></textarea></div>' +
+                '<div class="form-field span-2"><div class="form-label">应急措施</div><textarea id="riskTierReportEmergencyMeasures" rows="3" placeholder="例如 1. 脱离现场；2. 止血包扎。"></textarea></div>' +
+                '<div class="form-field"><div class="form-label">管控层级</div><input type="text" id="riskTierReportControlLevel" placeholder="例如 岗位级 / 班组级"></div>' +
+                '<div class="form-field"><div class="form-label">责任人/联系方式</div><input type="text" id="riskTierReportPersonInCharge" placeholder="例如 张三 138xxxx"></div>' +
               '</div>' +
               '<div class="modal-hint" id="riskTierReportFormHint" style="margin-top:12px;color:var(--text-secondary);font-size:13px;"></div>' +
             '</div>' +
@@ -2290,7 +2238,7 @@
       return;
     }
 
-    let approvedRows = parseRiskTierRowsFromTbody(tbodyEl);
+    let approvedRows = [];
     let pendingReports = [];
     let reviewActiveReportId = null;
 
@@ -2305,9 +2253,19 @@
     }
 
     function resetForm() {
+      const d = document.getElementById('riskTierReportDomain');
+      if (d) d.selectedIndex = 0;
       riskPointEl.value = '';
       hazardFactorsEl.value = '';
       accidentTypeEl.value = '';
+      const cm = document.getElementById('riskTierReportControlMeasures');
+      const em = document.getElementById('riskTierReportEmergencyMeasures');
+      const cl = document.getElementById('riskTierReportControlLevel');
+      const pic = document.getElementById('riskTierReportPersonInCharge');
+      if(cm) cm.value = '';
+      if(em) em.value = '';
+      if(cl) cl.value = '';
+      if(pic) pic.value = '';
     }
 
     function nextSeq() {
@@ -2458,25 +2416,14 @@
       const D = L * E * C;
       const riskLevelText = guessRiskLevelByD(D);
 
-      const approved = {
-        seq: nextSeq(),
-        riskPoint: report.riskPoint,
-        hazardFactors: report.hazardFactors,
-        accidentType: report.accidentType,
-        L: String(L),
-        E: String(E),
-        C: String(C),
-        D: String(D),
-        riskLevelText: riskLevelText
-      };
-      upsertApprovedRow(approved);
-
       apiPatch('/api/risks/' + report.id + '/review', {
         l_value: L,
         e_value: E,
         c_value: C,
         risk_level: riskLevelText,
         status: '已评审'
+      }).then(function () {
+        if(window.loadDualPreventionRisks) window.loadDualPreventionRisks();
       }).catch(function (err) {
         console.warn('风险评审同步API失败:', err);
       });
@@ -2533,10 +2480,27 @@
         return;
       }
 
+      const controlMeasuresEl = document.getElementById('riskTierReportControlMeasures');
+      const emergencyMeasuresEl = document.getElementById('riskTierReportEmergencyMeasures');
+      const controlLevelEl = document.getElementById('riskTierReportControlLevel');
+      const personInChargeEl = document.getElementById('riskTierReportPersonInCharge');
+      const domainEl = document.getElementById('riskTierReportDomain');
+
+      const controlMeasuresText = controlMeasuresEl ? String(controlMeasuresEl.value || '').trim().replace(/\r\n/g, '\n') : '';
+      const emergencyMeasuresText = emergencyMeasuresEl ? String(emergencyMeasuresEl.value || '').trim().replace(/\r\n/g, '\n') : '';
+      const controlLevelText = controlLevelEl ? String(controlLevelEl.value || '').trim() : '';
+      const personInChargeText = personInChargeEl ? String(personInChargeEl.value || '').trim() : '';
+      const domainText = domainEl ? String(domainEl.value || '').trim() : '转运中心';
+
       apiPost('/api/risks', {
+        domain: domainText,
         risk_point: riskPointText,
         hazard_factors: hazardFactorsText,
-        accident_type: accidentTypeText
+        accident_type: accidentTypeText,
+        control_measures: controlMeasuresText,
+        emergency_measures: emergencyMeasuresText,
+        control_level: controlLevelText,
+        person_in_charge: personInChargeText
       }).then(function (result) {
         pendingReports.push({
           id: String(result.id),
@@ -2572,39 +2536,76 @@
     }).catch(function () {
       renderPending();
     });
-
-    function parseRiskTierRowsFromTbody(tbody) {
-      const rows = [];
-      const trList = tbody.querySelectorAll('tr');
-      trList.forEach(function (tr) {
-        const tds = tr.querySelectorAll('td');
-        if (!tds || tds.length < 9) return;
-
-        const seq = tds[0].textContent.trim();
-        const riskPoint = tds[1].textContent.trim();
-        const hazardFactors = (tds[2].innerHTML || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim();
-        const accidentType = (tds[3].innerHTML || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim();
-        const L = tds[4].textContent.trim();
-        const E = tds[5].textContent.trim();
-        const C = tds[6].textContent.trim();
-        const D = tds[7].textContent.trim();
-        const riskLevelText = tds[8].textContent.trim();
-
-        if (!seq) return;
-        rows.push({
-          seq: seq,
-          riskPoint: riskPoint,
-          hazardFactors: hazardFactors,
-          accidentType: accidentType,
-          L: L,
-          E: E,
-          C: C,
-          D: D,
-          riskLevelText: riskLevelText
-        });
+    const tabNav = document.getElementById('riskDomainTabNav');
+    if (tabNav) {
+      tabNav.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('tab-item')) return;
+        tabNav.querySelectorAll('.tab-item').forEach(function (el) { el.classList.remove('active'); });
+        e.target.classList.add('active');
+        const reportDomainSelect = document.getElementById('riskTierReportDomain');
+        if (reportDomainSelect) {
+          Array.from(reportDomainSelect.options).forEach((opt, idx) => {
+            if (opt.value === e.target.dataset.domain) reportDomainSelect.selectedIndex = idx;
+          });
+        }
+        if (window.loadDualPreventionRisks) window.loadDualPreventionRisks();
       });
-      return rows;
     }
+
+    window.loadDualPreventionRisks = function () {
+      apiGet('/api/risks').then(function (rows) {
+        const tbody1 = document.getElementById('riskTierTbody');
+        if (!tbody1) return;
+
+        const activeTab = document.querySelector('#riskDomainTabNav .tab-item.active');
+        const activeDomain = activeTab ? activeTab.dataset.domain : '转运中心';
+
+        let html1 = '';
+        let count = 0;
+
+        rows.forEach(function (r, i) {
+          if ((r.domain || '转运中心') !== activeDomain) return;
+
+          count++;
+          const L = (r.l_value || 0).toString();
+          const E = (r.e_value || 0).toString();
+          const C = (r.c_value || 0).toString();
+          const D = (r.d_value || 0).toString();
+
+          const rp = escapeHtml(r.risk_point || '');
+          const hf = nl2br(escapeHtml(r.hazard_factors || ''));
+          const descHtml = '<div style="font-weight:600;margin-bottom:4px;">' + rp + '</div><div style="color:var(--text-secondary);font-size:13px;line-height:1.4;">' + hf + '</div>';
+
+          const rl = escapeHtml(r.risk_level || '');
+
+          let badgeClass = 'blue';
+          if (rl === '重大风险' || rl === '重大') badgeClass = 'red';
+          else if (rl === '较大风险' || rl === '较大') badgeClass = 'orange';
+          else if (rl === '一般风险' || rl === '一般') badgeClass = 'yellow';
+          
+          html1 += '<tr>' +
+            '<td>' + count + '</td>' +
+            '<td>' + descHtml + '</td>' +
+            '<td>' + L + '</td>' +
+            '<td>' + E + '</td>' +
+            '<td>' + C + '</td>' +
+            '<td>' + D + '</td>' +
+            '<td><span class="risk-badge ' + badgeClass + '">' + rl + '</span></td>' +
+            '<td>' + escapeHtml(r.control_level || '') + '</td>' +
+            '<td>' + nl2br(escapeHtml(r.control_measures || '')) + '</td>' +
+            '</tr>';
+        });
+
+        if (!html1) html1 = '<tr><td colspan="9" style="text-align:center;">暂无数据</td></tr>';
+
+        tbody1.innerHTML = html1;
+
+        const search1 = document.getElementById('riskTierSearchInput');
+        if (search1) search1.dispatchEvent(new Event('input'));
+      }).catch(console.error);
+    };
+
+    window.loadDualPreventionRisks();
   }
 
   // ============ 转运中心风险评估分级表：搜索 + 分页 ============
@@ -2629,17 +2630,16 @@
     function getRiskLevelTextFromTr(tr) {
       const tds = tr.querySelectorAll('td');
       if (!tds || tds.length < 9) return '';
-      return String(tds[8].textContent || '').trim();
+      return String(tds[6].textContent || '').trim();
     }
 
     function getRowKeywordTextFromTr(tr) {
       const tds = tr.querySelectorAll('td');
-      if (!tds || tds.length < 4) return '';
-      const riskPoint = String(tds[1].textContent || '');
-      const hazardFactors = String(tds[2].textContent || '');
-      const accidentType = String(tds[3].textContent || '');
-      const riskLevel = String(tds[8] && tds[8].textContent ? tds[8].textContent : '');
-      return (riskPoint + ' ' + hazardFactors + ' ' + accidentType + ' ' + riskLevel).toLowerCase();
+      if (!tds || tds.length < 9) return '';
+      const riskDesc = String(tds[1].textContent || '');
+      const riskLevel = String(tds[6].textContent || '');
+      const controlMeasures = String(tds[8].textContent || '');
+      return (riskDesc + ' ' + riskLevel + ' ' + controlMeasures).toLowerCase();
     }
 
     function matchesRow(tr, keyword, levelFilter) {
