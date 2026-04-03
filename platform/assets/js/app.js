@@ -62,6 +62,10 @@
 
   // ============ 页面配置 ============
   const PAGE_CONFIG = {
+    'safety-dashboard': {
+      title: '安全大屏',
+      breadcrumb: ['首页', '安全大屏']
+    },
     dashboard: {
       title: '工作台',
       breadcrumb: ['首页', '工作台']
@@ -114,6 +118,7 @@
 
   const BREADCRUMB_NAV_MAP = {
     '首页': 'dashboard',
+    '安全大屏': 'safety-dashboard',
     '核心业务': 'dual-prevention',
     '基础要素': 'personnel',
     '专项安全': 'delivery-safety',
@@ -300,6 +305,7 @@
   function renderPage(page) {
     mainContent.scrollTop = 0;
     switch (page) {
+      case 'safety-dashboard': mainContent.innerHTML = renderSafetyDashboard(); break;
       case 'dashboard': mainContent.innerHTML = renderDashboard(); break;
       case 'dual-prevention':
         mainContent.innerHTML = renderDualPrevention();
@@ -327,6 +333,20 @@
       case 'system': mainContent.innerHTML = renderSystem(); break;
       default: mainContent.innerHTML = renderDashboard();
     }
+  }
+
+  // ============ 安全大屏 ============
+  function renderSafetyDashboard() {
+    return '' +
+      '<div style="margin: -24px; min-height: calc(100vh - 60px); display:flex; flex-direction:column; overflow:hidden;">' +
+        '<div class="page-header" style="margin-bottom:0; flex-shrink:0; padding:16px 24px; background:var(--bg-card); border-bottom:1px solid var(--border);">' +
+          '<div class="page-title">安全大屏</div>' +
+          '<div class="page-desc">全景态势感知与风险预警</div>' +
+        '</div>' +
+        '<div style="flex:1; width:100%; position:relative;">' +
+          '<iframe src="safety-dashboard/index.html" style="width:100%; height:100%; border:none; background:transparent; position:absolute; top:0; left:0;"></iframe>' +
+        '</div>' +
+      '</div>';
   }
 
   // ============ 工作台（首页） ============
