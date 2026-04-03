@@ -201,6 +201,7 @@
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const sidebarOverlay = document.getElementById('sidebarOverlay');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const topbar = document.querySelector('.topbar');
 
   let currentPage = 'dashboard';
 
@@ -278,6 +279,11 @@
     updateBreadcrumb(page);
     renderPage(page);
 
+    // 大屏页面时隐藏顶部工具栏
+    if (topbar) {
+      topbar.style.display = (page === 'safety-dashboard') ? 'none' : 'flex';
+    }
+
     sidebar.classList.remove('mobile-open');
     sidebarOverlay.classList.remove('active');
   }
@@ -338,13 +344,9 @@
   // ============ 安全大屏 ============
   function renderSafetyDashboard() {
     return '' +
-      '<div style="margin: -24px; min-height: calc(100vh - 60px); display:flex; flex-direction:column; overflow:hidden;">' +
-        '<div class="page-header" style="margin-bottom:0; flex-shrink:0; padding:16px 24px; background:var(--bg-card); border-bottom:1px solid var(--border);">' +
-          '<div class="page-title">安全大屏</div>' +
-          '<div class="page-desc">全景态势感知与风险预警</div>' +
-        '</div>' +
+      '<div style="margin: -24px; height: 100vh; width: calc(100% + 48px); display:flex; flex-direction:column; overflow:hidden;">' +
         '<div style="flex:1; width:100%; position:relative;">' +
-          '<iframe src="safety-dashboard/index.html" style="width:100%; height:100%; border:none; background:transparent; position:absolute; top:0; left:0;"></iframe>' +
+          '<iframe src="safety-dashboard/index.html" style="width:100%; height:100%; border:none; background:#000; position:absolute; top:0; left:0;"></iframe>' +
         '</div>' +
       '</div>';
   }
