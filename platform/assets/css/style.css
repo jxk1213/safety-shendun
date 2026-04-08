@@ -2508,3 +2508,175 @@ input {
   border-color: var(--primary);
   box-shadow: 0 4px 10px rgba(26, 92, 256, 0.2);
 }
+
+/* ===== 事故统计工作台 ===== */
+.stats-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.stats-chart-panel {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.trend-chart-container {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  padding: 40px 20px 20px;
+  min-height: 300px;
+}
+
+.bar-chart-wrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  width: 100%;
+  height: 100%;
+  gap: 12px;
+}
+
+.chart-bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.bar-fill {
+  width: 100%;
+  max-width: 36px;
+  background: linear-gradient(to top, var(--primary), #4f83ff);
+  border-radius: 4px 4px 0 0;
+  transition: height 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  min-height: 2px;
+}
+
+.bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to right, rgba(255,255,255,0.1), transparent);
+}
+
+.bar-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.bar-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* 分布统计列表 */
+.distribution-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dist-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dist-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.dist-label {
+  color: var(--text-secondary);
+}
+
+.dist-percent {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dist-progress-bg {
+  height: 8px;
+  background: var(--bg-body);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dist-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease;
+}
+
+/* 区域排行榜 */
+.top-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: var(--bg-body);
+  border-radius: var(--radius-md);
+  transition: transform 0.2s ease;
+}
+
+.top-row:hover {
+  transform: translateX(4px);
+}
+
+.top-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.top-name {
+  flex: 1;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.top-count {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.top-ratio {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  width: 45px;
+  text-align: right;
+}
+
+@media (max-width: 1200px) {
+  .stats-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

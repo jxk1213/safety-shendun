@@ -6,6 +6,34 @@
   'use strict';
 
   var currentHazardSource = { title: '隐患上报', subTab: 'report' };
+  var provincesData = [];
+  var centersData = [];
+  var hazardReportList = [];
+  var hazardIndex = 100000;
+  var loadHazardsFromAPI = function () { };
+
+  function dbToFrontend(row) {
+    var regionParts = [row.area, row.province, row.center].filter(Boolean);
+    return {
+      id: row.id,
+      category: row.category || '',
+      second: row.content || '',
+      otherDesc: '',
+      desc: row.description || '',
+      region: regionParts.join(' / '),
+      time: row.report_time ? String(row.report_time).replace('T', ' ').substring(0, 16) : '',
+      status: row.status || '待稽核',
+      imageBefore: row.photo_before ? [row.photo_before] : [],
+      imageAfter: row.photo_after ? [row.photo_after] : [],
+      closedLoop: !!row.is_closed,
+      // 对应后端：self_check, security_audit, special
+      // 对应前端查询：self-check, security-audit, special-audit
+      source: row.source_type === 'self_check' ? 'self-check' : (row.source_type === 'security_audit' ? 'security-audit' : (row.source_type === 'special' ? 'special-audit' : 'manual')),
+      rectifyDesc: row.rectify_description || '',
+      rectifyTime: row.rectify_time ? String(row.rectify_time).replace('T', ' ').substring(0, 16) : '',
+      rectifyPerson: row.rectifier || ''
+    };
+  }
 
   // ============ API 配置 ============
   var API_BASE = (function () {
@@ -115,6 +143,10 @@
     system: {
       title: '系统与权限管理',
       breadcrumb: ['首页', '辅助运营', '系统与权限管理']
+    },
+    'accident-statistics': {
+      title: '事故统计',
+      breadcrumb: ['首页', '核心业务', '事故与应急管理', '事故统计']
     }
   };
 
@@ -340,6 +372,10 @@
       case 'document': mainContent.innerHTML = renderDocument(); break;
       case 'system': mainContent.innerHTML = renderSystem(); break;
       case 'hazard-report-page': mainContent.innerHTML = renderHazardReportPage(); break;
+      case 'accident-statistics':
+        mainContent.innerHTML = renderAccidentStatistics();
+        initAccidentStatistics();
+        break;
       default: mainContent.innerHTML = renderDashboard();
     }
   }
@@ -1161,48 +1197,26 @@
   }
 
   function initDualPreventionHazardTab() {
-    var hazardReportList = [];
-    var hazardIndex = 100000;
-    var provincesData = [];
-    var centersData = [];
     var hazardDeleteMode = false;
     var selectedHazardIds = {};
 
-    function dbToFrontend(row) {
-      var regionParts = [row.area, row.province, row.center].filter(Boolean);
-      return {
-        id: row.id,
-        category: row.category || '',
-        second: row.content || '',
-        otherDesc: '',
-        desc: row.description || '',
-        region: regionParts.join(' / '),
-        time: row.report_time ? String(row.report_time).replace('T', ' ').substring(0, 16) : '',
-        status: row.status || '待稽核',
-        imageBefore: row.photo_before ? [row.photo_before] : [],
-        imageAfter: row.photo_after ? [row.photo_after] : [],
-        closedLoop: !!row.is_closed,
-        source: row.source_type === 'self_check' ? 'self-check' : (row.source_type === 'security_audit' ? 'security-audit' : (row.source_type === 'special' ? 'special-audit' : undefined)),
-        rectifyDesc: row.rectify_description || '',
-        rectifyTime: row.rectify_time ? String(row.rectify_time).replace('T', ' ').substring(0, 16) : '',
-        rectifyPerson: row.rectifier || ''
-      };
-    }
-
-    function loadHazardsFromAPI() {
+    loadHazardsFromAPI = function() {
       apiGet('/api/hazards').then(function (rows) {
         hazardReportList = rows.map(dbToFrontend);
         if (hazardReportList.length > 0) {
           hazardIndex = Math.max.apply(null, hazardReportList.map(function(r) { return r.id; })) + 1;
         }
-        try { renderHazardRows(); } catch(e) { console.warn('renderHazardRows error:', e); }
-        try { renderSelfcheckRows(); } catch(e) { console.warn('renderSelfcheckRows error:', e); }
-        try { renderSecurityAuditRows(); } catch(e) { console.warn('renderSecurityAuditRows error:', e); }
-        try { renderSpecialAuditRows(); } catch(e) { console.warn('renderSpecialAuditRows error:', e); }
+        // 触发各级版块渲染
+        if (typeof renderHazardRows === 'function') try { renderHazardRows(); } catch(e) { console.warn('renderHazardRows error:', e); }
+        if (typeof renderSelfcheckRows === 'function') try { renderSelfcheckRows(); } catch(e) { console.warn('renderSelfcheckRows error:', e); }
+        if (typeof renderSecurityAuditRows === 'function') try { renderSecurityAuditRows(); } catch(e) { console.warn('renderSecurityAuditRows error:', e); }
+        if (typeof renderSpecialAuditRows === 'function') try { renderSpecialAuditRows(); } catch(e) { console.warn('renderSpecialAuditRows error:', e); }
       }).catch(function (err) {
         console.error('从API加载隐患数据失败:', err);
       });
-    }
+    };
+    
+    loadHazardsFromAPI(); // 执行初始加载项
 
     var subNav = mainContent.querySelector('.hazard-sub-tab-nav');
     var panels = {
@@ -1277,53 +1291,6 @@
       // Self-check Filters
       fillFilterProvinces(selfcheckFilterArea, selfcheckFilterProvince, selfcheckFilterCenter);
       fillFilterCenters(selfcheckFilterProvince, selfcheckFilterCenter, selfcheckFilterArea);
-    }
-
-    function fillFilterProvinces(areaEl, provEl, centerEl) {
-      if (!provEl) return;
-      var areaVal = areaEl ? areaEl.value : '';
-      var current = provEl.value;
-      provEl.innerHTML = '<option value="">全部</option>';
-      var filtered = areaVal ? provincesData.filter(function(p) { return p.northSouth === areaVal; }) : provincesData;
-      filtered.forEach(function (p) {
-        var opt = document.createElement('option');
-        opt.value = p.name;
-        opt.textContent = p.name;
-        provEl.appendChild(opt);
-      });
-      var exists = Array.prototype.some.call(provEl.options, function(o) { return o.value === current; });
-      if (exists) provEl.value = current;
-      else provEl.value = '';
-    }
-
-    function fillFilterCenters(provEl, centerEl, areaEl) {
-      if (!centerEl) return;
-      var provName = provEl ? provEl.value : '';
-      var areaVal = areaEl ? areaEl.value : '';
-      var current = centerEl.value;
-      centerEl.innerHTML = '<option value="">全部</option>';
-      
-      var filtered = [];
-      if (provName) {
-        var province = provincesData.find(function(p) { return p.name === provName; });
-        if (province) filtered = centersData.filter(function(c) { return c.provinceCode === province.code; });
-      } else if (areaVal) {
-        var areaProvinceCodes = provincesData.filter(function(p) { return p.northSouth === areaVal; }).map(function(p) { return p.code; });
-        filtered = centersData.filter(function(c) { return areaProvinceCodes.indexOf(c.provinceCode) !== -1; });
-      } else {
-        filtered = centersData;
-      }
-
-      filtered.forEach(function (c) {
-        var opt = document.createElement('option');
-        opt.value = c.shortName || c.name;
-        opt.textContent = c.shortName || c.name;
-        centerEl.appendChild(opt);
-      });
-
-      var exists = Array.prototype.some.call(centerEl.options, function(o) { return o.value === current; });
-      if (exists) centerEl.value = current;
-      else centerEl.value = '';
     }
     function fillHazardSecondOptions(category) {
       var listContainer = document.getElementById('hazardFormSecondList');
@@ -4134,7 +4101,7 @@
           '<div class="feature-grid">' +
             buildFeatureCard('事故上报', '快速上报安全事故，支持拍照取证与定位', 'var(--danger-light)', 'var(--danger)', '本月上报 2 起', 'accident-report') +
             buildFeatureCard('事故调查', '事故原因分析、责任认定与整改跟踪', 'var(--warning-light)', 'var(--warning)', '进行中 1 项') +
-            buildFeatureCard('事故统计', '多维度事故数据统计与趋势分析', 'var(--info-light)', 'var(--info)', '累计 23 起') +
+            buildFeatureCard('事故统计', '多维度事故数据统计与趋势分析', 'var(--info-light)', 'var(--info)', '累计 23 起', 'accident-statistics') +
           '</div>' +
         '</div>' +
 
@@ -4158,6 +4125,184 @@
           '</div>' +
         '</div>' +
       '</div>';
+  }
+
+  function renderAccidentStatistics() {
+    return '' +
+      '<div class="sub-page">' +
+        '<div class="page-header">' +
+          '<div>' +
+            '<div class="page-title">事故统计分析</div>' +
+            '<div class="page-desc">多维度事故数据钻取与安全趋势研判</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="tab-nav mb-24" id="accidentStatsTabNav">' +
+          '<div class="tab-item active" data-tab="analysis">事故分析</div>' +
+          '<div class="tab-item" data-tab="list">事故统计</div>' +
+        '</div>' +
+
+        '<div id="accidentAnalysisPanel">' +
+          // 核心统计指标
+          '<div class="stats-row mb-24">' +
+            buildStatCard('年度总事故起数', '23', '同比下降 12%', 'down', 
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>', 'blue') +
+            buildStatCard('本月发生', '2', '环比上月持平', 'stable', 
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>', 'orange') +
+            buildStatCard('百万工时事故率', '0.45', '优于行业均值', 'up', 
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>', 'green') +
+            buildStatCard('重大事故起数', '0', '连续 365 天无重大事故', 'stable', 
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>', 'red') +
+          '</div>' +
+
+          // 图表工作区
+          '<div class="stats-dashboard-grid">' +
+            // 趋势图
+            '<div class="panel stats-chart-panel">' +
+              '<div class="panel-header">' +
+                '<div class="panel-title">事故月度变化趋势</div>' +
+              '</div>' +
+              '<div class="panel-body">' +
+                '<div class="trend-chart-container">' +
+                  buildBarChart([4, 3, 5, 2, 4, 3, 0, 0, 0, 0, 0, 0], ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]) +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            // 分类占比与区域排行
+            '<div style="display: flex; flex-direction: column; gap: 24px;">' +
+              '<div class="panel" style="flex: 1;">' +
+                '<div class="panel-header">' +
+                  '<div class="panel-title">事故性质占比</div>' +
+                '</div>' +
+                '<div class="panel-body">' +
+                  '<div class="distribution-list">' +
+                    buildDistItem("交通运输", 45, "var(--primary)") +
+                    buildDistItem("机械伤害", 25, "var(--warning)") +
+                    buildDistItem("高处坠落", 15, "var(--danger)") +
+                    buildDistItem("触电伤害", 10, "var(--info)") +
+                    buildDistItem("其他类型", 5, "var(--text-tertiary)") +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="panel" style="flex: 1;">' +
+                '<div class="panel-header">' +
+                  '<div class="panel-title">事故高发区域 TOP 3</div>' +
+                '</div>' +
+                '<div class="panel-body">' +
+                  '<div class="top-list">' +
+                    buildTopItem(1, "北部区域", "8起", "34.7%", "var(--danger)") +
+                    buildTopItem(2, "华东区域", "6起", "26.1%", "var(--warning)") +
+                    buildTopItem(3, "华中区域", "4起", "17.4%", "var(--info)") +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' + // End Analysis Panel
+
+        '<div id="accidentListPanel" style="display:none;">' +
+          // 列表内容
+          '<div class="panel">' +
+            '<div class="panel-header">' +
+              '<div class="panel-title">最新事故明细</div>' +
+            '</div>' +
+            '<div class="panel-body p-0">' +
+              '<table class="data-table">' +
+                '<thead>' +
+                  '<tr>' +
+                    '<th>事故时间</th>' +
+                    '<th>所属单元</th>' +
+                    '<th>事故性质</th>' +
+                    '<th>等级</th>' +
+                    '<th>责任判定</th>' +
+                    '<th>状态</th>' +
+                    '<th>操作</th>' +
+                  '</tr>' +
+                '</thead>' +
+                '<tbody>' +
+                  '<tr>' +
+                    '<td>2026-03-25 14:20</td>' +
+                    '<td>华北分拨中心</td>' +
+                    '<td>交通运输</td>' +
+                    '<td><span class="badge badge-warning">轻微事故</span></td>' +
+                    '<td>主要责任</td>' +
+                    '<td><span class="status-indicator status-active">已结案</span></td>' +
+                    '<td><span class="panel-link">详情</span></td>' +
+                  '</tr>' +
+                  '<tr>' +
+                    '<td>2026-03-22 09:45</td>' +
+                    '<td>上海转运中心</td>' +
+                    '<td>机械伤害</td>' +
+                    '<td><span class="badge badge-warning">一般事故</span></td>' +
+                    '<td>同等责任</td>' +
+                    '<td><span class="status-indicator status-pending">调查中</span></td>' +
+                    '<td><span class="panel-link">详情</span></td>' +
+                  '</tr>' +
+                '</tbody>' +
+              '</table>' +
+            '</div>' +
+          '</div>' +
+        '</div>' + // End List Panel
+      '</div>';
+  }
+
+  function buildBarChart(data, labels) {
+    let bars = "";
+    const max = Math.max(...data, 1);
+    data.forEach((val, i) => {
+      const height = (val / max) * 100;
+      bars += 
+        '<div class="chart-bar-item">' +
+          '<div class="bar-value">' + (val || "") + '</div>' +
+          '<div class="bar-fill" style="height: ' + height + '%;"></div>' +
+          '<div class="bar-label">' + labels[i] + '</div>' +
+        '</div>';
+    });
+    return '<div class="bar-chart-wrap">' + bars + '</div>';
+  }
+
+  function buildDistItem(label, percent, color) {
+    return '' +
+      '<div class="dist-item">' +
+        '<div class="dist-info">' +
+          '<span class="dist-label">' + label + '</span>' +
+          '<span class="dist-percent">' + percent + '%</span>' +
+        '</div>' +
+        '<div class="dist-progress-bg">' +
+          '<div class="dist-progress-fill" style="width: ' + percent + '%; background: ' + color + '"></div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function buildTopItem(rank, name, count, ratio, color) {
+    return '' +
+      '<div class="top-row">' +
+        '<div class="top-rank" style="background: ' + color + '">' + rank + '</div>' +
+        '<div class="top-name">' + name + '</div>' +
+        '<div class="top-count">' + count + '</div>' +
+        '<div class="top-ratio">' + ratio + '</div>' +
+      '</div>';
+  }
+
+  function initAccidentStatistics() {
+    var tabNav = document.getElementById('accidentStatsTabNav');
+    var analysisPanel = document.getElementById('accidentAnalysisPanel');
+    var listPanel = document.getElementById('accidentListPanel');
+    
+    if (tabNav && analysisPanel && listPanel) {
+      tabNav.addEventListener('click', function(e) {
+        var tab = e.target.closest('.tab-item');
+        if (!tab) return;
+        
+        var key = tab.dataset.tab;
+        tabNav.querySelectorAll('.tab-item').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        
+        analysisPanel.style.display = key === 'analysis' ? '' : 'none';
+        listPanel.style.display = key === 'list' ? '' : 'none';
+      });
+    }
   }
 
   // ============ 人员安全管理 ============
@@ -5008,6 +5153,9 @@
 
     // 初始化联动
     if (nsEl && provEl && centerEl) {
+      fillFilterProvinces(nsEl, provEl, centerEl);
+      fillFilterCenters(provEl, centerEl, nsEl);
+
       nsEl.addEventListener('change', function() {
         fillFilterProvinces(nsEl, provEl, centerEl);
         fillFilterCenters(provEl, centerEl, nsEl);
@@ -5051,21 +5199,104 @@
     if (submitBtn) {
       submitBtn.onclick = function() {
         var cat = categoryEl.value;
+        var second = document.getElementById('reportFormSecond').value;
         var desc = document.getElementById('reportFormDesc').value;
+        var ns = nsEl.value;
+        var prov = provEl.value;
+        var center = centerEl.value;
+        
         if (!cat || !desc) {
           alert('请完整填写关键信息（隐患类别与描述）');
           return;
+        }
+
+        // 整理提交数据
+        var formData = new FormData();
+        formData.append('category', cat);
+        formData.append('content', second || '');
+        formData.append('description', desc);
+        formData.append('area', ns);
+        formData.append('province', prov);
+        formData.append('center', center);
+        
+        // 映射 source_type
+        var subTab = currentHazardSource.subTab || 'report';
+        var sourceType = 'manual';
+        if (subTab === 'selfcheck') sourceType = 'self_check';
+        else if (subTab === 'audit') sourceType = 'security_audit';
+        else if (subTab === 'special') sourceType = 'special';
+        formData.append('source_type', sourceType);
+
+        // 如果有图片，添加第一张图片 (后端目前只支持 photo_before 单张)
+        if (fileInput && fileInput.files.length > 0) {
+          formData.append('photo_before', fileInput.files[0]);
         }
         
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="loading-spinner"></span> 正在提交...';
         
-        setTimeout(function() {
+        apiPostForm('/api/hazards/report', formData).then(function(res) {
           alert('隐患上报成功！感谢参与安全治理。');
+          // 重新加载数据以刷新列表
+          if (typeof loadHazardsFromAPI === 'function') {
+            loadHazardsFromAPI();
+          }
           returnToHazardList();
-        }, 1200);
+        }).catch(function(err) {
+          console.error('上报失败:', err);
+          alert('提交过程中出现错误，请检查网络后重试。');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '提交上报';
+        });
       };
     }
+  }
+
+  function fillFilterProvinces(areaEl, provEl, centerEl) {
+    if (!provEl) return;
+    var areaVal = areaEl ? areaEl.value : '';
+    var current = provEl.value;
+    provEl.innerHTML = '<option value="">全部</option>';
+    var filtered = areaVal ? provincesData.filter(function(p) { return p.northSouth === areaVal; }) : provincesData;
+    filtered.forEach(function (p) {
+      var opt = document.createElement('option');
+      opt.value = p.name;
+      opt.textContent = p.name;
+      provEl.appendChild(opt);
+    });
+    var exists = Array.prototype.some.call(provEl.options, function(o) { return o.value === current; });
+    if (exists) provEl.value = current;
+    else provEl.value = '';
+  }
+
+  function fillFilterCenters(provEl, centerEl, areaEl) {
+    if (!centerEl) return;
+    var provName = provEl ? provEl.value : '';
+    var areaVal = areaEl ? areaEl.value : '';
+    var current = centerEl.value;
+    centerEl.innerHTML = '<option value="">全部</option>';
+    
+    var filtered = [];
+    if (provName) {
+      var province = provincesData.find(function(p) { return p.name === provName; });
+      if (province) filtered = centersData.filter(function(c) { return c.provinceCode === province.code; });
+    } else if (areaVal) {
+      var areaProvinceCodes = provincesData.filter(function(p) { return p.northSouth === areaVal; }).map(function(p) { return p.code; });
+      filtered = centersData.filter(function(c) { return areaProvinceCodes.indexOf(c.provinceCode) !== -1; });
+    } else {
+      filtered = centersData;
+    }
+
+    filtered.forEach(function (c) {
+      var opt = document.createElement('option');
+      opt.value = c.shortName || c.name;
+      opt.textContent = c.shortName || c.name;
+      centerEl.appendChild(opt);
+    });
+
+    var exists = Array.prototype.some.call(centerEl.options, function(o) { return o.value === current; });
+    if (exists) centerEl.value = current;
+    else centerEl.value = '';
   }
 
   function returnToHazardList() {
