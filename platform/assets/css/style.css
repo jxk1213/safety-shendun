@@ -2638,6 +2638,7 @@ input {
   background: var(--bg-body);
   border-radius: var(--radius-md);
   transition: transform 0.2s ease;
+  margin-bottom: 8px;
 }
 
 .top-row:hover {

@@ -4194,6 +4194,16 @@
                   '<label class="filter-label">中心</label>' +
                   '<select class="filter-select" id="accAnalysisCenterSelect"><option value="">全部</option></select>' +
                 '</div>' +
+                '<div class="filter-actions" style="margin-left:auto; display:flex; gap:8px; align-items:flex-end; padding-bottom:5px;">' +
+                  '<button class="filter-btn filter-btn-primary" id="accAnalysisSearchBtn" style="height:32px;padding:0 16px;border-radius:4px;display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">' +
+                    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+                    '查询' +
+                  '</button>' +
+                  '<button class="filter-btn filter-btn-outline" id="accAnalysisResetBtn" style="height:32px;padding:0 16px;border-radius:4px;display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">' +
+                    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
+                    '重置' +
+                  '</button>' +
+                '</div>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -4661,11 +4671,39 @@
       var aaProvince = document.getElementById('accAnalysisProvinceSelect');
       var aaCenter = document.getElementById('accAnalysisCenterSelect');
 
-      [aaYear, aaMonth, aaArea, aaProvince, aaCenter].forEach(el => {
-        if (el) el.addEventListener('change', function() {
-            refreshAccidentAnalysis();
+      // 初始化分析页筛选查询/重置逻辑
+      var aaSearchBtn = document.getElementById('accAnalysisSearchBtn');
+      var aaResetBtn = document.getElementById('accAnalysisResetBtn');
+
+      if (aaSearchBtn) {
+        aaSearchBtn.addEventListener('click', function() {
+          refreshAccidentAnalysis();
         });
-      });
+      }
+
+      if (aaResetBtn) {
+        aaResetBtn.addEventListener('click', function() {
+          if (aaYear) aaYear.value = '2025年';
+          if (aaMonth) aaMonth.value = '全部';
+          if (aaArea) aaArea.value = '';
+          
+          // 级联重置
+          if (aaArea && aaProvince) {
+            fillFilterProvinces(aaArea, aaProvince, aaCenter);
+            // 等待级联填充后再重置下一级（简单方案是直接清空）
+            setTimeout(function() {
+               if (aaProvince) aaProvince.value = '';
+               fillFilterCenters(aaProvince, aaCenter, aaArea);
+               setTimeout(function() {
+                 if (aaCenter) aaCenter.value = '';
+                 refreshAccidentAnalysis();
+               }, 50);
+            }, 50);
+          } else {
+            refreshAccidentAnalysis();
+          }
+        });
+      }
 
       fetchLocationsData().then(function() {
         if (aaArea && aaProvince) {
