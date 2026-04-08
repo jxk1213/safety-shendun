@@ -5,6 +5,8 @@
 (function () {
   'use strict';
 
+  var currentHazardSource = { title: '隐患上报', subTab: 'report' };
+
   // ============ API 配置 ============
   var API_BASE = (function () {
     var origin = window.location.origin;
@@ -753,6 +755,10 @@
             '<div class="hazard-list-header" style="margin-top:24px;">' +
               '<div class="section-title">安全稽核报告</div>' +
               '<div class="hazard-list-header-actions">' +
+                '<button class="btn btn-primary" id="securityAuditHazardReportBtn" type="button" style="margin-right: 8px;">' +
+                  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg>' +
+                  '隐患上报' +
+                '</button>' +
                 '<button class="btn btn-outline" id="securityAuditExportBtn" type="button">导出报表</button>' +
               '</div>' +
             '</div>' +
@@ -802,6 +808,10 @@
             '<div class="hazard-list-header" style="margin-top:24px;">' +
               '<div class="section-title">专项稽查报告</div>' +
               '<div class="hazard-list-header-actions">' +
+                '<button class="btn btn-primary" id="specialInspectionHazardReportBtn" type="button" style="margin-right: 8px;">' +
+                  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg>' +
+                  '隐患上报' +
+                '</button>' +
                 '<button class="btn btn-outline" id="specialAuditExportBtn" type="button">导出报表</button>' +
               '</div>' +
             '</div>' +
@@ -1216,21 +1226,21 @@
       });
     }
 
-    var addBtn = document.getElementById('hazardReportAddBtn');
-    if (addBtn) {
-      addBtn.addEventListener('click', function () {
-        renderPage('hazard-report-page');
-        if (typeof initHazardReportPage === 'function') initHazardReportPage();
-      });
-    }
-
     var selfcheckHazardReportBtn = document.getElementById('selfcheckHazardReportBtn');
-    if (selfcheckHazardReportBtn) {
-      selfcheckHazardReportBtn.addEventListener('click', function () {
-        renderPage('hazard-report-page');
-        if (typeof initHazardReportPage === 'function') initHazardReportPage();
-      });
-    }
+    var securityAuditHazardReportBtn = document.getElementById('securityAuditHazardReportBtn');
+    var specialInspectionHazardReportBtn = document.getElementById('specialInspectionHazardReportBtn');
+    var addBtn = document.getElementById('hazardReportAddBtn');
+
+    var handleHazardReportClick = function (title, subTab) {
+      currentHazardSource = { title: title, subTab: subTab };
+      renderPage('hazard-report-page');
+      if (typeof initHazardReportPage === 'function') initHazardReportPage();
+    };
+
+    if (selfcheckHazardReportBtn) selfcheckHazardReportBtn.onclick = function() { handleHazardReportClick('自查自纠', 'selfcheck'); };
+    if (securityAuditHazardReportBtn) securityAuditHazardReportBtn.onclick = function() { handleHazardReportClick('安全稽核', 'audit'); };
+    if (specialInspectionHazardReportBtn) specialInspectionHazardReportBtn.onclick = function() { handleHazardReportClick('专项稽查', 'special'); };
+    if (addBtn) addBtn.onclick = function() { handleHazardReportClick('隐患上报', 'report'); };
 
     var overlay = document.getElementById('hazardReportModalOverlay');
     var addBtn = document.getElementById('hazardReportAddBtn');
@@ -4815,14 +4825,15 @@
 
   // ============ 隐患上报专用页 (Premium) ============
   function renderHazardReportPage() {
+    var fullTitle = (currentHazardSource.title || '隐患上报') + ' · 闭环共治';
     return `
       <div class="hazard-report-page">
         <div class="report-hero">
-          <div class="report-back-btn" onclick="renderPage('dual-prevention')">
+          <div class="report-back-btn" id="reportBackBtn">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             返回列表
           </div>
-          <h1 class="report-title">隐患上报 · 闭环共治</h1>
+          <h1 class="report-title">${fullTitle}</h1>
           <p class="report-subtitle">通过及时发现并上报安全隐患，您正在为构建更安全的作业环境贡献力量。</p>
         </div>
 
@@ -4920,7 +4931,7 @@
             <button class="btn btn-primary btn-xl" id="reportSubmitBtn" style="width: 100%; justify-content: center; box-shadow: 0 10px 15px -3px rgba(26, 92, 255, 0.4);">
               提交上报
             </button>
-            <button class="btn btn-outline" style="width: 100%; justify-content: center; margin-top: 12px;" onclick="renderPage('dual-prevention')">
+            <button class="btn btn-outline" id="reportCancelBtn" style="width: 100%; justify-content: center; margin-top: 12px;">
               取消返回
             </button>
           </div>
@@ -4940,6 +4951,11 @@
     var uploadZone = document.getElementById('reportUploadZone');
     var fileInput = document.getElementById('reportFileInput');
     var previewArea = document.getElementById('reportPreviewArea');
+    var backBtn = document.getElementById('reportBackBtn');
+    var cancelBtn = document.getElementById('reportCancelBtn');
+    
+    if (backBtn) backBtn.onclick = returnToHazardList;
+    if (cancelBtn) cancelBtn.onclick = returnToHazardList;
 
     // 初始化时间
     if (timeEl) {
@@ -5046,10 +5062,36 @@
         
         setTimeout(function() {
           alert('隐患上报成功！感谢参与安全治理。');
-          renderPage('dual-prevention');
+          returnToHazardList();
         }, 1200);
       };
     }
+  }
+
+  function returnToHazardList() {
+    if (typeof navigateTo === 'function') {
+      navigateTo('dual-prevention');
+    } else {
+      renderPage('dual-prevention');
+    }
+    
+    // 跳转到对应的子标签页
+    var targetTab = currentHazardSource.subTab || 'report';
+    
+    // 延迟以确保 renderPage 和 init 逻辑执行完成
+    setTimeout(function() {
+        // 1. 先切换到大类的“隐患排查治理” (data-dp-tab="hazard")
+        var dpTab = document.querySelector('.tab-item[data-dp-tab="hazard"]');
+        if (dpTab) {
+            dpTab.click();
+            
+            // 2. 再切换到对应的子分类 (data-hazard-sub)
+            setTimeout(function() {
+                var subTab = document.querySelector('.tab-item[data-hazard-sub="' + targetTab + '"]');
+                if (subTab) subTab.click();
+            }, 100);
+        }
+    }, 150);
   }
 
   // ============ 启动 ============
