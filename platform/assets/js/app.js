@@ -12,6 +12,22 @@
   var hazardIndex = 100000;
   var loadHazardsFromAPI = function () { };
 
+  function fetchLocationsData() {
+    if (provincesData.length > 0) return Promise.resolve();
+    if (typeof window.LOCATION_PROVINCES !== 'undefined') {
+      provincesData = window.LOCATION_PROVINCES;
+      centersData = window.LOCATION_CENTERS;
+      return Promise.resolve();
+    }
+    return Promise.all([
+      fetch('data/provinces.json').then(function(r) { return r.ok ? r.json() : []; }),
+      fetch('data/centers.json').then(function(r) { return r.ok ? r.json() : []; })
+    ]).then(function(arr) {
+      provincesData = arr[0] || [];
+      centersData = arr[1] || [];
+    });
+  }
+
   function dbToFrontend(row) {
     var regionParts = [row.area, row.province, row.center].filter(Boolean);
     return {
@@ -1291,6 +1307,24 @@
       // Self-check Filters
       fillFilterProvinces(selfcheckFilterArea, selfcheckFilterProvince, selfcheckFilterCenter);
       fillFilterCenters(selfcheckFilterProvince, selfcheckFilterCenter, selfcheckFilterArea);
+
+      // Accident Statistics Filters (List)
+      var accArea = document.getElementById('accAreaSelect');
+      var accProv = document.getElementById('accProvinceSelect');
+      var accCenter = document.getElementById('accCenterSelect');
+      if (accArea && accProv) {
+          fillFilterProvinces(accArea, accProv, accCenter);
+          fillFilterCenters(accProv, accCenter, accArea);
+      }
+
+      // Accident Statistics Filters (Analysis)
+      var aaArea = document.getElementById('accAnalysisAreaSelect');
+      var aaProv = document.getElementById('accAnalysisProvinceSelect');
+      var aaCenter = document.getElementById('accAnalysisCenterSelect');
+      if (aaArea && aaProv) {
+          fillFilterProvinces(aaArea, aaProv, aaCenter);
+          fillFilterCenters(aaProv, aaCenter, aaArea);
+      }
     }
     function fillHazardSecondOptions(category) {
       var listContainer = document.getElementById('hazardFormSecondList');
@@ -1461,26 +1495,14 @@
     }
 
 
-    (function loadLocationData() {
-      if (typeof window.LOCATION_PROVINCES !== 'undefined' && typeof window.LOCATION_CENTERS !== 'undefined') {
-        provincesData = window.LOCATION_PROVINCES;
-        centersData = window.LOCATION_CENTERS;
-        fillFilterLocationOptions();
-        populateHazardCategorySelects();
-        renderSelfcheckRows();
-        return;
-      }
-      Promise.all([
-        fetch('data/provinces.json').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
-        fetch('data/centers.json').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
-      ]).then(function (arr) {
-        provincesData = arr[0] || [];
-        centersData = arr[1] || [];
+    function loadLocationData() {
+      fetchLocationsData().then(function() {
         fillFilterLocationOptions();
         populateHazardCategorySelects();
         renderSelfcheckRows();
       });
-    })();
+    }
+    loadLocationData();
 
     var nsSelect = document.getElementById('hazardFormNorthSouth');
     var provSelect = document.getElementById('hazardFormProvince');
@@ -4143,58 +4165,82 @@
         '</div>' +
 
         '<div id="accidentAnalysisPanel">' +
-          // 核心统计指标
-          '<div class="stats-row mb-24">' +
-            buildStatCard('年度总事故起数', '23', '同比下降 12%', 'down', 
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>', 'blue') +
-            buildStatCard('本月发生', '2', '环比上月持平', 'stable', 
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>', 'orange') +
-            buildStatCard('百万工时事故率', '0.45', '优于行业均值', 'up', 
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>', 'green') +
-            buildStatCard('重大事故起数', '0', '连续 365 天无重大事故', 'stable', 
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>', 'red') +
-          '</div>' +
-
-          // 图表工作区
-          '<div class="stats-dashboard-grid">' +
-            // 趋势图
-            '<div class="panel stats-chart-panel">' +
-              '<div class="panel-header">' +
-                '<div class="panel-title">事故月度变化趋势</div>' +
-              '</div>' +
-              '<div class="panel-body">' +
-                '<div class="trend-chart-container">' +
-                  buildBarChart([4, 3, 5, 2, 4, 3, 0, 0, 0, 0, 0, 0], ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]) +
+          // 分析页筛选
+          '<div class="panel" style="margin-bottom:20px;">' +
+            '<div class="panel-body" style="padding: 12px 20px;">' + // 收窄内边距
+              '<div class="filter-row" style="margin-bottom:0;">' + // 紧凑布局
+                '<div class="filter-item">' +
+                  '<label class="filter-label">年份</label>' +
+                  '<select class="filter-select" id="accAnalysisYearSelect"><option>2025年</option><option>2026年</option></select>' +
+                '</div>' +
+                '<div class="filter-item">' +
+                  '<label class="filter-label">月份</label>' +
+                  '<select class="filter-select" id="accAnalysisMonthSelect"><option>全部</option><option>1月</option><option>2月</option><option>3月</option><option>4月</option><option>5月</option><option>6月</option><option>7月</option><option>8月</option><option>9月</option><option>10月</option><option>11月</option><option>12月</option></select>' +
+                '</div>' +
+                '<div class="filter-item">' +
+                  '<label class="filter-label">南北部</label>' +
+                  '<select class="filter-select" id="accAnalysisAreaSelect">' +
+                    '<option value="">全部</option>' +
+                    '<option value="北部">北部区域</option>' +
+                    '<option value="南部">南部区域</option>' +
+                    '<option value="中部">中部区域</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="filter-item">' +
+                  '<label class="filter-label">省区</label>' +
+                  '<select class="filter-select" id="accAnalysisProvinceSelect"><option value="">全部</option></select>' +
+                '</div>' +
+                '<div class="filter-item">' +
+                  '<label class="filter-label">中心</label>' +
+                  '<select class="filter-select" id="accAnalysisCenterSelect"><option value="">全部</option></select>' +
                 '</div>' +
               '</div>' +
             '</div>' +
+          '</div>' +
+          
+          // 核心统计指标
+          '<div class="stats-row" style="margin-bottom:20px;" id="accAnalysisMetrics">' +
+            buildStatCard('年度总事故起数', '0', '正在分析...', 'stable', 
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>', 'blue') +
+            buildStatCard('当前月发生', '0', '同比计算中', 'stable', 
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>', 'orange') +
+            buildStatCard('千万工时事故率', '0.00', '优于行业均值', 'up', 
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>', 'green') +
+            buildStatCard('重大事故起数', '0', '安全稳定运行中', 'stable', 
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>', 'red') +
+          '</div>' +
 
-            // 分类占比与区域排行
-            '<div style="display: flex; flex-direction: column; gap: 24px;">' +
-              '<div class="panel" style="flex: 1;">' +
-                '<div class="panel-header">' +
-                  '<div class="panel-title">事故性质占比</div>' +
-                '</div>' +
-                '<div class="panel-body">' +
-                  '<div class="distribution-list">' +
-                    buildDistItem("交通运输", 45, "var(--primary)") +
-                    buildDistItem("机械伤害", 25, "var(--warning)") +
-                    buildDistItem("高处坠落", 15, "var(--danger)") +
-                    buildDistItem("触电伤害", 10, "var(--info)") +
-                    buildDistItem("其他类型", 5, "var(--text-tertiary)") +
-                  '</div>' +
+          // 第一行：月度趋势面积图（全宽）
+          '<div class="panel" style="margin-bottom:20px;">' +
+            '<div class="panel-header">' +
+              '<div class="panel-title">📈 事故月度变化趋势</div>' +
+            '</div>' +
+            '<div class="panel-body">' +
+              '<div id="accAnalysisTrendChart" style="min-height:240px;">' +
+                '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary)">加载中...</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          // 第二行：事故类型 TOP5 + 区域排行 TOP3
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">' +
+            '<div class="panel">' +
+              '<div class="panel-header">' +
+                '<div class="panel-title">📊 事故类型 TOP 5</div>' +
+              '</div>' +
+              '<div class="panel-body">' +
+                '<div id="accAnalysisTypeDist" style="min-height:220px;">' +
+                  '<div style="text-align:center;padding:20px;color:var(--text-tertiary)">加载中...</div>' +
                 '</div>' +
               '</div>' +
-              '<div class="panel" style="flex: 1;">' +
-                '<div class="panel-header">' +
-                  '<div class="panel-title">事故高发区域 TOP 3</div>' +
-                '</div>' +
-                '<div class="panel-body">' +
-                  '<div class="top-list">' +
-                    buildTopItem(1, "北部区域", "8起", "34.7%", "var(--danger)") +
-                    buildTopItem(2, "华东区域", "6起", "26.1%", "var(--warning)") +
-                    buildTopItem(3, "华中区域", "4起", "17.4%", "var(--info)") +
-                  '</div>' +
+            '</div>' +
+            '<div class="panel">' +
+              '<div class="panel-header">' +
+                '<div class="panel-title">🏆 事故高发区域 TOP 3</div>' +
+              '</div>' +
+              '<div class="panel-body">' +
+                '<div id="accAnalysisRegionTop" style="min-height:220px;">' +
+                  '<div style="text-align:center;padding:20px;color:var(--text-tertiary)">加载中...</div>' +
                 '</div>' +
               '</div>' +
             '</div>' +
@@ -4218,9 +4264,9 @@
                   '<label class="filter-label">南北部</label>' +
                   '<select class="filter-select" id="accAreaSelect">' +
                     '<option value="">全部</option>' +
-                    '<option value="north">北部区域</option>' +
-                    '<option value="south">南部区域</option>' +
-                    '<option value="central">中部区域</option>' +
+                    '<option value="北部">北部区域</option>' +
+                    '<option value="南部">南部区域</option>' +
+                    '<option value="中部">中部区域</option>' +
                   '</select>' +
                 '</div>' +
                 '<div class="filter-item">' +
@@ -4304,19 +4350,142 @@
       '</div>';
   }
 
-  function buildBarChart(data, labels) {
-    let bars = "";
-    const max = Math.max(...data, 1);
-    data.forEach((val, i) => {
-      const height = (val / max) * 100;
-      bars += 
-        '<div class="chart-bar-item">' +
-          '<div class="bar-value">' + (val || "") + '</div>' +
-          '<div class="bar-fill" style="height: ' + height + '%;"></div>' +
-          '<div class="bar-label">' + labels[i] + '</div>' +
+  // === 面积趋势图 ===
+  function buildAreaChart(data, labels) {
+    var max = Math.max.apply(null, data.concat([1]));
+    var padL = 50, padR = 30, padT = 50, padB = 40; 
+    var totalW = 1200, totalH = 400; 
+    var chartW = totalW - padL - padR;
+    var chartH = totalH - padT - padB;
+    var step = chartW / (data.length - 1);
+
+    // 构造坐标
+    var pts = [];
+    data.forEach(function(v, i) {
+      var x = padL + i * step;
+      var y = padT + chartH - (v / max) * chartH;
+      pts.push({x: x, y: y, v: v});
+    });
+
+    var linePoints = pts.map(function(p) { return p.x + ',' + p.y; }).join(' ');
+    var areaPoints = padL + ',' + (padT + chartH) + ' ' + linePoints + ' ' + (padL + chartW) + ',' + (padT + chartH);
+
+    // 坐标轴与网格线
+    var gridLines = '';
+    for (var g = 0; g <= 4; g++) {
+      var gy = padT + (chartH / 4) * g;
+      var gVal = Math.round(max - (max / 4) * g);
+      gridLines += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (padL + chartW) + '" y2="' + gy + '" stroke="#eee" stroke-width="1" stroke-dasharray="4,4" />';
+      gridLines += '<text x="' + (padL - 12) + '" y="' + (gy + 5) + '" fill="#999" font-size="14" text-anchor="end">' + gVal + '</text>';
+    }
+
+    // X轴 刻度/月份
+    var xLabelsHtml = labels.map(function(l, i) {
+      var px = padL + i * step;
+      return '<text x="' + px + '" y="' + (totalH - 10) + '" fill="#999" font-size="14" text-anchor="middle">' + l + '</text>';
+    }).join('');
+
+    // 圆点 + 数值标签
+    var dotsHtml = pts.map(function(p) {
+      return '<circle cx="' + p.x + '" cy="' + p.y + '" r="6" fill="#4f7df9" stroke="white" stroke-width="2.5" />' +
+             '<text x="' + p.x + '" y="' + (p.y - 14) + '" fill="#333" font-size="16" text-anchor="middle" font-weight="600">' + (p.v || '') + '</text>';
+    }).join('');
+
+    var svg = '<svg viewBox="0 0 ' + totalW + ' ' + totalH + '" preserveAspectRatio="none" style="width:100%; height:100%;">' +
+      '<defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="#4f7df9" stop-opacity="0.3"/>' +
+        '<stop offset="100%" stop-color="#4f7df9" stop-opacity="0.05"/>' +
+      '</linearGradient></defs>' +
+      gridLines +
+      xLabelsHtml +
+      '<polygon points="' + areaPoints + '" fill="url(#areaGrad)" />' +
+      '<polyline points="' + linePoints + '" fill="none" stroke="#4f7df9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />' +
+      dotsHtml +
+    '</svg>';
+
+    return '<div style="position:relative; height:350px; padding: 10px 0;">' + svg + '</div>';
+  }
+
+  // === 水平柱状图 (事故类型 TOP) ===
+  function buildHorizontalBarChart(items, total) {
+    if (!items || items.length === 0) {
+      return '<div style="text-align:center;padding:30px;color:var(--text-tertiary)">暂无分类数据</div>';
+    }
+    var max = items[0].value || 1;
+    var colors = ['#4f7df9', '#36b37e', '#ff9f43', '#ff6b6b', '#a855f7'];
+    var html = '';
+    items.forEach(function(item, idx) {
+      var pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
+      var barW = ((item.value / max) * 100).toFixed(0);
+      var color = colors[idx] || '#999';
+      html +=
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">' +
+          '<div style="width:70px;font-size:13px;color:var(--text-secondary);text-align:right;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + item.label + '">' + item.label + '</div>' +
+          '<div style="flex:1;height:28px;background:#f5f6fa;border-radius:6px;overflow:hidden;position:relative;">' +
+            '<div style="height:100%;width:' + barW + '%;background:linear-gradient(90deg,' + color + ',' + color + 'cc);border-radius:6px;transition:width .6s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;">' +
+              '<span style="font-size:12px;font-weight:600;color:white;">' + item.value + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="width:48px;font-size:13px;font-weight:600;color:' + color + ';text-align:right;">' + pct + '%</div>' +
         '</div>';
     });
-    return '<div class="bar-chart-wrap">' + bars + '</div>';
+    return '<div style="padding:4px 0;">' + html + '</div>';
+  }
+
+  function refreshAccidentAnalysis() {
+    const metricsContainer = document.getElementById('accAnalysisMetrics');
+    const trendContainer = document.getElementById('accAnalysisTrendChart');
+    const typeDistContainer = document.getElementById('accAnalysisTypeDist');
+    const regionTopContainer = document.getElementById('accAnalysisRegionTop');
+
+    var year = document.getElementById('accAnalysisYearSelect')?.value || '2025';
+    var month = document.getElementById('accAnalysisMonthSelect')?.value || '';
+    var area = document.getElementById('accAnalysisAreaSelect')?.value || '';
+    var province = document.getElementById('accAnalysisProvinceSelect')?.value || '';
+    var center = document.getElementById('accAnalysisCenterSelect')?.value || '';
+
+    var queryParams = new URLSearchParams({
+        year: year,
+        month: month,
+        area: area,
+        province: province,
+        center: center
+    });
+
+    fetch('/api/accidents/stats?' + queryParams.toString())
+      .then(res => res.json())
+      .then(res => {
+        if (res.code === 200) {
+          const d = res.data;
+          // 1. Metrics
+          if (metricsContainer) {
+            metricsContainer.innerHTML = 
+              buildStatCard('年度总事故起数', d.totalYearly, '同比基准分析中', 'stable', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>', 'blue') +
+              buildStatCard('当前月发生', d.totalMonthly, '环比实时监测', 'stable', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>', 'orange') +
+              buildStatCard('千万工时事故率', '0.38', '优于行业同期', 'up', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>', 'green') +
+              buildStatCard('重大事故起数', '0', '连续稳产运行', 'stable', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>', 'red');
+          }
+
+          // 2. Trend Chart (Mixed Bar + Line)
+          if (trendContainer) {
+            const months = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+            trendContainer.innerHTML = buildAreaChart(d.monthlyTrend, months);
+          }
+
+          // 3. Type Dist (horizontal bar chart)
+          if (typeDistContainer) {
+            typeDistContainer.innerHTML = buildHorizontalBarChart(d.typeDist, d.totalYearly);
+          }
+
+          // 4. Region Top
+          if (regionTopContainer) {
+            regionTopContainer.innerHTML = d.regionalTop.map((item, idx) => {
+              const colors = ["var(--danger)", "var(--warning)", "var(--info)"];
+              return buildTopItem(idx + 1, item.label, item.count + "起", item.percent + "%", colors[idx] || 'var(--primary)');
+            }).join('') || '<div style="text-align:center; padding:20px; color:var(--text-tertiary)">该年份暂无区域数据</div>';
+          }
+        }
+      });
   }
 
   function buildDistItem(label, percent, color) {
@@ -4478,10 +4647,51 @@
         analysisPanel.style.display = key === 'analysis' ? '' : 'none';
         listPanel.style.display = key === 'list' ? '' : 'none';
         
-        if (key === 'list') {
+        if (key === 'analysis') {
+            refreshAccidentAnalysis();
+        } else if (key === 'list') {
             loadAccidentList(currentAccidentPage);
         }
       });
+
+      // 初始化分析页筛选逻辑
+      var aaYear = document.getElementById('accAnalysisYearSelect');
+      var aaMonth = document.getElementById('accAnalysisMonthSelect');
+      var aaArea = document.getElementById('accAnalysisAreaSelect');
+      var aaProvince = document.getElementById('accAnalysisProvinceSelect');
+      var aaCenter = document.getElementById('accAnalysisCenterSelect');
+
+      [aaYear, aaMonth, aaArea, aaProvince, aaCenter].forEach(el => {
+        if (el) el.addEventListener('change', function() {
+            refreshAccidentAnalysis();
+        });
+      });
+
+      fetchLocationsData().then(function() {
+        if (aaArea && aaProvince) {
+          fillFilterProvinces(aaArea, aaProvince, aaCenter);
+          fillFilterCenters(aaProvince, aaCenter, aaArea);
+        }
+        if (accAreaSelect && accProvinceSelect && accCenterSelect) {
+          fillFilterProvinces(accAreaSelect, accProvinceSelect, accCenterSelect);
+          fillFilterCenters(accProvinceSelect, accCenterSelect, accAreaSelect);
+        }
+      });
+
+      // 分析页级联逻辑
+      if (aaArea) {
+        aaArea.addEventListener('change', function() {
+          fillFilterProvinces(aaArea, aaProvince, aaCenter);
+        });
+      }
+      if (aaProvince) {
+        aaProvince.addEventListener('change', function() {
+          fillFilterCenters(this, aaCenter, aaArea);
+        });
+      }
+      
+      // 默认加载分析数据
+      refreshAccidentAnalysis();
       
       // 初始化位置联动
       var accAreaSelect = document.getElementById('accAreaSelect');
@@ -4494,7 +4704,7 @@
         });
         
         accProvinceSelect.addEventListener('change', function() {
-          fillFilterCenters(accProvinceSelect, accCenterSelect);
+          fillFilterCenters(accProvinceSelect, accCenterSelect, accAreaSelect);
         });
       }
       
