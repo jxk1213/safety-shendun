@@ -4202,48 +4202,105 @@
         '</div>' + // End Analysis Panel
 
         '<div id="accidentListPanel" style="display:none;">' +
+          // 列表搜索
+          '<div class="panel mb-16">' +
+            '<div class="panel-body">' +
+              '<div class="filter-row">' +
+                '<div class="filter-item">' +
+                  '<label class="filter-label">年份</label>' +
+                  '<select class="filter-select" id="accYearSelect"><option>全部</option><option>2026年</option><option>2025年</option></select>' +
+                '</div>' +
+                '<div class="filter-item">' +
+                  '<label class="filter-label">月份</label>' +
+                  '<select class="filter-select" id="accMonthSelect"><option>全部</option><option>1月</option><option>2月</option><option>3月</option><option>4月</option><option>5月</option><option>6月</option><option>7月</option><option>8月</option><option>9月</option><option>10月</option><option>11月</option><option>12月</option></select>' +
+                '</div>' +
+                '<div class="filter-item">' +
+                  '<label class="filter-label">南北部</label>' +
+                  '<select class="filter-select" id="accAreaSelect">' +
+                    '<option value="">全部</option>' +
+                    '<option value="north">北部区域</option>' +
+                    '<option value="south">南部区域</option>' +
+                    '<option value="central">中部区域</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="filter-item">' +
+                  '<label class="filter-label">省区</label>' +
+                  '<select class="filter-select" id="accProvinceSelect"><option value="">全部</option></select>' +
+                '</div>' +
+                '<div class="filter-item">' +
+                  '<label class="filter-label">中心</label>' +
+                  '<select class="filter-select" id="accCenterSelect"><option value="">全部</option></select>' +
+                '</div>' +
+                '<div class="filter-item">' +
+                  '<label class="filter-label">事故类型</label>' +
+                  '<select class="filter-select" id="accTypeSelect"><option>全部</option><option>交通运输</option><option>机械伤害</option><option>高处坠落</option><option>触电伤害</option><option>其他</option></select>' +
+                '</div>' +
+                '<div class="filter-actions">' +
+                  '<button class="filter-btn filter-btn-primary" id="accSearchBtn">' +
+                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+                    '查询' +
+                  '</button>' +
+                  '<button class="filter-btn filter-btn-outline" id="accResetBtn">' +
+                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
+                    '重置' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
           // 列表内容
           '<div class="panel">' +
             '<div class="panel-header">' +
-              '<div class="panel-title">最新事故明细</div>' +
+              '<div class="panel-title">事故清单</div>' +
             '</div>' +
             '<div class="panel-body p-0">' +
-              '<table class="data-table">' +
-                '<thead>' +
-                  '<tr>' +
-                    '<th>事故时间</th>' +
-                    '<th>所属单元</th>' +
-                    '<th>事故性质</th>' +
-                    '<th>等级</th>' +
-                    '<th>责任判定</th>' +
-                    '<th>状态</th>' +
-                    '<th>操作</th>' +
-                  '</tr>' +
-                '</thead>' +
-                '<tbody>' +
-                  '<tr>' +
-                    '<td>2026-03-25 14:20</td>' +
-                    '<td>华北分拨中心</td>' +
-                    '<td>交通运输</td>' +
-                    '<td><span class="badge badge-warning">轻微事故</span></td>' +
-                    '<td>主要责任</td>' +
-                    '<td><span class="status-indicator status-active">已结案</span></td>' +
-                    '<td><span class="panel-link">详情</span></td>' +
-                  '</tr>' +
-                  '<tr>' +
-                    '<td>2026-03-22 09:45</td>' +
-                    '<td>上海转运中心</td>' +
-                    '<td>机械伤害</td>' +
-                    '<td><span class="badge badge-warning">一般事故</span></td>' +
-                    '<td>同等责任</td>' +
-                    '<td><span class="status-indicator status-pending">调查中</span></td>' +
-                    '<td><span class="panel-link">详情</span></td>' +
-                  '</tr>' +
-                '</tbody>' +
-              '</table>' +
+              '<div class="data-table-scroll">' +
+                '<table class="data-table">' +
+                  '<thead>' +
+                    '<tr>' +
+                      '<th style="width:50px">序号</th>' +
+                      '<th style="width:80px">姓名</th>' +
+                      '<th>所属单位</th>' +
+                      '<th style="width:100px">省区</th>' +
+                      '<th style="min-width:150px">事故名称</th>' +
+                      '<th style="width:110px">出险日期</th>' +
+                      '<th style="width:60px">月份</th>' +
+                      '<th style="width:70px">操作</th>' +
+                    '</tr>' +
+                  '</thead>' +
+                  '<tbody id="accidentTableBody">' +
+                    // 数据将由 loadAccidentList 方法动态渲染
+                    '<tr><td colspan="8" style="text-align: center; padding: 20px;">加载中...</td></tr>' +
+                  '</tbody>' +
+                '</table>' +
+              '</div>' +
+              '<div id="accidentPagination" class="pagination-wrapper" style="padding: 16px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; border-top: 1px solid var(--border-light);"></div>' +
             '</div>' +
           '</div>' +
+          '</div>' +
         '</div>' + // End List Panel
+        
+        // 事故详情 Modal
+        '<div class="modal-overlay" id="accidentDetailModalOverlay" style="display:none;">' +
+          '<div class="modal modal-accident-detail" role="dialog" style="max-width:640px;">' +
+            '<div class="modal-header"><div class="modal-title">事故详情</div><button class="modal-close" type="button" title="关闭" onclick="document.getElementById(\'accidentDetailModalOverlay\').style.display=\'none\'">×</button></div>' +
+            '<div class="modal-body">' +
+              '<div class="hazard-detail-info" id="accidentDetailInfo"></div>' +
+              '<div class="hazard-detail-images" style="margin-top:16px;">' +
+                '<div class="hazard-detail-section"><div class="form-label" style="font-weight:600;margin-bottom:8px;">事故附件</div><div style="color:var(--text-tertiary);font-size:13px;padding:12px;background:#f9fafb;border-radius:4px;border:1px dashed #e5e7eb;text-align:center;">历史记录暂无附件</div></div>' +
+              '</div>' +
+              '<div class="hazard-detail-section" style="margin-top:16px;">' +
+                '<div class="form-label" style="font-weight:600;margin-bottom:8px;">闭环情况</div>' +
+                '<div style="color:var(--text-secondary);font-size:13px;padding:12px;background:#f9fafb;border-radius:4px;"><span class="status-indicator status-active" style="margin-bottom:8px;display:inline-block;">已结案</span><br>本条事故来源于外部历史数据归档，已完成业务闭环。</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-outline" type="button" onclick="document.getElementById(\'accidentDetailModalOverlay\').style.display=\'none\'">关闭详情</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        
       '</div>';
   }
 
@@ -4285,12 +4342,131 @@
       '</div>';
   }
 
-  function initAccidentStatistics() {
-    var tabNav = document.getElementById('accidentStatsTabNav');
-    var analysisPanel = document.getElementById('accidentAnalysisPanel');
-    var listPanel = document.getElementById('accidentListPanel');
-    
-    if (tabNav && analysisPanel && listPanel) {
+    let currentAccidentPage = 1;
+    function loadAccidentList(page = 1) {
+      var tbody = document.getElementById('accidentTableBody');
+      var pagination = document.getElementById('accidentPagination');
+      if (!tbody) return;
+      
+      currentAccidentPage = page;
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">加载中...</td></tr>';
+      
+      var year = document.getElementById('accYearSelect')?.value || '';
+      var month = document.getElementById('accMonthSelect')?.value || '';
+      var area = document.getElementById('accAreaSelect')?.value || '';
+      var province = document.getElementById('accProvinceSelect')?.value || '';
+      var center = document.getElementById('accCenterSelect')?.value || '';
+      var type = document.getElementById('accTypeSelect')?.value || '';
+      
+      var queryParams = new URLSearchParams({
+        page: page,
+        limit: 20,
+        year: year,
+        month: month,
+        area: area,
+        province: province,
+        center: center,
+        type: type
+      });
+      
+      fetch('/api/accidents?' + queryParams.toString())
+        .then(res => res.json())
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            if (res.data.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--text-tertiary);">暂无数据</td></tr>';
+              if (pagination) pagination.innerHTML = '';
+              return;
+            }
+            
+            var html = '';
+            window._currentAccidents = res.data; // Store for detail modal
+            res.data.forEach(function(item, index) {
+              var dateStr = '-';
+              if (item.accident_date && typeof item.accident_date === 'string') {
+                  dateStr = item.accident_date.substring(0, 10);
+              } else if (item.accident_date) {
+                  dateStr = new Date(item.accident_date).toISOString().substring(0, 10);
+              }
+              // 构建事故名称：默认使用事故详细类型 (如果有)，或者使用受伤部位和详细类型拼接。
+              var accidentName = item.accident_type || '安全事故';
+              if (item.injured_part && item.injured_part !== '-' && item.accident_type && item.accident_type !== '-') {
+                  accidentName = item.injured_part + item.accident_type;
+              }
+              if (accidentName.length > 20) {
+                  accidentName = accidentName.substring(0, 20) + '...';
+              }
+              
+              var monthStr = item.month || '-';
+              if (monthStr !== '-' && !monthStr.includes('月')) monthStr += '月';
+
+              // 计算逻辑序号：(当前页-1) * 每页限额 + 当前行索引 + 1
+              var displayIndex = (res.pagination.page - 1) * res.pagination.limit + index + 1;
+
+              html += '<tr>' +
+                '<td>' + displayIndex + '</td>' +
+                '<td>' + (item.person_name || '-') + '</td>' +
+                '<td>' + (item.unit || '-') + '</td>' +
+                '<td>' + (item.province || '-') + '</td>' +
+                '<td><span class="badge badge-info">' + accidentName + '</span></td>' +
+                '<td style="white-space: nowrap;">' + dateStr + '</td>' +
+                '<td>' + monthStr + '</td>' +
+                '<td><span class="panel-link" onclick="window._showAccidentDetail(' + item.id + ')">详情</span></td>' +
+              '</tr>';
+            });
+            tbody.innerHTML = html;
+            
+            // 渲染分页组件
+            if (pagination && res.pagination) {
+              var btnPrev = '<button class="btn btn-outline btn-sm" ' + (res.pagination.page <= 1 ? 'disabled' : '') + ' onclick="window._fetchAccidentsPage(' + (res.pagination.page - 1) + ')">上一页</button>';
+              var btnNext = '<button class="btn btn-outline btn-sm" ' + (res.pagination.page >= res.pagination.totalPages ? 'disabled' : '') + ' onclick="window._fetchAccidentsPage(' + (res.pagination.page + 1) + ')">下一页</button>';
+              
+              pagination.innerHTML = 
+                '<div style="font-size: 13px; color: var(--text-secondary);">共 ' + res.pagination.total + ' 条数据，当前第 ' + res.pagination.page + ' / ' + res.pagination.totalPages + ' 页</div>' +
+                '<div style="display: flex; gap: 8px;">' + btnPrev + btnNext + '</div>';
+            }
+          }
+        })
+        .catch(function(err) {
+          console.error(err);
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--danger);">加载失败</td></tr>';
+        });
+    }
+
+    // 暴露给分页按钮调用
+    window._fetchAccidentsPage = function(page) {
+      loadAccidentList(page);
+    };
+
+    window._showAccidentDetail = function(id) {
+       var arr = window._currentAccidents || [];
+       var item = arr.find(function(a) { return a.id === id; });
+       if(!item) return;
+       var dOverlay = document.getElementById('accidentDetailModalOverlay');
+       var dInfo = document.getElementById('accidentDetailInfo');
+       if(!dOverlay || !dInfo) return;
+       
+       var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;line-height:1.5;">' +
+         '<div><span style="color:var(--text-secondary)">序号：</span>'+(item.serial_number || item.id)+'</div>' +
+         '<div><span style="color:var(--text-secondary)">姓名：</span>'+(item.person_name || '-')+'</div>' +
+         '<div><span style="color:var(--text-secondary)">所属单位：</span>'+(item.unit || '-')+'</div>' +
+         '<div><span style="color:var(--text-secondary)">省区：</span>'+(item.province || '-')+'</div>' +
+         '<div><span style="color:var(--text-secondary)">事故名称：</span>'+(item.injured_part || '')+(item.accident_type || '-')+'</div>' +
+         '<div><span style="color:var(--text-secondary)">出险日期：</span>'+(item.accident_date ? new Date(item.accident_date).toISOString().substring(0,10) : '-')+'</div>' +
+         '<div><span style="color:var(--text-secondary)">月份：</span>'+(item.month || '-')+'月</div>' +
+         '<div style="grid-column:1/3;margin-top:8px;"><div style="color:var(--text-secondary);margin-bottom:4px;">出险情况说明：</div><div style="padding:10px;background:var(--bg-light);border-radius:4px;">'+(item.description || '-')+'</div></div>' +
+       '</div>';
+       
+       dInfo.innerHTML = html;
+       dOverlay.style.display = 'flex';
+    };
+
+    function initAccidentStatistics() {
+      var tabNav = document.getElementById('accidentStatsTabNav');
+      var analysisPanel = document.getElementById('accidentAnalysisPanel');
+      var listPanel = document.getElementById('accidentListPanel');
+      
+      if (tabNav && analysisPanel && listPanel) {
       tabNav.addEventListener('click', function(e) {
         var tab = e.target.closest('.tab-item');
         if (!tab) return;
@@ -4301,7 +4477,45 @@
         
         analysisPanel.style.display = key === 'analysis' ? '' : 'none';
         listPanel.style.display = key === 'list' ? '' : 'none';
+        
+        if (key === 'list') {
+            loadAccidentList(currentAccidentPage);
+        }
       });
+      
+      // 初始化位置联动
+      var accAreaSelect = document.getElementById('accAreaSelect');
+      var accProvinceSelect = document.getElementById('accProvinceSelect');
+      var accCenterSelect = document.getElementById('accCenterSelect');
+      
+      if (accAreaSelect && accProvinceSelect && accCenterSelect) {
+        accAreaSelect.addEventListener('change', function() {
+          fillFilterProvinces(accAreaSelect, accProvinceSelect, accCenterSelect);
+        });
+        
+        accProvinceSelect.addEventListener('change', function() {
+          fillFilterCenters(accProvinceSelect, accCenterSelect);
+        });
+      }
+      
+      // 查询与重置按钮
+      var accSearchBtn = document.getElementById('accSearchBtn');
+      var accResetBtn = document.getElementById('accResetBtn');
+      
+      if (accSearchBtn) {
+        accSearchBtn.addEventListener('click', function() {
+          loadAccidentList(1);
+        });
+      }
+      
+      if (accResetBtn) {
+        accResetBtn.addEventListener('click', function() {
+          var filters = document.querySelectorAll('#accidentListPanel .filter-select');
+          filters.forEach(function(f) { f.value = f.options[0].value; });
+          if (accProvinceSelect) accProvinceSelect.innerHTML = '<option value="">全部</option>';
+          if (accCenterSelect) accCenterSelect.innerHTML = '<option value="">全部</option>';
+        });
+      }
     }
   }
 

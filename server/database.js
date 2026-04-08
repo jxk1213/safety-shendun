@@ -147,6 +147,22 @@ async function initializeTables() {
       FOREIGN KEY (hazard_id) REFERENCES hazards (id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
+    await promisePool.query(`CREATE TABLE IF NOT EXISTS accidents (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      serial_number VARCHAR(100),
+      person_name VARCHAR(100),
+      unit VARCHAR(255),
+      province VARCHAR(100),
+      accident_date DATETIME,
+      month VARCHAR(50),
+      description TEXT,
+      injured_part VARCHAR(255),
+      accident_type VARCHAR(100),
+      area VARCHAR(100),
+      center VARCHAR(100),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
     console.log('MySQL 数据表初始化完成');
   } catch (err) {
     console.error('建表失败:', err.message);
