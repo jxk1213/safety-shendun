@@ -2280,3 +2280,231 @@ input {
     position: static;
   }
 }
+
+/* ========================================
+   隐患上报专用页样式 (Premium Design)
+   ======================================== */
+.hazard-report-page {
+  animation: fadeIn 0.4s ease-out;
+  padding-bottom: 60px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.report-hero {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  color: white;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.report-hero::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  filter: blur(40px);
+}
+
+.report-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.report-back-btn:hover {
+  color: white;
+  transform: translateX(-4px);
+}
+
+.report-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.report-subtitle {
+  font-size: 15px;
+  opacity: 0.8;
+}
+
+.report-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.report-form-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+}
+
+.report-sidebar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--primary-light);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-section-title svg {
+  color: var(--primary);
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.report-span-2 {
+  grid-column: span 2;
+}
+
+.report-field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.report-input, .report-select, .report-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  transition: all var(--transition);
+  background: var(--bg-body);
+}
+
+.report-input:focus, .report-select:focus, .report-textarea:focus {
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 4px var(--primary-50);
+}
+
+.report-level-selector {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.level-item {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  text-align: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all var(--transition);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.level-item.low { background: #f0fdf4; color: #16a34a; border-color: #dcfce7; }
+.level-item.mid { background: #fffbeb; color: #d97706; border-color: #fef3c7; }
+.level-item.high { background: #fff1f2; color: #e11d48; border-color: #ffe4e6; }
+
+.level-item.active.low { background: #16a34a; color: white; border-color: #16a34a; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2); }
+.level-item.active.mid { background: #d97706; color: white; border-color: #d97706; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2); }
+.level-item.active.high { background: #e11d48; color: white; border-color: #e11d48; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2); }
+
+.report-upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: var(--bg-body);
+}
+
+.report-upload-zone:hover {
+  border-color: var(--primary);
+  background: var(--primary-50);
+}
+
+.upload-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  color: var(--text-tertiary);
+}
+
+.report-footer {
+  margin-top: 32px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-xl {
+  padding: 14px 40px;
+  font-size: 16px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+}
+
+/* 二级隐患描述卡片样式 */
+.report-second-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  min-height: 40px;
+}
+
+.report-second-item {
+  padding: 8px 16px;
+  background: var(--bg-body);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.report-second-item:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-50);
+}
+
+.report-second-item.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 4px 10px rgba(26, 92, 256, 0.2);
+}

@@ -337,6 +337,7 @@
       case 'data-center': mainContent.innerHTML = renderDataCenter(); break;
       case 'document': mainContent.innerHTML = renderDocument(); break;
       case 'system': mainContent.innerHTML = renderSystem(); break;
+      case 'hazard-report-page': mainContent.innerHTML = renderHazardReportPage(); break;
       default: mainContent.innerHTML = renderDashboard();
     }
   }
@@ -695,6 +696,10 @@
             '<div class="hazard-list-header" style="margin-top:24px;">' +
               '<div class="section-title">自查自纠报告</div>' +
               '<div class="hazard-list-header-actions">' +
+                '<button class="btn btn-primary" id="selfcheckHazardReportBtn" type="button" style="margin-right: 8px;">' +
+                  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg>' +
+                  '隐患上报' +
+                '</button>' +
                 '<button class="btn btn-outline" id="selfcheckExportBtn" type="button">导出报表</button>' +
               '</div>' +
             '</div>' +
@@ -1208,6 +1213,22 @@
           var el = panels[k];
           if (el) el.style.display = k === key ? '' : 'none';
         });
+      });
+    }
+
+    var addBtn = document.getElementById('hazardReportAddBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        renderPage('hazard-report-page');
+        if (typeof initHazardReportPage === 'function') initHazardReportPage();
+      });
+    }
+
+    var selfcheckHazardReportBtn = document.getElementById('selfcheckHazardReportBtn');
+    if (selfcheckHazardReportBtn) {
+      selfcheckHazardReportBtn.addEventListener('click', function () {
+        renderPage('hazard-report-page');
+        if (typeof initHazardReportPage === 'function') initHazardReportPage();
       });
     }
 
@@ -4791,6 +4812,247 @@
       '</div>';
   }
 
+
+  // ============ 隐患上报专用页 (Premium) ============
+  function renderHazardReportPage() {
+    return `
+      <div class="hazard-report-page">
+        <div class="report-hero">
+          <div class="report-back-btn" onclick="renderPage('dual-prevention')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            返回列表
+          </div>
+          <h1 class="report-title">隐患上报 · 闭环共治</h1>
+          <p class="report-subtitle">通过及时发现并上报安全隐患，您正在为构建更安全的作业环境贡献力量。</p>
+        </div>
+
+        <div class="report-container">
+          <div class="report-form-card">
+            <div class="form-section">
+              <h2 class="form-section-title">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                基本信息
+              </h2>
+              <div class="report-grid">
+                <div class="report-field">
+                  <label class="required">隐患类别</label>
+                  <select id="reportFormCategory" class="report-select">
+                    <option value="">请选择类别</option>
+                  </select>
+                </div>
+                <div class="report-field">
+                  <label>发现时间</label>
+                  <input type="datetime-local" id="reportFormTime" class="report-input">
+                </div>
+                <div class="report-field report-span-2" id="reportFormSecondWrap">
+                  <label>二级隐患描述 <span id="reportSecondGuide" style="font-size: 11px; font-weight: 400; color: var(--text-tertiary); margin-left: 8px;">(根据类别自动加载内容)</span></label>
+                  <div id="reportFormSecondList" class="report-second-list">
+                    <div style="color: var(--text-tertiary); font-style: italic; font-size: 13px; padding: 20px 0;">请先选择隐患类别...</div>
+                  </div>
+                  <input type="hidden" id="reportFormSecond" value="">
+                </div>
+                <div class="report-field report-span-2">
+                  <label class="required">具体问题描述</label>
+                  <textarea id="reportFormDesc" class="report-textarea" rows="4" placeholder="请详细描述隐患的具体情况、具体位置及可能的风险..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section" style="margin-top: 32px;">
+              <h2 class="form-section-title">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                所属位置
+              </h2>
+              <div class="report-grid">
+                <div class="report-field">
+                  <label>南北部</label>
+                  <select id="reportFormNorthSouth" class="report-select">
+                    <option value="">全部</option>
+                    <option value="北部">北部</option>
+                    <option value="南部">南部</option>
+                    <option value="中部">中部</option>
+                  </select>
+                </div>
+                <div class="report-field">
+                  <label>所属省区</label>
+                  <select id="reportFormProvince" class="report-select">
+                    <option value="">请选择</option>
+                  </select>
+                </div>
+                <div class="report-field report-span-2">
+                  <label>所属中心</label>
+                  <select id="reportFormCenter" class="report-select">
+                    <option value="">请选择</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-sidebar-card">
+            <div class="report-form-card" style="padding: 24px;">
+              <h2 class="form-section-title">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                紧急程度
+              </h2>
+              <div class="report-level-selector" id="reportLevelSelector">
+                <div class="level-item low active" data-level="一般">一般</div>
+                <div class="level-item mid" data-level="重大">重大</div>
+                <div class="level-item high" data-level="特大">特大</div>
+              </div>
+              <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 12px;">注：特大隐患将同步发送短信提醒相关负责人。</p>
+            </div>
+
+            <div class="report-form-card" style="padding: 24px;">
+              <h2 class="form-section-title">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                现场图片
+              </h2>
+              <div class="report-upload-zone" id="reportUploadZone">
+                <svg viewBox="0 0 24 24" class="upload-icon" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <div style="font-size: 14px; font-weight: 500;">点击或拖拽上传照片</div>
+                <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">支持 PNG, JPG (最大 10MB)</div>
+                <input type="file" id="reportFileInput" style="display:none;" multiple accept="image/*">
+              </div>
+              <div id="reportPreviewArea" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;"></div>
+            </div>
+
+            <button class="btn btn-primary btn-xl" id="reportSubmitBtn" style="width: 100%; justify-content: center; box-shadow: 0 10px 15px -3px rgba(26, 92, 255, 0.4);">
+              提交上报
+            </button>
+            <button class="btn btn-outline" style="width: 100%; justify-content: center; margin-top: 12px;" onclick="renderPage('dual-prevention')">
+              取消返回
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function initHazardReportPage() {
+    var categoryEl = document.getElementById('reportFormCategory');
+    var timeEl = document.getElementById('reportFormTime');
+    var nsEl = document.getElementById('reportFormNorthSouth');
+    var provEl = document.getElementById('reportFormProvince');
+    var centerEl = document.getElementById('reportFormCenter');
+    var submitBtn = document.getElementById('reportSubmitBtn');
+    var levelItems = document.querySelectorAll('.level-item');
+    var uploadZone = document.getElementById('reportUploadZone');
+    var fileInput = document.getElementById('reportFileInput');
+    var previewArea = document.getElementById('reportPreviewArea');
+
+    // 初始化时间
+    if (timeEl) {
+      var now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      timeEl.value = now.toISOString().slice(0, 16);
+    }
+
+    // 初始化类别
+    if (categoryEl && typeof HAZARD_CATEGORY_CONTENT === 'object') {
+      Object.keys(HAZARD_CATEGORY_CONTENT).forEach(function(cat) {
+        var opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        categoryEl.appendChild(opt);
+      });
+
+      categoryEl.addEventListener('change', function() {
+        fillReportSecondOptions(categoryEl.value);
+      });
+    }
+
+    function fillReportSecondOptions(category) {
+      var listContainer = document.getElementById('reportFormSecondList');
+      var secondInput = document.getElementById('reportFormSecond');
+      var guide = document.getElementById('reportSecondGuide');
+      if (!listContainer || !secondInput) return;
+      
+      listContainer.innerHTML = '';
+      secondInput.value = '';
+      if (guide) guide.textContent = '(点击卡片选择对应内容)';
+      
+      if (!category || !HAZARD_CATEGORY_CONTENT[category]) {
+        listContainer.innerHTML = '<div style="color: var(--text-tertiary); font-style: italic; font-size: 13px; padding: 20px 0;">请先选择隐患类别...</div>';
+        return;
+      }
+      
+      HAZARD_CATEGORY_CONTENT[category].forEach(function (text) {
+        var item = document.createElement('div');
+        item.className = 'report-second-item';
+        item.textContent = text;
+        item.onclick = function () {
+          listContainer.querySelectorAll('.report-second-item').forEach(function (el) { el.classList.remove('active'); });
+          item.classList.add('active');
+          secondInput.value = text;
+        };
+        listContainer.appendChild(item);
+      });
+    }
+
+    // 初始化联动
+    if (nsEl && provEl && centerEl) {
+      nsEl.addEventListener('change', function() {
+        fillFilterProvinces(nsEl, provEl, centerEl);
+        fillFilterCenters(provEl, centerEl, nsEl);
+      });
+      provEl.addEventListener('change', function() {
+        fillFilterCenters(provEl, centerEl, nsEl);
+      });
+    }
+
+    // 紧急程度选择
+    levelItems.forEach(function(item) {
+      item.onclick = function() {
+        levelItems.forEach(function(el) { el.classList.remove('active'); });
+        item.classList.add('active');
+      };
+    });
+
+    // 文件上传预览
+    if (uploadZone && fileInput) {
+      uploadZone.onclick = function() { fileInput.click(); };
+      fileInput.onchange = function() {
+        previewArea.innerHTML = '';
+        Array.from(fileInput.files).forEach(function(file) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            var img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.width = '64px';
+            img.style.height = '64px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '4px';
+            img.style.border = '1px solid var(--border)';
+            previewArea.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+    }
+
+    // 提交逻辑
+    if (submitBtn) {
+      submitBtn.onclick = function() {
+        var cat = categoryEl.value;
+        var desc = document.getElementById('reportFormDesc').value;
+        if (!cat || !desc) {
+          alert('请完整填写关键信息（隐患类别与描述）');
+          return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading-spinner"></span> 正在提交...';
+        
+        setTimeout(function() {
+          alert('隐患上报成功！感谢参与安全治理。');
+          renderPage('dual-prevention');
+        }, 1200);
+      };
+    }
+  }
+
   // ============ 启动 ============
   init();
 })();
+
