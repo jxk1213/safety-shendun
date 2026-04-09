@@ -145,8 +145,8 @@
       breadcrumb: ['首页', '专项安全', '寄递安全管理']
     },
     training: {
-      title: '培训与宣教',
-      breadcrumb: ['首页', '培训与文化', '培训与宣教']
+      title: '申安学堂',
+      breadcrumb: ['首页', '培训与文化', '申安学堂']
     },
     'data-center': {
       title: '数据与分析中心',
@@ -163,6 +163,22 @@
     'accident-statistics': {
       title: '事故统计',
       breadcrumb: ['首页', '核心业务', '事故与应急管理', '事故统计']
+    },
+    'training-course-library': {
+      title: '培训课程库',
+      breadcrumb: ['首页', '培训与文化', '申安学堂', '培训课程库']
+    },
+    'publicity-materials-library': {
+      title: '宣传资料库',
+      breadcrumb: ['首页', '培训与文化', '申安学堂', '宣传资料库']
+    },
+    'training-plan': {
+      title: '培训计划',
+      breadcrumb: ['首页', '培训与文化', '申安学堂', '培训计划']
+    },
+    'online-exam': {
+      title: '在线考试',
+      breadcrumb: ['首页', '培训与文化', '申安学堂', '在线考试']
     }
   };
 
@@ -182,10 +198,14 @@
     '场地与设施管理': 'facility',
     '园区综合管理': 'park',
     '寄递安全管理': 'delivery-safety',
-    '培训与宣教': 'training',
+    '申安学堂': 'training',
     '数据与分析中心': 'data-center',
     '制度与文档管理': 'document',
-    '系统与权限管理': 'system'
+    '系统与权限管理': 'system',
+    '培训课程库': 'training-course-library',
+    '宣传资料库': 'publicity-materials-library',
+    '培训计划': 'training-plan',
+    '在线考试': 'online-exam'
   };
 
   /**
@@ -384,6 +404,22 @@
         initAccidentReport();
         break;
       case 'training': mainContent.innerHTML = renderTraining(); break;
+      case 'training-course-library':
+        mainContent.innerHTML = renderTrainingCourseLibrary();
+        initTrainingCourseLibrary();
+        break;
+      case 'publicity-materials-library':
+        mainContent.innerHTML = renderPublicityMaterialsLibrary();
+        initPublicityMaterialsLibrary();
+        break;
+      case 'training-plan':
+        mainContent.innerHTML = renderTrainingPlan();
+        initTrainingPlan();
+        break;
+      case 'online-exam':
+        mainContent.innerHTML = renderOnlineExam();
+        initOnlineExam();
+        break;
       case 'data-center': mainContent.innerHTML = renderDataCenter(); break;
       case 'document': mainContent.innerHTML = renderDocument(); break;
       case 'system': mainContent.innerHTML = renderSystem(); break;
@@ -492,7 +528,7 @@
           ['运营安全', '多场地协同', '安防联动'], 'var(--primary-light)', 'var(--primary)') +
         buildModuleCard('delivery-safety', '寄递安全管理', '保障寄递物品安全，实名登记管理及危险品识别检查。',
           ['安全检查', '实名登记', '危险品识别'], 'var(--warning-light)', 'var(--warning)') +
-        buildModuleCard('training', '培训与宣教', '安全培训课程管理，宣传资料分发及在线考试考核系统。',
+        buildModuleCard('training', '申安学堂', '安全培训课程管理，宣传资料分发及在线考试考核系统。',
           ['安全培训', '宣传资料', '考试考核'], 'var(--success-light)', 'var(--success)') +
         buildModuleCard('data-center', '数据与分析中心', '多维度统计报表与数据可视化，风险趋势分析与KPI考核。',
           ['统计报表', '风险趋势', 'KPI'], 'var(--info-light)', 'var(--info)') +
@@ -4985,13 +5021,13 @@
       '</div>';
   }
 
-  // ============ 培训与宣教 ============
+  // ============ 申安学堂 ============
   function renderTraining() {
     return '' +
       '<div class="sub-page">' +
         '<div class="page-header">' +
           '<div>' +
-            '<div class="page-title">培训与宣教</div>' +
+            '<div class="page-title">申安学堂</div>' +
             '<div class="page-desc">安全培训课程管理、宣传资料与考试考核</div>' +
           '</div>' +
           '<div class="page-actions">' +
@@ -5021,14 +5057,819 @@
         '</div>' +
 
         '<div class="feature-grid">' +
-          buildFeatureCard('培训课程库', '安全培训课程分类管理，支持在线学习与线下签到', 'var(--primary-light)', 'var(--primary)', '课程总量 86 门') +
-          buildFeatureCard('培训计划', '年度、季度培训计划制定与执行追踪', 'var(--info-light)', 'var(--info)', '本年度 12 期') +
+          buildFeatureCard('培训课程库', '安全培训课程分类管理，支持在线学习与线下签到', 'var(--primary-light)', 'var(--primary)', '课程总量 86 门', 'training-course-library') +
+          buildFeatureCard('培训计划', '年度、季度培训计划制定与执行追踪', 'var(--info-light)', 'var(--info)', '本年度 12 期', 'training-plan') +
           buildFeatureCard('学习记录', '员工个人学习进度追踪与学时统计', 'var(--success-light)', 'var(--success)', '人均学时 24h') +
-          buildFeatureCard('宣传资料库', '安全标语、海报、视频等宣教材料统一管理', 'var(--warning-light)', 'var(--warning)', '资料 256 份') +
-          buildFeatureCard('在线考试', '安全知识在线考试系统，自动阅卷与成绩管理', 'var(--danger-light)', 'var(--danger)', '本月考试 3 场') +
+          buildFeatureCard('宣传资料库', '安全标语、海报、视频等宣教材料统一管理', 'var(--warning-light)', 'var(--warning)', '资料 256 份', 'publicity-materials-library') +
+          buildFeatureCard('在线考试', '安全知识在线考试系统，自动阅卷与成绩管理', 'var(--danger-light)', 'var(--danger)', '本月考试 3 场', 'online-exam') +
           buildFeatureCard('证书管理', '培训合格证书生成与查询', 'var(--primary-light)', 'var(--primary)', '已发放 892 张') +
         '</div>' +
       '</div>';
+  }
+
+  // ============ 培训课程库 ============
+  function renderTrainingCourseLibrary() {
+    const courses = [
+      { id: 1, title: '新员工入职安全第一课', category: '通用安全', type: 'online', duration: '45分钟', progress: 100, thumb: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=400&q=80' },
+      { id: 2, title: '有限空间作业安全技术规范', category: '专项安全', type: 'online', duration: '120分钟', progress: 65, thumb: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=400&q=80' },
+      { id: 3, title: '消防设施器材使用与实操演练', category: '消防安全', type: 'offline', duration: '4课时', progress: 0, thumb: 'https://images.unsplash.com/photo-1599833719482-600fed77017b?auto=format&fit=crop&w=400&q=80' },
+      { id: 4, title: '危化品包装与运输安全要求', category: '专项安全', type: 'online', duration: '90分钟', progress: 30, thumb: 'https://images.unsplash.com/photo-1586528116311-ad86d6263012?auto=format&fit=crop&w=400&q=80' },
+      { id: 5, title: '急救常识：心肺复苏(CPR)', category: '应急救援', type: 'online', duration: '30分钟', progress: 85, thumb: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=400&q=80' },
+      { id: 6, title: '叉车驾驶员岗位安全操作规程', category: '设备安全', type: 'offline', duration: '8课时', progress: 0, thumb: 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?auto=format&fit=crop&w=400&q=80' },
+      { id: 7, title: '劳动防护用品(PPE)选配指南', category: '个人防护', type: 'online', duration: '20分钟', progress: 100, thumb: 'https://images.unsplash.com/photo-1590402444582-43d16d655f9f?auto=format&fit=crop&w=400&q=80' },
+      { id: 8, title: '转运中心作业场所风险辨识', category: '风险管控', type: 'online', duration: '60分钟', progress: 10, thumb: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=400&q=80' }
+    ];
+
+    let coursesHtml = '';
+    courses.forEach(course => {
+      coursesHtml += `
+        <div class="course-card" data-category="${course.category}" data-type="${course.type}">
+          <div class="course-thumb">
+            <div class="course-type-badge ${course.type}">${course.type === 'online' ? '在线学习' : '线下培训'}</div>
+            <img src="${course.thumb}" alt="${course.title}">
+          </div>
+          <div class="course-content">
+            <div class="course-meta">
+              <span class="course-category">${course.category}</span>
+              <span class="course-duration">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                ${course.duration}
+              </span>
+            </div>
+            <div class="course-title" title="${course.title}">${course.title}</div>
+            <div class="course-progress-container">
+              <div class="course-progress-bar">
+                <div class="course-progress-inner" style="width: ${course.progress}%"></div>
+              </div>
+              <div class="course-progress-info">
+                <span>学习进度</span>
+                <span>${course.progress}%</span>
+              </div>
+            </div>
+          </div>
+          <div class="course-actions">
+            <button class="btn btn-primary btn-sm btn-learn">${course.progress === 100 ? '再次学习' : (course.progress > 0 ? '继续学习' : '开始学习')}</button>
+          </div>
+        </div>
+      `;
+    });
+
+    return `
+      <div class="sub-page course-library">
+        <div class="page-header">
+          <div>
+            <div class="page-title">培训课程库</div>
+            <div class="page-desc">全集团安全培训课程资源，支持按需学习与管理</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              创建课程
+            </button>
+            <button class="btn btn-outline">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              导入课程
+            </button>
+          </div>
+        </div>
+
+        <div class="course-stats">
+          <div class="course-stat-card">
+            <div class="course-stat-label">已上线课程</div>
+            <div class="course-stat-value">86 门</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">本月必修</div>
+            <div class="course-stat-value">4 门</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">已完成学习</div>
+            <div class="course-stat-value">12 门</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">累计学分</div>
+            <div class="course-stat-value">24.5</div>
+          </div>
+        </div>
+
+        <div class="course-toolbar">
+          <div class="course-toolbar-left">
+            <div class="course-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" class="course-search-input" id="courseSearchInput" placeholder="搜索课程名称...">
+            </div>
+            <div class="course-filter-group">
+              <select class="course-filter-select" id="courseCategoryFilter">
+                <option value="all">所有类别</option>
+                <option value="通用安全">通用安全</option>
+                <option value="专项安全">专项安全</option>
+                <option value="消防安全">消防安全</option>
+                <option value="应急救援">应急救援</option>
+                <option value="设备安全">设备安全</option>
+              </select>
+              <select class="course-filter-select" id="courseTypeFilter">
+                <option value="all">所有方式</option>
+                <option value="online">在线学习</option>
+                <option value="offline">线下培训</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="course-grid" id="courseGrid">
+          ${coursesHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  function initTrainingCourseLibrary() {
+    const searchInput = document.getElementById('courseSearchInput');
+    const categoryFilter = document.getElementById('courseCategoryFilter');
+    const typeFilter = document.getElementById('courseTypeFilter');
+    const courseCards = document.querySelectorAll('.course-card');
+
+    function filterCourses() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const category = categoryFilter.value;
+      const type = typeFilter.value;
+
+      courseCards.forEach(card => {
+        const title = card.querySelector('.course-title').textContent.toLowerCase();
+        const cardCategory = card.dataset.category;
+        const cardType = card.dataset.type;
+
+        const matchesSearch = title.includes(searchTerm);
+        const matchesCategory = category === 'all' || cardCategory === category;
+        const matchesType = type === 'all' || cardType === type;
+
+        if (matchesSearch && matchesCategory && matchesType) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterCourses);
+    if (categoryFilter) categoryFilter.addEventListener('change', filterCourses);
+    if (typeFilter) typeFilter.addEventListener('change', filterCourses);
+  }
+
+  // ============ 宣传资料库 ============
+  function renderPublicityMaterialsLibrary() {
+    const materials = [
+      { id: 1, title: '叉车安全操作"十不准"', type: 'poster', category: '设备安全', date: '2026-03-15', thumb: 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?auto=format&fit=crop&w=400&q=80' },
+      { id: 2, title: '分拨中心消防安全演示视频', type: 'video', category: '消防安全', date: '2026-03-10', thumb: 'https://images.unsplash.com/photo-1599833719482-600fed77017b?auto=format&fit=crop&w=400&q=100' },
+      { id: 3, title: '有限空间作业典型事故案例分析', type: 'video', category: '案例教育', date: '2026-03-05', thumb: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=400&q=80' },
+      { id: 4, title: '员工安全手册(2026精简版)', type: 'pdf', category: '通用安全', date: '2026-02-28', thumb: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80' },
+      { id: 5, title: '夏季防高温中暑安全提示海报', type: 'poster', category: '通用安全', date: '2026-03-20', thumb: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=400&q=80' },
+      { id: 6, title: '交通事故应急处置标准化程序', type: 'pdf', category: '交通安全', date: '2026-03-12', thumb: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=400&q=80' },
+      { id: 7, title: '安全警戒线与警示标识使用规范', type: 'poster', category: '场所管理', date: '2026-01-15', thumb: 'https://images.unsplash.com/photo-1590402444582-43d16d655f9f?auto=format&fit=crop&w=400&q=80' },
+      { id: 8, title: '新修订安全生产法在线宣讲', type: 'video', category: '法规标准', date: '2026-02-10', thumb: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=400&q=80' }
+    ];
+
+    let gridHtml = '';
+    materials.forEach(item => {
+      const typeLabel = item.type === 'video' ? '视频' : (item.type === 'poster' ? '海报' : '文档');
+      const typeClass = `tag-${item.type}`;
+      const isVideo = item.type === 'video';
+
+      gridHtml += `
+        <div class="material-card type-${item.type}" data-type="${item.type}" data-category="${item.category}">
+          <div class="material-thumb">
+            <img src="${item.thumb}" alt="${item.title}">
+            <div class="media-overlay">
+              ${isVideo ? '<div class="play-button"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' : '<div class="btn btn-outline btn-sm" style="background:white">查看详情</div>'}
+            </div>
+          </div>
+          <div class="material-content">
+            <div class="material-title" title="${item.title}">${item.title}</div>
+            <div class="material-info">
+              <span class="material-type-tag ${typeClass}">${typeLabel}</span>
+              <span>${item.date}</span>
+            </div>
+          </div>
+          <div class="material-actions">
+            <button class="material-action-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>预览</button>
+            <button class="material-action-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载</button>
+          </div>
+        </div>
+      `;
+    });
+
+    return `
+      <div class="sub-page">
+        <div class="page-header">
+          <div>
+            <div class="page-title">宣传资料库</div>
+            <div class="page-desc">安全海报、宣教视频、手册指南等数字化资源中心</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              上传资料
+            </button>
+          </div>
+        </div>
+
+        <div class="course-stats">
+          <div class="course-stat-card">
+            <div class="course-stat-label">资料总数</div>
+            <div class="course-stat-value">256 份</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">累计下载</div>
+            <div class="course-stat-value">1,892 次</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">本月新增</div>
+            <div class="course-stat-value">12 份</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">热门推荐</div>
+            <div class="course-stat-value">消防安全</div>
+          </div>
+        </div>
+
+        <div class="course-toolbar">
+          <div class="course-toolbar-left">
+            <div class="course-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" class="course-search-input" id="materialSearchInput" placeholder="搜索资料名称...">
+            </div>
+            <div class="course-filter-group">
+              <select class="course-filter-select" id="materialTypeFilter">
+                <option value="all">所有格式</option>
+                <option value="poster">海报 (Image)</option>
+                <option value="video">视频 (Video)</option>
+                <option value="pdf">文档 (PDF)</option>
+              </select>
+              <select class="course-filter-select" id="materialCategoryFilter">
+                <option value="all">所有类别</option>
+                <option value="通用安全">通用安全</option>
+                <option value="消防安全">消防安全</option>
+                <option value="设备安全">设备安全</option>
+                <option value="交通安全">交通安全</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="material-grid" id="materialGrid">
+          ${gridHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  function initPublicityMaterialsLibrary() {
+    const searchInput = document.getElementById('materialSearchInput');
+    const typeFilter = document.getElementById('materialTypeFilter');
+    const categoryFilter = document.getElementById('materialCategoryFilter');
+    const cards = document.querySelectorAll('.material-card');
+
+    function filterMaterials() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const type = typeFilter.value;
+      const category = categoryFilter.value;
+
+      cards.forEach(card => {
+        const title = card.querySelector('.material-title').textContent.toLowerCase();
+        const cardType = card.dataset.type;
+        const cardCategory = card.dataset.category;
+
+        const matchesSearch = title.includes(searchTerm);
+        const matchesType = type === 'all' || cardType === type;
+        const matchesCategory = category === 'all' || cardCategory === category;
+
+        if (matchesSearch && matchesType && matchesCategory) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterMaterials);
+    if (typeFilter) typeFilter.addEventListener('change', filterMaterials);
+    if (categoryFilter) categoryFilter.addEventListener('change', filterMaterials);
+  }
+
+  // ============ 培训计划 ============
+  function renderTrainingPlan() {
+    const plans = [
+      { id: 1, name: '2026年度全员消防安全知识大轮训', category: '消防安全', period: '2026-03 至 2026-06', target: '全体员工', status: 'ongoing', progress: 65 },
+      { id: 2, name: '转运中心特种设备操作人员取证培训', category: '设备安全', period: '2026-04 至 2026-05', target: '特种设备操作工', status: 'planned', progress: 0 },
+      { id: 3, name: '第一季度新员工入职安全教育', category: '通用安全', period: '2026-01 至 2026-03', target: 'Q1入职员工', status: 'completed', progress: 100 },
+      { id: 4, name: '有限空间作业外包人员安全进场培训', category: '专项安全', period: '2026-04-10 至 2026-04-12', target: '施工单位人员', status: 'planned', progress: 0 },
+      { id: 5, name: '全网网点负责人安全管理能力提升班', category: '管理层培训', period: '2026-02 至 2026-04', target: '各网点负责人', status: 'ongoing', progress: 85 },
+      { id: 6, name: '危险化学品包装与装卸现场实操演练', category: '专项安全', period: '2026-03-20', target: '分拣区一线员工', status: 'completed', progress: 100 },
+      { id: 7, name: '春季百日安全无事故劳动竞赛宣贯', category: '安全教育', period: '2026-03 至 2026-05', target: '全网驾驶员', status: 'ongoing', progress: 40 },
+      { id: 8, name: '应急救援预案演练：火灾与疏散', category: '应急响应', period: '2026-06-15', target: '园区办公楼人员', status: 'delayed', progress: 10 }
+    ];
+
+    let rowHtml = '';
+    plans.forEach(plan => {
+      const statusLabel = {
+        planned: '计划中',
+        ongoing: '进行中',
+        completed: '已完成',
+        delayed: '已延期'
+      };
+      
+      rowHtml += `
+        <tr data-status="${plan.status}" data-name="${plan.name}">
+          <td>
+            <div class="plan-name-cell">
+              <span style="font-weight: 600;">${plan.name}</span>
+              <span class="plan-category">${plan.category}</span>
+            </div>
+          </td>
+          <td>${plan.period}</td>
+          <td>${plan.target}</td>
+          <td>
+            <div class="plan-progress-wrap">
+              <div class="plan-progress-mini">
+                <div class="plan-progress-fill" style="width: ${plan.progress}%"></div>
+              </div>
+              <span style="font-size: 12px; color: var(--text-secondary); min-width: 30px;">${plan.progress}%</span>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge status-${plan.status}">${statusLabel[plan.status]}</span>
+          </td>
+          <td>
+            <div class="plan-action-btns">
+              ${plan.status === 'planned' ? `
+                <button class="btn-icon dispatch-btn" title="下发任务" style="color: var(--primary); border-color: var(--primary-light); background: var(--primary-light);">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+              ` : ''}
+              <button class="btn-icon" title="编辑"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon" title="查看明细"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    return `
+      <div class="sub-page">
+        <div class="page-header">
+          <div>
+            <div class="page-title">培训计划</div>
+            <div class="page-desc">年度与季度安全培训任务清单，实时追踪执行进度</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              创建计划
+            </button>
+            <button class="btn btn-outline">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              导出报表
+            </button>
+          </div>
+        </div>
+
+        <div class="course-stats">
+          <div class="course-stat-card">
+            <div class="course-stat-label">计划总数</div>
+            <div class="course-stat-value">12 期</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">执行中</div>
+            <div class="course-stat-value">5 期</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">已完成计</div>
+            <div class="course-stat-value">4 期</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">整体进度</div>
+            <div class="course-stat-value">72%</div>
+          </div>
+        </div>
+
+        <div class="course-toolbar">
+          <div class="course-toolbar-left">
+            <div class="course-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" class="course-search-input" id="planSearchInput" placeholder="搜索计划名称...">
+            </div>
+            <div class="course-filter-group">
+              <select class="course-filter-select" id="planYearFilter">
+                <option value="2026">2026年</option>
+                <option value="2025">2025年</option>
+              </select>
+              <select class="course-filter-select" id="planStatusFilter">
+                <option value="all">所有状态</option>
+                <option value="planned">计划中</option>
+                <option value="ongoing">进行中</option>
+                <option value="completed">已完成</option>
+                <option value="delayed">已延期</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="plan-table-container">
+          <table class="plan-table">
+            <thead>
+              <tr>
+                <th>计划名称</th>
+                <th>计划周期</th>
+                <th>目标对象</th>
+                <th>执行进度</th>
+                <th>当前状态</th>
+                <th>管理操作</th>
+              </tr>
+            </thead>
+            <tbody id="planTableBody">
+              ${rowHtml}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 创建计划弹窗 -->
+      <div class="modal-overlay" id="createPlanModalOverlay" style="display:none;">
+        <div class="modal" style="max-width: 600px;">
+          <div class="modal-header">
+            <div class="modal-title">创建培训计划</div>
+            <button class="modal-close" type="button" onclick="document.getElementById('createPlanModalOverlay').style.display='none'">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="modal-hint">请填写年度/季度培训计划的基础信息，下发后将转入执行阶段。</div>
+            <form id="createPlanForm">
+              <div class="form-group full-width" style="margin-bottom: 16px;">
+                <label>计划名称</label>
+                <input type="text" class="form-control" name="name" placeholder="请输入计划名称，例如：2026年Q2消防演练" required>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>培训类别</label>
+                  <select class="form-control" name="category">
+                    <option value="消防安全">消防安全</option>
+                    <option value="设备安全">设备安全</option>
+                    <option value="专项安全">专项安全</option>
+                    <option value="通用安全">通用安全</option>
+                    <option value="应急响应">应急响应</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>目标对象</label>
+                  <input type="text" class="form-control" name="target" placeholder="如：全体员工、驾驶员" required>
+                </div>
+                <div class="form-group">
+                  <label>开始日期</label>
+                  <input type="date" class="form-control" name="startDate" required>
+                </div>
+                <div class="form-group">
+                  <label>结束日期</label>
+                  <input type="date" class="form-control" name="endDate" required>
+                </div>
+              </div>
+              <div class="form-group full-width">
+                <label>计划描述</label>
+                <textarea class="form-control" name="desc" rows="3" placeholder="简述培训内容与目标..."></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" type="button" onclick="document.getElementById('createPlanModalOverlay').style.display='none'">取消</button>
+            <button class="btn btn-primary" type="submit" form="createPlanForm">立即创建</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 下发任务确认弹窗 -->
+      <div class="modal-overlay" id="dispatchPlanModalOverlay" style="display:none;">
+        <div class="modal" style="max-width: 450px;">
+          <div class="modal-header">
+            <div class="modal-title">下发培训任务</div>
+            <button class="modal-close" type="button" onclick="document.getElementById('dispatchPlanModalOverlay').style.display='none'">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="dispatch-summary">
+              <div class="dispatch-item"><label>计划名称：</label><span id="dispatchPlanName">-</span></div>
+              <div class="dispatch-item"><label>计划周期：</label><span id="dispatchPlanPeriod">-</span></div>
+              <div class="dispatch-item"><label>拟受众：</label><span id="dispatchPlanTarget">-</span></div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 16px;">
+              <label style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; display: block;">下发人群范围 (筛选项)</label>
+              <select class="form-control" id="dispatchScopeSelect">
+                <option value="all">全网</option>
+                <option value="ns">南北部</option>
+                <option value="province">省区</option>
+                <option value="center">中心</option>
+              </select>
+            </div>
+
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-top: 16px;">
+              确认下发该计划吗？下发后，系统将通知对应范围内的负责人开始筹备。
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" type="button" onclick="document.getElementById('dispatchPlanModalOverlay').style.display='none'">暂不下发</button>
+            <button class="btn btn-primary" id="confirmDispatchBtn">确认下发</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function initTrainingPlan() {
+    const searchInput = document.getElementById('planSearchInput');
+    const statusFilter = document.getElementById('planStatusFilter');
+    const tableBody = document.getElementById('planTableBody');
+    const rows = tableBody.querySelectorAll('tr');
+
+    function filterPlans() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const status = statusFilter.value;
+
+      rows.forEach(row => {
+        const name = row.dataset.name.toLowerCase();
+        const rowStatus = row.dataset.status;
+
+        const matchesSearch = name.includes(searchTerm);
+        const matchesStatus = status === 'all' || rowStatus === status;
+
+        if (matchesSearch && matchesStatus) {
+          row.style.display = 'table-row';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterPlans);
+    if (statusFilter) statusFilter.addEventListener('change', filterPlans);
+
+    // --- 创建计划逻辑 ---
+    const createBtn = document.querySelector('.page-actions .btn-primary');
+    const createModal = document.getElementById('createPlanModalOverlay');
+    const createForm = document.getElementById('createPlanForm');
+
+    if (createBtn && createModal) {
+      createBtn.addEventListener('click', () => {
+        createModal.style.display = 'flex';
+      });
+    }
+
+    if (createForm) {
+      createForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(createForm);
+        const name = formData.get('name');
+        const category = formData.get('category');
+        const target = formData.get('target');
+        const period = `${formData.get('startDate')} 至 ${formData.get('endDate')}`;
+
+        // 动态添加一行
+        const newRow = document.createElement('tr');
+        newRow.dataset.status = 'planned';
+        newRow.dataset.name = name;
+        newRow.innerHTML = `
+          <td>
+            <div class="plan-name-cell">
+              <span style="font-weight: 600;">${name}</span>
+              <span class="plan-category">${category}</span>
+            </div>
+          </td>
+          <td>${period}</td>
+          <td>${target}</td>
+          <td>
+            <div class="plan-progress-wrap">
+              <div class="plan-progress-mini">
+                <div class="plan-progress-fill" style="width: 0%"></div>
+              </div>
+              <span style="font-size: 12px; color: var(--text-secondary); min-width: 30px;">0%</span>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge status-planned">计划中</span>
+          </td>
+          <td>
+            <div class="plan-action-btns">
+              <button class="btn-icon dispatch-btn" title="下发任务" style="color: var(--primary); border-color: var(--primary-light); background: var(--primary-light);">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+              <button class="btn-icon" title="编辑"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon" title="查看明细"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+            </div>
+          </td>
+        `;
+        tableBody.insertBefore(newRow, tableBody.firstChild);
+        
+        // 重置并隐藏
+        createForm.reset();
+        createModal.style.display = 'none';
+        
+        // 更新统计 (模拟)
+        const totalStat = document.querySelector('.course-stat-card:nth-child(1) .course-stat-value');
+        if (totalStat) {
+          const currentVal = parseInt(totalStat.textContent);
+          totalStat.textContent = (currentVal + 1) + ' 期';
+        }
+
+        // 重新绑定“下发”事件（针对新行）
+        bindRowEvent(newRow);
+      });
+    }
+
+    // --- 下发任务逻辑 ---
+    const dispatchModal = document.getElementById('dispatchPlanModalOverlay');
+    const confirmDispatchBtn = document.getElementById('confirmDispatchBtn');
+    let currentRowToDispatch = null;
+
+    function bindRowEvent(row) {
+      const dispatchBtn = row.querySelector('.dispatch-btn');
+      if (dispatchBtn) {
+        dispatchBtn.addEventListener('click', () => {
+          currentRowToDispatch = row;
+          document.getElementById('dispatchPlanName').textContent = row.dataset.name;
+          document.getElementById('dispatchPlanPeriod').textContent = row.cells[1].textContent;
+          document.getElementById('dispatchPlanTarget').textContent = row.cells[2].textContent;
+          
+          // 重置下发业务范围
+          const scopeSelect = document.getElementById('dispatchScopeSelect');
+          if (scopeSelect) scopeSelect.value = 'all';
+          
+          dispatchModal.style.display = 'flex';
+        });
+      }
+    }
+
+    rows.forEach(bindRowEvent);
+
+    if (confirmDispatchBtn) {
+      confirmDispatchBtn.addEventListener('click', () => {
+        if (!currentRowToDispatch) return;
+
+        // 更新状态标签
+        const statusBadge = currentRowToDispatch.querySelector('.status-badge');
+        statusBadge.className = 'status-badge status-ongoing';
+        statusBadge.textContent = '进行中';
+
+        // 更新进度 (模拟)
+        const progressFill = currentRowToDispatch.querySelector('.plan-progress-fill');
+        const progressText = currentRowToDispatch.querySelector('.plan-progress-wrap span');
+        if (progressFill && progressText) {
+          progressFill.style.width = '5%';
+          progressText.textContent = '5%';
+        }
+
+        // 移除下发按钮
+        const dispatchBtn = currentRowToDispatch.querySelector('.dispatch-btn');
+        if (dispatchBtn) dispatchBtn.remove();
+
+        // 隐藏弹窗
+        dispatchModal.style.display = 'none';
+        currentRowToDispatch = null;
+
+        // 更新统计 (模拟)
+        const ongoingStat = document.querySelector('.course-stat-card:nth-child(2) .course-stat-value');
+        if (ongoingStat) {
+          const currentVal = parseInt(ongoingStat.textContent);
+          ongoingStat.textContent = (currentVal + 1) + ' 期';
+        }
+      });
+    }
+
+    // 点击蒙层关闭
+    [createModal, dispatchModal].forEach(m => {
+      if (m) m.addEventListener('click', (e) => { if(e.target === m) m.style.display = 'none'; });
+    });
+  }
+
+  // ============ 在线考试 ============
+  function renderOnlineExam() {
+    const activeExams = [
+      { id: 1, title: '2026年第一季度全员安全知识月度测评', category: '通用安全', duration: '30分钟', questions: 25, passing: 80, deadline: '2026-04-30' },
+      { id: 2, title: '特种设备操作人员岗位安全技术考核', category: '设备安全', duration: '60分钟', questions: 50, passing: 85, deadline: '2026-04-20' },
+      { id: 3, title: '转运中心消防疏散与应急响应知识测试', category: '应急响应', duration: '45分钟', questions: 40, passing: 90, deadline: '2026-05-15' }
+    ];
+
+    const history = [
+      { id: 101, title: '春季百日安全劳动竞赛选拔赛', date: '2026-03-20', score: 96, result: 'pass' },
+      { id: 102, title: '新员工入职安全培训结业考试', date: '2026-03-05', score: 88, result: 'pass' },
+      { id: 103, title: '危化品包装操作规范日常测验', date: '2026-02-15', score: 72, result: 'fail' }
+    ];
+
+    let examCardsHtml = '';
+    activeExams.forEach(exam => {
+      examCardsHtml += `
+        <div class="exam-card">
+          <div class="exam-title">${exam.title}</div>
+          <div class="exam-meta">
+            <div class="exam-meta-item">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              时长: ${exam.duration}
+            </div>
+            <div class="exam-meta-item">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              题数: ${exam.questions}
+            </div>
+            <div class="exam-meta-item">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              及格: ${exam.passing}分
+            </div>
+            <div class="exam-meta-item">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              截止: ${exam.deadline}
+            </div>
+          </div>
+          <div class="exam-footer">
+            <span style="font-size: 12px; color: var(--text-tertiary);">剩余次数: 2/3</span>
+            <button class="btn btn-primary btn-sm">立即参加</button>
+          </div>
+        </div>
+      `;
+    });
+
+    let historyTableRows = '';
+    history.forEach(item => {
+      const resultLabel = item.result === 'pass' ? '及格' : '不合格';
+      const resultClass = item.result === 'pass' ? 'score-pass' : 'score-fail';
+      
+      historyTableRows += `
+        <tr>
+          <td>${item.title}</td>
+          <td>${item.date}</td>
+          <td><span style="font-weight: 600; font-family: monospace;">${item.score}</span> / 100</td>
+          <td><span class="score-badge ${resultClass}">${resultLabel}</span></td>
+          <td><a href="#" style="color: var(--primary); font-size: 13px;">查看答卷</a></td>
+        </tr>
+      `;
+    });
+
+    return `
+      <div class="sub-page">
+        <div class="page-header">
+          <div>
+            <div class="page-title">在线考试</div>
+            <div class="page-desc">全网安全知识测评系统，支持自主练习与定期考核</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-outline">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              我的错题集
+            </button>
+          </div>
+        </div>
+
+        <div class="course-stats">
+          <div class="course-stat-card">
+            <div class="course-stat-label">待参加考试</div>
+            <div class="course-stat-value">3 场</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">已完成次数</div>
+            <div class="course-stat-value">12 次</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">平均分数</div>
+            <div class="course-stat-value">92.5</div>
+          </div>
+          <div class="course-stat-card">
+            <div class="course-stat-label">全网排名</div>
+            <div class="course-stat-value">Top 5%</div>
+          </div>
+        </div>
+
+        <div class="section-title">可用考试</div>
+        <div class="exam-grid">
+          ${examCardsHtml}
+        </div>
+
+        <div class="history-section">
+          <div class="section-title">考试历史</div>
+          <table class="exam-history-table">
+            <thead>
+              <tr>
+                <th>考试名称</th>
+                <th>参与时间</th>
+                <th>考试得分</th>
+                <th>考核结果</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${historyTableRows}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function initOnlineExam() {
+    // 逻辑初始化，例如平滑滚动或异步加载更多历史记录
+    console.log('Online Exam initialized');
   }
 
   // ============ 数据与分析中心 ============
