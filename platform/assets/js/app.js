@@ -172,6 +172,10 @@
       title: '宣传资料库',
       breadcrumb: ['首页', '培训与文化', '申安学堂', '宣传资料库']
     },
+    'upload-materials': {
+      title: '上传资料',
+      breadcrumb: ['首页', '培训与文化', '申安学堂', '宣传资料库', '上传资料']
+    },
     'training-plan': {
       title: '培训计划',
       breadcrumb: ['首页', '培训与文化', '申安学堂', '培训计划']
@@ -204,6 +208,7 @@
     '系统与权限管理': 'system',
     '培训课程库': 'training-course-library',
     '宣传资料库': 'publicity-materials-library',
+    '上传资料': 'upload-materials',
     '培训计划': 'training-plan',
     '在线考试': 'online-exam'
   };
@@ -411,6 +416,10 @@
       case 'publicity-materials-library':
         mainContent.innerHTML = renderPublicityMaterialsLibrary();
         initPublicityMaterialsLibrary();
+        break;
+      case 'upload-materials':
+        mainContent.innerHTML = renderUploadMaterialsPage();
+        initUploadMaterialsPage();
         break;
       case 'training-plan':
         mainContent.innerHTML = renderTrainingPlan();
@@ -5266,7 +5275,7 @@
             <div class="page-desc">安全海报、宣教视频、手册指南等数字化资源中心</div>
           </div>
           <div class="page-actions">
-            <button class="btn btn-primary">
+            <button class="btn btn-primary" id="goUploadMaterialBtn">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               上传资料
             </button>
@@ -5328,6 +5337,7 @@
     const typeFilter = document.getElementById('materialTypeFilter');
     const categoryFilter = document.getElementById('materialCategoryFilter');
     const cards = document.querySelectorAll('.material-card');
+    const uploadBtn = document.getElementById('goUploadMaterialBtn');
 
     function filterMaterials() {
       const searchTerm = searchInput.value.toLowerCase();
@@ -5354,6 +5364,468 @@
     if (searchInput) searchInput.addEventListener('input', filterMaterials);
     if (typeFilter) typeFilter.addEventListener('change', filterMaterials);
     if (categoryFilter) categoryFilter.addEventListener('change', filterMaterials);
+    if (uploadBtn) uploadBtn.addEventListener('click', function () {
+      navigateTo('upload-materials');
+    });
+  }
+
+  function renderUploadMaterialsPage() {
+    return `
+      <div class="sub-page upload-materials-page">
+        <div class="page-header">
+          <div>
+            <div class="page-title">上传资料</div>
+            <div class="page-desc">统一上传海报、视频、手册和宣教材料，完成分类、封面与发布配置</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-outline" type="button" id="backToMaterialsBtn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+              返回资料库
+            </button>
+            <button class="btn btn-primary" type="button" id="submitMaterialTopBtn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+              提交发布
+            </button>
+          </div>
+        </div>
+
+        <div class="upload-hero-card">
+          <div class="upload-hero-main">
+            <span class="upload-hero-badge">宣传资料库 · 新增资源</span>
+            <h3>让每份安全资料都有清晰归档、统一封面和可追溯版本</h3>
+            <p>支持视频、海报、PDF 手册、压缩包课件上传。上传后可进入资料库检索、预览和下载。</p>
+          </div>
+          <div class="upload-hero-metrics">
+            <div class="upload-metric-card">
+              <span>建议封面比例</span>
+              <strong>16:9 / 3:4</strong>
+            </div>
+            <div class="upload-metric-card">
+              <span>推荐单文件大小</span>
+              <strong>500MB 内</strong>
+            </div>
+            <div class="upload-metric-card">
+              <span>必填项</span>
+              <strong>4 项</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="upload-layout">
+          <form class="upload-form-shell" id="uploadMaterialForm">
+            <div class="upload-section-card">
+              <div class="upload-section-head">
+                <div>
+                  <div class="section-title">基础信息</div>
+                  <div class="upload-section-desc">先补齐资料名称、格式、分类与适用范围，方便资料库统一检索。</div>
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="form-field span-2">
+                  <label class="form-label required" for="materialTitleInput">资料标题</label>
+                  <input class="form-control" id="materialTitleInput" name="title" type="text" maxlength="60" placeholder="例如：2026年全国消防宣传月标准宣导视频">
+                </div>
+                <div class="form-field">
+                  <label class="form-label required" for="materialTypeSelect">资料格式</label>
+                  <select class="form-control" id="materialTypeSelect" name="type">
+                    <option value="">请选择资料格式</option>
+                    <option value="video">视频资料</option>
+                    <option value="poster">海报图片</option>
+                    <option value="pdf">PDF / 手册</option>
+                    <option value="package">压缩包 / 课件</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label class="form-label required" for="materialCategorySelect">资料类别</label>
+                  <select class="form-control" id="materialCategorySelect" name="category">
+                    <option value="">请选择资料类别</option>
+                    <option value="消防安全">消防安全</option>
+                    <option value="设备安全">设备安全</option>
+                    <option value="案例教育">案例教育</option>
+                    <option value="法规标准">法规标准</option>
+                    <option value="通用安全">通用安全</option>
+                    <option value="交通安全">交通安全</option>
+                    <option value="场所管理">场所管理</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label class="form-label" for="materialSourceInput">资料来源</label>
+                  <input class="form-control" id="materialSourceInput" name="source" type="text" placeholder="例如：安全管理部 / 外部培训供应商">
+                </div>
+                <div class="form-field">
+                  <label class="form-label" for="materialScopeSelect">适用范围</label>
+                  <select class="form-control" id="materialScopeSelect" name="scope">
+                    <option value="全网通用">全网通用</option>
+                    <option value="直营网点">直营网点</option>
+                    <option value="转运中心">转运中心</option>
+                    <option value="驾驶员队伍">驾驶员队伍</option>
+                    <option value="仓储与分拨">仓储与分拨</option>
+                  </select>
+                </div>
+                <div class="form-field span-2">
+                  <label class="form-label" for="materialSummaryInput">资料简介</label>
+                  <textarea class="form-control" id="materialSummaryInput" name="summary" rows="4" placeholder="请简要说明资料内容、使用场景、重点宣导对象和注意事项。"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="upload-section-card">
+              <div class="upload-section-head">
+                <div>
+                  <div class="section-title">文件上传</div>
+                  <div class="upload-section-desc">上传主文件和可选封面图，系统将用于资料预览卡片展示。</div>
+                </div>
+              </div>
+              <div class="upload-drop-grid">
+                <label class="upload-dropzone upload-dropzone-main" for="materialFileInput" id="materialFileDropzone">
+                  <input class="file-input" id="materialFileInput" type="file">
+                  <div class="upload-drop-icon">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </div>
+                  <div class="upload-drop-title">上传主资料文件</div>
+                  <div class="upload-drop-subtitle" id="materialAcceptHint">支持 MP4、JPG/PNG、PDF、ZIP 等常见格式</div>
+                  <div class="upload-drop-note">点击选择文件，或直接拖拽到此区域</div>
+                </label>
+
+                <label class="upload-dropzone upload-dropzone-cover" for="materialCoverInput" id="materialCoverDropzone">
+                  <input class="file-input" id="materialCoverInput" type="file" accept="image/*">
+                  <div class="upload-drop-icon subtle">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+                  </div>
+                  <div class="upload-drop-title">上传封面图</div>
+                  <div class="upload-drop-subtitle">建议尺寸 1280 × 720，提升资料卡片视觉效果</div>
+                </label>
+              </div>
+
+              <div class="upload-preview-panel">
+                <div class="upload-preview-card">
+                  <div class="upload-preview-label">主文件</div>
+                  <div class="upload-preview-file" id="materialFilePreview">
+                    <div class="empty-state">
+                      <div class="empty-state-icon">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      </div>
+                      <div class="empty-state-title">尚未选择文件</div>
+                      <div class="empty-state-desc">上传后可查看文件名称、类型与大小摘要。</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="upload-preview-card">
+                  <div class="upload-preview-label">封面预览</div>
+                  <div class="upload-cover-preview" id="materialCoverPreview">
+                    <div class="upload-cover-placeholder">
+                      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+                      <span>封面图将在这里预览</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="upload-section-card">
+              <div class="upload-section-head">
+                <div>
+                  <div class="section-title">标签与发布设置</div>
+                  <div class="upload-section-desc">用关键词增强搜索命中率，并确定上架状态与版本说明。</div>
+                </div>
+              </div>
+
+              <div class="upload-tag-picker">
+                <button class="upload-tag-chip" type="button" data-tag="消防宣传">消防宣传</button>
+                <button class="upload-tag-chip" type="button" data-tag="新员工培训">新员工培训</button>
+                <button class="upload-tag-chip" type="button" data-tag="事故案例">事故案例</button>
+                <button class="upload-tag-chip" type="button" data-tag="班前宣导">班前宣导</button>
+                <button class="upload-tag-chip" type="button" data-tag="季度活动">季度活动</button>
+                <button class="upload-tag-chip" type="button" data-tag="法规更新">法规更新</button>
+              </div>
+
+              <div class="form-grid" style="margin-top: 20px;">
+                <div class="form-field span-2">
+                  <label class="form-label" for="materialTagsInput">自定义标签</label>
+                  <input class="form-control" id="materialTagsInput" name="tags" type="text" placeholder="多个标签请用顿号、逗号或空格分隔">
+                </div>
+                <div class="form-field">
+                  <label class="form-label" for="materialStatusSelect">发布状态</label>
+                  <select class="form-control" id="materialStatusSelect" name="status">
+                    <option value="published">立即发布</option>
+                    <option value="draft">保存为草稿</option>
+                    <option value="review">提交审核</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label class="form-label" for="materialVersionInput">版本号</label>
+                  <input class="form-control" id="materialVersionInput" name="version" type="text" value="V1.0">
+                </div>
+                <div class="form-field span-2">
+                  <label class="form-label" for="materialRemarkInput">版本说明 / 备注</label>
+                  <textarea class="form-control" id="materialRemarkInput" name="remark" rows="3" placeholder="例如：替换旧版消防演示视频片头，补充仓内灭火器点检章节。"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-footer upload-form-footer">
+              <button class="btn btn-outline" type="reset" id="resetUploadFormBtn">重置表单</button>
+              <button class="btn btn-outline" type="button" id="saveMaterialDraftBtn">保存草稿</button>
+              <button class="btn btn-primary" type="submit">确认上传</button>
+            </div>
+          </form>
+
+          <aside class="upload-sidebar">
+            <div class="upload-side-card">
+              <div class="upload-side-title">发布清单</div>
+              <div class="upload-checklist">
+                <div class="upload-check-item"><span>1</span><p>填写资料标题、格式和分类</p></div>
+                <div class="upload-check-item"><span>2</span><p>上传主文件，并确认文件大小与格式</p></div>
+                <div class="upload-check-item"><span>3</span><p>补充简介、标签和版本说明</p></div>
+                <div class="upload-check-item"><span>4</span><p>选择发布状态后提交</p></div>
+              </div>
+            </div>
+
+            <div class="upload-side-card emphasis">
+              <div class="upload-side-title">实时摘要</div>
+              <div class="upload-summary-list">
+                <div class="upload-summary-item">
+                  <span>当前格式</span>
+                  <strong id="selectedTypeLabel">未选择</strong>
+                </div>
+                <div class="upload-summary-item">
+                  <span>已选标签</span>
+                  <strong id="selectedTagCount">0 个</strong>
+                </div>
+                <div class="upload-summary-item">
+                  <span>主文件大小</span>
+                  <strong id="selectedFileSize">--</strong>
+                </div>
+                <div class="upload-summary-item">
+                  <span>发布方式</span>
+                  <strong id="selectedStatusLabel">立即发布</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="upload-side-card">
+              <div class="upload-side-title">上传建议</div>
+              <ul class="upload-tip-list">
+                <li>视频资料建议补充封面图，方便资料库卡片展示。</li>
+                <li>资料标题尽量包含场景和主题，例如“消防”“有限空间”“驾驶员”。</li>
+                <li>如为制度修订版，请在备注中标明替换范围与生效时间。</li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </div>
+    `;
+  }
+
+  function initUploadMaterialsPage() {
+    const form = document.getElementById('uploadMaterialForm');
+    const titleInput = document.getElementById('materialTitleInput');
+    const typeSelect = document.getElementById('materialTypeSelect');
+    const categorySelect = document.getElementById('materialCategorySelect');
+    const statusSelect = document.getElementById('materialStatusSelect');
+    const fileInput = document.getElementById('materialFileInput');
+    const coverInput = document.getElementById('materialCoverInput');
+    const tagsInput = document.getElementById('materialTagsInput');
+    const filePreview = document.getElementById('materialFilePreview');
+    const coverPreview = document.getElementById('materialCoverPreview');
+    const acceptHint = document.getElementById('materialAcceptHint');
+    const selectedTypeLabel = document.getElementById('selectedTypeLabel');
+    const selectedTagCount = document.getElementById('selectedTagCount');
+    const selectedFileSize = document.getElementById('selectedFileSize');
+    const selectedStatusLabel = document.getElementById('selectedStatusLabel');
+    const topSubmitBtn = document.getElementById('submitMaterialTopBtn');
+    const backBtn = document.getElementById('backToMaterialsBtn');
+    const saveDraftBtn = document.getElementById('saveMaterialDraftBtn');
+    const resetBtn = document.getElementById('resetUploadFormBtn');
+    const chips = document.querySelectorAll('.upload-tag-chip');
+
+    let selectedTags = [];
+
+    function formatFileSize(size) {
+      if (!size && size !== 0) return '--';
+      if (size < 1024) return size + ' B';
+      if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+      if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(1) + ' MB';
+      return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
+
+    function getMaterialTypeMeta(type) {
+      const map = {
+        video: { label: '视频资料', accept: 'video/*,.mp4,.mov,.avi,.mkv', hint: '支持 MP4、MOV、AVI、MKV 等视频格式' },
+        poster: { label: '海报图片', accept: 'image/*,.jpg,.jpeg,.png,.webp', hint: '支持 JPG、PNG、WEBP 等图片格式' },
+        pdf: { label: 'PDF / 手册', accept: '.pdf,.doc,.docx', hint: '支持 PDF、Word 手册等文档格式' },
+        package: { label: '压缩包 / 课件', accept: '.zip,.rar,.7z,.ppt,.pptx', hint: '支持 ZIP、RAR、PPT 课件等打包资料' }
+      };
+      return map[type] || { label: '未选择', accept: '', hint: '支持 MP4、JPG/PNG、PDF、ZIP 等常见格式' };
+    }
+
+    function renderFilePreview(file) {
+      if (!file) {
+        filePreview.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="empty-state-title">尚未选择文件</div>
+            <div class="empty-state-desc">上传后可查看文件名称、类型与大小摘要。</div>
+          </div>
+        `;
+        selectedFileSize.textContent = '--';
+        return;
+      }
+
+      filePreview.innerHTML = `
+        <div class="upload-file-meta">
+          <div class="upload-file-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="upload-file-info">
+            <strong title="${file.name}">${file.name}</strong>
+            <span>${file.type || '未知格式'} · ${formatFileSize(file.size)}</span>
+          </div>
+        </div>
+      `;
+      selectedFileSize.textContent = formatFileSize(file.size);
+    }
+
+    function renderCoverPreview(file) {
+      if (!file) {
+        coverPreview.innerHTML = `
+          <div class="upload-cover-placeholder">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span>封面图将在这里预览</span>
+          </div>
+        `;
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        coverPreview.innerHTML = '<img src="' + e.target.result + '" alt="封面预览">';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateTagCount() {
+      const customTags = (tagsInput.value || '')
+        .split(/[、，,\s]+/)
+        .map(function (item) { return item.trim(); })
+        .filter(Boolean);
+      const merged = selectedTags.concat(customTags.filter(function (tag) {
+        return selectedTags.indexOf(tag) === -1;
+      }));
+      selectedTagCount.textContent = merged.length + ' 个';
+    }
+
+    function updateTypeMeta() {
+      const meta = getMaterialTypeMeta(typeSelect.value);
+      selectedTypeLabel.textContent = meta.label;
+      acceptHint.textContent = meta.hint;
+      if (meta.accept) {
+        fileInput.setAttribute('accept', meta.accept);
+      } else {
+        fileInput.removeAttribute('accept');
+      }
+    }
+
+    function updateStatusLabel() {
+      const label = statusSelect.options[statusSelect.selectedIndex] ? statusSelect.options[statusSelect.selectedIndex].text : '立即发布';
+      selectedStatusLabel.textContent = label;
+    }
+
+    function validateForm() {
+      if (!titleInput.value.trim() || !typeSelect.value || !categorySelect.value || !fileInput.files.length) {
+        alert('请先完整填写资料标题、资料格式、资料类别，并上传主资料文件。');
+        return false;
+      }
+      return true;
+    }
+
+    if (backBtn) {
+      backBtn.addEventListener('click', function () {
+        navigateTo('publicity-materials-library');
+      });
+    }
+
+    if (topSubmitBtn) {
+      topSubmitBtn.addEventListener('click', function () {
+        form.requestSubmit();
+      });
+    }
+
+    if (typeSelect) {
+      typeSelect.addEventListener('change', updateTypeMeta);
+      updateTypeMeta();
+    }
+
+    if (statusSelect) {
+      statusSelect.addEventListener('change', updateStatusLabel);
+      updateStatusLabel();
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener('change', function () {
+        renderFilePreview(fileInput.files[0]);
+      });
+    }
+
+    if (coverInput) {
+      coverInput.addEventListener('change', function () {
+        renderCoverPreview(coverInput.files[0]);
+      });
+    }
+
+    if (tagsInput) {
+      tagsInput.addEventListener('input', updateTagCount);
+    }
+
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        const tag = chip.dataset.tag;
+        const active = chip.classList.toggle('active');
+        if (active) {
+          selectedTags.push(tag);
+        } else {
+          selectedTags = selectedTags.filter(function (item) { return item !== tag; });
+        }
+        updateTagCount();
+      });
+    });
+
+    if (saveDraftBtn) {
+      saveDraftBtn.addEventListener('click', function () {
+        const draftTitle = titleInput.value.trim() || '未命名资料';
+        alert('草稿已保存：' + draftTitle);
+      });
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        selectedTags = [];
+        chips.forEach(function (chip) { chip.classList.remove('active'); });
+        window.setTimeout(function () {
+          renderFilePreview(null);
+          renderCoverPreview(null);
+          updateTypeMeta();
+          updateStatusLabel();
+          updateTagCount();
+        }, 0);
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!validateForm()) return;
+        const statusText = statusSelect.options[statusSelect.selectedIndex].text;
+        alert('资料《' + titleInput.value.trim() + '》已提交，当前处理方式：' + statusText + '。');
+        navigateTo('publicity-materials-library');
+      });
+    }
+
+    renderFilePreview(null);
+    renderCoverPreview(null);
+    updateTagCount();
   }
 
   // ============ 培训计划 ============
@@ -6631,4 +7103,3 @@
   // ============ 启动 ============
   init();
 })();
-
