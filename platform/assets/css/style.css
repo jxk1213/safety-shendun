@@ -3084,7 +3084,7 @@ input {
 
 .material-thumb {
   width: 100%;
-  aspect-ratio: 1/1.2; /* 适合海报的比例 */
+  aspect-ratio: 16/9; /* 统一为视频样式比例 */
   background: var(--bg-body);
   position: relative;
   overflow: hidden;
@@ -3093,9 +3093,7 @@ input {
   justify-content: center;
 }
 
-.material-card.type-video .material-thumb {
-  aspect-ratio: 16/9; /* 视频使用 16:9 */
-}
+/* 兼容旧结构：type-video 不再需要单独比例 */
 
 .material-thumb img {
   width: 100%;

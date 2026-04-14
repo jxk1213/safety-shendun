@@ -408,7 +408,10 @@
         mainContent.innerHTML = renderAccidentReport();
         initAccidentReport();
         break;
-      case 'training': mainContent.innerHTML = renderTraining(); break;
+      case 'training':
+        mainContent.innerHTML = renderTraining();
+        initTraining();
+        break;
       case 'training-course-library':
         mainContent.innerHTML = renderTrainingCourseLibrary();
         initTrainingCourseLibrary();
@@ -5031,7 +5034,25 @@
   }
 
   // ============ 申安学堂 ============
+  function renderTrainingFeatureCards(activeTab) {
+    const featureCardMap = {
+      'safety-training':
+        buildFeatureCard('培训课程库', '安全培训课程分类管理，支持在线学习与线下签到', 'var(--primary-light)', 'var(--primary)', '课程总量 86 门', 'training-course-library') +
+        buildFeatureCard('培训计划', '年度、季度培训计划制定与执行追踪', 'var(--info-light)', 'var(--info)', '本年度 12 期', 'training-plan') +
+        buildFeatureCard('学习记录', '员工个人学习进度追踪与学时统计', 'var(--success-light)', 'var(--success)', '人均学时 24h'),
+      'publicity-materials':
+        buildFeatureCard('宣传资料库', '安全标语、海报、视频等宣教材料统一管理', 'var(--warning-light)', 'var(--warning)', '资料 256 份', 'publicity-materials-library'),
+      'exam-assessment':
+        buildFeatureCard('在线考试', '安全知识在线考试系统，自动阅卷与成绩管理', 'var(--danger-light)', 'var(--danger)', '本月考试 3 场', 'online-exam') +
+        buildFeatureCard('证书管理', '培训合格证书生成与查询', 'var(--primary-light)', 'var(--primary)', '已发放 892 张')
+    };
+
+    return featureCardMap[activeTab] || featureCardMap['safety-training'];
+  }
+
   function renderTraining() {
+    const activeTab = 'safety-training';
+
     return '' +
       '<div class="sub-page">' +
         '<div class="page-header">' +
@@ -5049,9 +5070,9 @@
         '</div>' +
 
         '<div class="tab-nav">' +
-          '<div class="tab-item active">安全培训</div>' +
-          '<div class="tab-item">宣传资料</div>' +
-          '<div class="tab-item">考试考核</div>' +
+          '<div class="tab-item active" data-training-tab="safety-training">安全培训</div>' +
+          '<div class="tab-item" data-training-tab="publicity-materials">宣传资料</div>' +
+          '<div class="tab-item" data-training-tab="exam-assessment">考试考核</div>' +
         '</div>' +
 
         '<div class="stats-row">' +
@@ -5065,15 +5086,27 @@
             '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>', 'green') +
         '</div>' +
 
-        '<div class="feature-grid">' +
-          buildFeatureCard('培训课程库', '安全培训课程分类管理，支持在线学习与线下签到', 'var(--primary-light)', 'var(--primary)', '课程总量 86 门', 'training-course-library') +
-          buildFeatureCard('培训计划', '年度、季度培训计划制定与执行追踪', 'var(--info-light)', 'var(--info)', '本年度 12 期', 'training-plan') +
-          buildFeatureCard('学习记录', '员工个人学习进度追踪与学时统计', 'var(--success-light)', 'var(--success)', '人均学时 24h') +
-          buildFeatureCard('宣传资料库', '安全标语、海报、视频等宣教材料统一管理', 'var(--warning-light)', 'var(--warning)', '资料 256 份', 'publicity-materials-library') +
-          buildFeatureCard('在线考试', '安全知识在线考试系统，自动阅卷与成绩管理', 'var(--danger-light)', 'var(--danger)', '本月考试 3 场', 'online-exam') +
-          buildFeatureCard('证书管理', '培训合格证书生成与查询', 'var(--primary-light)', 'var(--primary)', '已发放 892 张') +
+        '<div class="feature-grid" id="trainingFeatureGrid">' +
+          renderTrainingFeatureCards(activeTab) +
         '</div>' +
       '</div>';
+  }
+
+  function initTraining() {
+    const tabNav = document.querySelector('.tab-nav');
+    const featureGrid = document.getElementById('trainingFeatureGrid');
+    if (!tabNav || !featureGrid) return;
+
+    tabNav.addEventListener('click', function (e) {
+      const tab = e.target.closest('.tab-item[data-training-tab]');
+      if (!tab) return;
+
+      tabNav.querySelectorAll('.tab-item[data-training-tab]').forEach(function (item) {
+        item.classList.remove('active');
+      });
+      tab.classList.add('active');
+      featureGrid.innerHTML = renderTrainingFeatureCards(tab.dataset.trainingTab);
+    });
   }
 
   // ============ 培训课程库 ============
@@ -5241,15 +5274,19 @@
     let gridHtml = '';
     materials.forEach(item => {
       const typeLabel = item.type === 'video' ? '视频' : (item.type === 'poster' ? '海报' : '文档');
-      const typeClass = `tag-${item.type}`;
+      const typeClass = item.type === 'poster' ? 'tag-image' : `tag-${item.type}`;
       const isVideo = item.type === 'video';
+
+      const overlayIcon = isVideo
+        ? '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
+        : '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3"/></svg>';
 
       gridHtml += `
         <div class="material-card type-${item.type}" data-type="${item.type}" data-category="${item.category}">
           <div class="material-thumb">
             <img src="${item.thumb}" alt="${item.title}">
             <div class="media-overlay">
-              ${isVideo ? '<div class="play-button"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' : '<div class="btn btn-outline btn-sm" style="background:white">查看详情</div>'}
+              <div class="play-button">${overlayIcon}</div>
             </div>
           </div>
           <div class="material-content">
