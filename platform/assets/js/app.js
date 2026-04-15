@@ -136,6 +136,10 @@
       title: '场地与设施管理',
       breadcrumb: ['首页', '基础要素', '场地与设施管理']
     },
+    'facility-site-ledger': {
+      title: '场地信息台账',
+      breadcrumb: ['首页', '基础要素', '场地与设施管理', '场地信息台账']
+    },
     park: {
       title: '园区综合管理',
       breadcrumb: ['首页', '基础要素', '园区综合管理']
@@ -212,6 +216,7 @@
     '事故上报': 'accident-report',
     '人员安全管理': 'personnel',
     '场地与设施管理': 'facility',
+    '场地信息台账': 'facility-site-ledger',
     '园区综合管理': 'park',
     '寄递安全管理': 'delivery-safety',
     '申安学堂': 'training',
@@ -424,6 +429,10 @@
         break;
       case 'personnel': mainContent.innerHTML = renderPersonnel(); break;
       case 'facility': mainContent.innerHTML = renderFacility(); break;
+      case 'facility-site-ledger':
+        mainContent.innerHTML = renderFacilitySiteLedger();
+        initFacilitySiteLedger();
+        break;
       case 'park': mainContent.innerHTML = renderPark(); break;
       case 'delivery-safety': mainContent.innerHTML = renderDeliverySafety(); break;
       case 'accident-report':
@@ -4939,7 +4948,7 @@
             '<div class="page-desc">场地信息、设备设施安全与区域划分管理</div>' +
           '</div>' +
           '<div class="page-actions">' +
-            '<button class="btn btn-primary">' +
+            '<button class="btn btn-primary" data-page="facility-site-ledger">' +
               '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
               '新增场地' +
             '</button>' +
@@ -4954,7 +4963,7 @@
         '</div>' +
 
         '<div class="feature-grid">' +
-          buildFeatureCard('场地信息台账', '全面记录各场地基础信息、面积、用途及安全设施配置', 'var(--primary-light)', 'var(--primary)', '已录入 42 个场地') +
+          buildFeatureCard('场地信息台账', '全面记录各场地基础信息、面积、用途及安全设施配置', 'var(--primary-light)', 'var(--primary)', '进入台账管理', 'facility-site-ledger') +
           buildFeatureCard('设备设施清单', '设备资产登记、维保计划与安全状态实时监控', 'var(--info-light)', 'var(--info)', '设备总量 856 台') +
           buildFeatureCard('设备巡检记录', '定期巡检任务管理与异常报修追踪', 'var(--warning-light)', 'var(--warning)', '待巡检 12 项') +
           buildFeatureCard('区域安全划分', '作业区、仓储区、通行区等功能区域安全等级划分', 'var(--success-light)', 'var(--success)', '已划分 186 个区域') +
@@ -4962,6 +4971,508 @@
           buildFeatureCard('维保计划', '设备维护保养计划制定与执行跟踪', 'var(--primary-light)', 'var(--primary)', '本月计划 28 项') +
         '</div>' +
       '</div>';
+  }
+
+  // ============ 场地信息台账 ============
+  function renderFacilitySiteLedger() {
+    return '' +
+      '<div class="sub-page">' +
+        '<div class="page-header">' +
+          '<div>' +
+            '<div class="page-title">场地信息台账</div>' +
+            '<div class="page-desc">基于公司通讯录统一维护省区/中心场地信息，支持导入、查询、编辑与导出</div>' +
+          '</div>' +
+          '<div class="page-actions">' +
+            '<button class="btn btn-outline" data-page="facility">返回</button>' +
+            '<button class="btn btn-outline" id="siteLedgerExportBtn" type="button">导出 CSV</button>' +
+            '<button class="btn btn-outline" id="siteLedgerImportBtn" type="button">从通讯录导入</button>' +
+            '<button class="btn btn-primary" id="siteLedgerAddBtn" type="button">' +
+              '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+              '新增场地' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="data-table-wrapper">' +
+          '<div class="table-toolbar">' +
+            '<div class="table-toolbar-left">' +
+              '<div class="table-filter">' +
+                '<span>省区：</span>' +
+                '<select id="siteLedgerProvinceSelect"><option value="">全部</option></select>' +
+              '</div>' +
+              '<div class="table-filter">' +
+                '<span>分区：</span>' +
+                '<select id="siteLedgerPartitionSelect"><option value="">全部</option></select>' +
+              '</div>' +
+              '<div class="table-filter">' +
+                '<span>中心：</span>' +
+                '<select id="siteLedgerCenterSelect"><option value="">全部</option></select>' +
+              '</div>' +
+              '<button class="btn btn-outline" id="siteLedgerResetBtn" type="button">重置</button>' +
+            '</div>' +
+            '<div class="table-search">' +
+              '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+              '<input id="siteLedgerSearchInput" type="text" placeholder="搜索省区/中心/负责人/电话/地址...">' +
+            '</div>' +
+          '</div>' +
+
+          '<table class="data-table">' +
+            '<thead><tr>' +
+              '<th style="width:90px;">省区编码</th>' +
+              '<th style="width:150px;">省区名称</th>' +
+              '<th style="width:100px;">分区</th>' +
+              '<th style="width:110px;">运营负责人</th>' +
+              '<th style="width:90px;">中心编码</th>' +
+              '<th style="width:180px;">中心名称</th>' +
+              '<th style="width:90px;">级别</th>' +
+              '<th style="width:90px;">属性</th>' +
+              '<th style="width:90px;">负责人</th>' +
+              '<th style="width:120px;">电话</th>' +
+              '<th>地址</th>' +
+              '<th style="width:140px;">操作</th>' +
+            '</tr></thead>' +
+            '<tbody id="siteLedgerTbody"></tbody>' +
+          '</table>' +
+
+          '<div class="table-pagination" style="justify-content:space-between;">' +
+            '<span id="siteLedgerTotalText">共 0 条记录</span>' +
+            '<div class="pagination-btns" id="siteLedgerPager"></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="modal-overlay" id="siteLedgerEditModalOverlay" style="display:none;">' +
+          '<div class="modal" role="dialog" aria-modal="true" style="max-width:860px;">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title" id="siteLedgerEditModalTitle">新增场地</div>' +
+              '<button class="modal-close" id="siteLedgerEditModalClose" type="button" title="关闭">×</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+              '<input type="hidden" id="siteLedgerEditingId" value="">' +
+              '<div class="form-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">' +
+                '<div class="form-field"><label class="form-label">省区编码</label><input id="slProvinceCode" class="form-control" type="text" placeholder="如 P01"></div>' +
+                '<div class="form-field"><label class="form-label">省区名称</label><input id="slProvinceName" class="form-control" type="text" placeholder="如 上海省公司"></div>' +
+                '<div class="form-field"><label class="form-label">分区名称</label><input id="slPartitionName" class="form-control" type="text" placeholder="如 上海"></div>' +
+                '<div class="form-field"><label class="form-label">运营负责人</label><input id="slOperationManager" class="form-control" type="text" placeholder="如 刘辉"></div>' +
+                '<div class="form-field"><label class="form-label required">中心编码</label><input id="slCenterCode" class="form-control" type="text" placeholder="如 C001"></div>' +
+                '<div class="form-field"><label class="form-label required">中心名称</label><input id="slCenterName" class="form-control" type="text" placeholder="如 上海转运中心"></div>' +
+                '<div class="form-field"><label class="form-label">中心简称</label><input id="slCenterShortName" class="form-control" type="text" placeholder="如 上海"></div>' +
+                '<div class="form-field"><label class="form-label">类型</label><input id="slSiteType" class="form-control" type="text" placeholder="如 中心"></div>' +
+                '<div class="form-field"><label class="form-label">级别</label><input id="slSiteLevel" class="form-control" type="text" placeholder="如 一级"></div>' +
+                '<div class="form-field"><label class="form-label">属性</label><input id="slSiteAttribute" class="form-control" type="text" placeholder="如 直属"></div>' +
+                '<div class="form-field"><label class="form-label">负责人</label><input id="slManager" class="form-control" type="text" placeholder="如 余昕"></div>' +
+                '<div class="form-field"><label class="form-label">电话</label><input id="slPhone" class="form-control" type="text" placeholder="负责人电话"></div>' +
+                '<div class="form-field"><label class="form-label">面积(㎡)</label><input id="slAreaM2" class="form-control" type="number" step="0.01" placeholder="可选"></div>' +
+                '<div class="form-field"><label class="form-label">用途</label><input id="slUsageDesc" class="form-control" type="text" placeholder="如 分拨/仓储/办公"></div>' +
+                '<div class="form-field span-3" style="grid-column: span 3;"><label class="form-label">地址</label><textarea id="slAddress" class="form-control" rows="3" placeholder="场地详细地址"></textarea></div>' +
+                '<div class="form-field span-3" style="grid-column: span 3;"><label class="form-label">安全设施配置</label><textarea id="slSafetyFacilities" class="form-control" rows="2" placeholder="可填写主要安全设施/消防/监控等"></textarea></div>' +
+                '<div class="form-field span-3" style="grid-column: span 3;"><label class="form-label">备注</label><textarea id="slRemark" class="form-control" rows="2" placeholder="其他补充信息"></textarea></div>' +
+              '</div>' +
+              '<div class="modal-hint" id="siteLedgerEditHint" style="margin-top:10px;color:var(--text-secondary);font-size:13px;"></div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-outline" id="siteLedgerEditCancelBtn" type="button">取消</button>' +
+              '<button class="btn btn-primary" id="siteLedgerEditSaveBtn" type="button">保存</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function initFacilitySiteLedger() {
+    let currentPage = 1;
+    const pageSize = 10;
+    let currentRows = [];
+    let loading = false;
+
+    const provinceSelect = document.getElementById('siteLedgerProvinceSelect');
+    const partitionSelect = document.getElementById('siteLedgerPartitionSelect');
+    const centerSelect = document.getElementById('siteLedgerCenterSelect');
+    const searchInput = document.getElementById('siteLedgerSearchInput');
+    const resetBtn = document.getElementById('siteLedgerResetBtn');
+    const tbody = document.getElementById('siteLedgerTbody');
+    const totalText = document.getElementById('siteLedgerTotalText');
+    const pager = document.getElementById('siteLedgerPager');
+    const addBtn = document.getElementById('siteLedgerAddBtn');
+    const importBtn = document.getElementById('siteLedgerImportBtn');
+    const exportBtn = document.getElementById('siteLedgerExportBtn');
+
+    const modalOverlay = document.getElementById('siteLedgerEditModalOverlay');
+    const modalTitle = document.getElementById('siteLedgerEditModalTitle');
+    const modalClose = document.getElementById('siteLedgerEditModalClose');
+    const modalCancel = document.getElementById('siteLedgerEditCancelBtn');
+    const modalSave = document.getElementById('siteLedgerEditSaveBtn');
+    const modalHint = document.getElementById('siteLedgerEditHint');
+
+    const fieldIds = {
+      id: 'siteLedgerEditingId',
+      province_code: 'slProvinceCode',
+      province_name: 'slProvinceName',
+      partition_name: 'slPartitionName',
+      operation_manager: 'slOperationManager',
+      center_code: 'slCenterCode',
+      center_name: 'slCenterName',
+      center_short_name: 'slCenterShortName',
+      site_type: 'slSiteType',
+      site_level: 'slSiteLevel',
+      site_attribute: 'slSiteAttribute',
+      manager: 'slManager',
+      phone: 'slPhone',
+      address: 'slAddress',
+      area_m2: 'slAreaM2',
+      usage_desc: 'slUsageDesc',
+      safety_facilities: 'slSafetyFacilities',
+      remark: 'slRemark'
+    };
+
+    function setLoading(next) {
+      loading = !!next;
+      if (importBtn) importBtn.disabled = loading;
+      if (modalSave) modalSave.disabled = loading;
+    }
+
+    function openModal(mode, row) {
+      modalHint.textContent = '';
+      const editingIdEl = document.getElementById(fieldIds.id);
+      if (mode === 'edit') {
+        modalTitle.textContent = '编辑场地';
+        editingIdEl.value = String(row.id || '');
+      } else {
+        modalTitle.textContent = '新增场地';
+        editingIdEl.value = '';
+      }
+
+      Object.keys(fieldIds).forEach(function (key) {
+        if (key === 'id') return;
+        const el = document.getElementById(fieldIds[key]);
+        if (!el) return;
+        let v = (row && row[key] != null) ? row[key] : '';
+        if (key === 'area_m2') v = (v === null || v === undefined) ? '' : String(v);
+        el.value = String(v);
+      });
+
+      modalOverlay.style.display = 'flex';
+    }
+
+    function closeModal() {
+      modalOverlay.style.display = 'none';
+    }
+
+    function buildQuery() {
+      const params = [];
+      const keyword = (searchInput.value || '').trim();
+      const provinceName = provinceSelect.value || '';
+      const partitionName = partitionSelect.value || '';
+      const centerName = centerSelect.value || '';
+
+      if (keyword) params.push('keyword=' + encodeURIComponent(keyword));
+      if (provinceName) params.push('provinceName=' + encodeURIComponent(provinceName));
+      if (partitionName) params.push('partitionName=' + encodeURIComponent(partitionName));
+      if (centerName) params.push('centerName=' + encodeURIComponent(centerName));
+
+      params.push('page=' + encodeURIComponent(String(currentPage)));
+      params.push('pageSize=' + encodeURIComponent(String(pageSize)));
+      return params.length ? ('?' + params.join('&')) : '';
+    }
+
+    function renderTable(rows) {
+      if (!Array.isArray(rows) || !rows.length) {
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-secondary);padding:22px;">暂无数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(function (r) {
+        const addr = String(r.address || '');
+        const addrSafe = escapeHtml(addr);
+        const addrTitle = escapeHtml(addr.replace(/\n/g, ' '));
+        return '' +
+          '<tr data-id="' + escapeHtml(r.id) + '">' +
+            '<td>' + escapeHtml(r.province_code || '') + '</td>' +
+            '<td>' + escapeHtml(r.province_name || '') + '</td>' +
+            '<td>' + escapeHtml(r.partition_name || '') + '</td>' +
+            '<td>' + escapeHtml(r.operation_manager || '') + '</td>' +
+            '<td>' + escapeHtml(r.center_code || '') + '</td>' +
+            '<td>' + escapeHtml(r.center_name || '') + '</td>' +
+            '<td>' + escapeHtml(r.site_level || '') + '</td>' +
+            '<td>' + escapeHtml(r.site_attribute || '') + '</td>' +
+            '<td>' + escapeHtml(r.manager || '') + '</td>' +
+            '<td>' + escapeHtml(r.phone || '') + '</td>' +
+            '<td style="max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + addrTitle + '">' + addrSafe + '</td>' +
+            '<td>' +
+              '<button class="btn btn-outline btn-sm" data-action="edit" type="button" style="padding:6px 10px;margin-right:8px;">编辑</button>' +
+              '<button class="btn btn-outline btn-sm" data-action="delete" type="button" style="padding:6px 10px;color:var(--danger);border-color:rgba(244,63,94,.35);">删除</button>' +
+            '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function renderPager(total) {
+      totalText.textContent = '共 ' + total + ' 条记录';
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const btns = [];
+      const pushBtn = function (label, page, active, disabled) {
+        btns.push(
+          '<button class="pagination-btn' + (active ? ' active' : '') + '" data-page="' + page + '" ' + (disabled ? 'disabled' : '') + '>' + label + '</button>'
+        );
+      };
+
+      pushBtn('&lt;', String(Math.max(1, currentPage - 1)), false, currentPage <= 1);
+
+      const windowSize = 7;
+      let start = Math.max(1, currentPage - Math.floor(windowSize / 2));
+      let end = Math.min(totalPages, start + windowSize - 1);
+      start = Math.max(1, end - windowSize + 1);
+
+      if (start > 1) {
+        pushBtn('1', '1', currentPage === 1, false);
+        if (start > 2) pushBtn('...', String(Math.max(1, start - 1)), false, false);
+      }
+
+      for (let p = start; p <= end; p++) {
+        pushBtn(String(p), String(p), p === currentPage, false);
+      }
+
+      if (end < totalPages) {
+        if (end < totalPages - 1) pushBtn('...', String(Math.min(totalPages, end + 1)), false, false);
+        pushBtn(String(totalPages), String(totalPages), currentPage === totalPages, false);
+      }
+
+      pushBtn('&gt;', String(Math.min(totalPages, currentPage + 1)), false, currentPage >= totalPages);
+      pager.innerHTML = btns.join('');
+    }
+
+    function refreshCenterOptions() {
+      const provinceName = provinceSelect.value || '';
+      let centers = centersData || [];
+      if (provinceName) centers = centers.filter(function (c) { return c && c.provinceName === provinceName; });
+      const names = centers.map(function (c) { return c.name; }).filter(Boolean);
+      const unique = Array.from(new Set(names));
+      centerSelect.innerHTML = '<option value="">全部</option>' + unique.map(function (n) {
+        return '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>';
+      }).join('');
+    }
+
+    function refreshPartitionOptions() {
+      const provinceName = provinceSelect.value || '';
+      let provs = provincesData || [];
+      if (provinceName) provs = provs.filter(function (p) { return p && p.name === provinceName; });
+      const parts = provs.map(function (p) { return p.partitionName; }).filter(Boolean);
+      const unique = Array.from(new Set(parts));
+      partitionSelect.innerHTML = '<option value="">全部</option>' + unique.map(function (n) {
+        return '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>';
+      }).join('');
+    }
+
+    function refreshProvinceOptions() {
+      const names = (provincesData || []).map(function (p) { return p.name; }).filter(Boolean);
+      const unique = Array.from(new Set(names));
+      provinceSelect.innerHTML = '<option value="">全部</option>' + unique.map(function (n) {
+        return '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>';
+      }).join('');
+    }
+
+    function load() {
+      if (loading) return;
+      setLoading(true);
+      apiGet('/api/site-ledger' + buildQuery()).then(function (resp) {
+        currentRows = resp && Array.isArray(resp.rows) ? resp.rows : [];
+        renderTable(currentRows);
+        renderPager(Number(resp && resp.total ? resp.total : 0));
+      }).catch(function (err) {
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--danger);padding:22px;">加载失败：' + escapeHtml(err.message) + '</td></tr>';
+        pager.innerHTML = '';
+        totalText.textContent = '加载失败';
+      }).finally(function () {
+        setLoading(false);
+      });
+    }
+
+    function collectFormBody() {
+      const body = {};
+      Object.keys(fieldIds).forEach(function (key) {
+        if (key === 'id') return;
+        const el = document.getElementById(fieldIds[key]);
+        if (!el) return;
+        body[key] = el.value;
+      });
+      return body;
+    }
+
+    function validateForm(body) {
+      if (!String(body.center_code || '').trim() || !String(body.center_name || '').trim()) {
+        modalHint.style.color = 'var(--danger)';
+        modalHint.textContent = '请填写中心编码与中心名称（必填）。';
+        return false;
+      }
+      return true;
+    }
+
+    function saveForm() {
+      if (loading) return;
+      modalHint.textContent = '';
+      const editingId = (document.getElementById(fieldIds.id).value || '').trim();
+      const body = collectFormBody();
+      if (!validateForm(body)) return;
+
+      setLoading(true);
+      const req = editingId ? apiPatch('/api/site-ledger/' + encodeURIComponent(editingId), body) : apiPost('/api/site-ledger', body);
+      req.then(function () {
+        closeModal();
+        load();
+        alert(editingId ? '更新成功' : '新增成功');
+      }).catch(function (err) {
+        modalHint.style.color = 'var(--danger)';
+        modalHint.textContent = '保存失败：' + err.message;
+      }).finally(function () {
+        setLoading(false);
+      });
+    }
+
+    function exportCsv() {
+      if (!currentRows.length) {
+        alert('当前无数据可导出。');
+        return;
+      }
+      const headers = ['省区编码', '省区名称', '分区名称', '运营负责人', '中心编码', '中心名称', '中心简称', '类型', '级别', '属性', '负责人', '电话', '地址', '面积(㎡)', '用途', '安全设施配置', '备注'];
+      const lines = [headers.join(',')];
+      currentRows.forEach(function (r) {
+        const values = [
+          r.province_code, r.province_name, r.partition_name, r.operation_manager,
+          r.center_code, r.center_name, r.center_short_name, r.site_type, r.site_level, r.site_attribute,
+          r.manager, r.phone, r.address,
+          r.area_m2, r.usage_desc, r.safety_facilities, r.remark
+        ].map(function (v) {
+          const s = String(v == null ? '' : v);
+          const escaped = s.replace(/\"/g, '""');
+          return /[",\n]/.test(escaped) ? '"' + escaped + '"' : escaped;
+        });
+        lines.push(values.join(','));
+      });
+      const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      a.download = '场地信息台账_' + y + m + d + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    tbody.addEventListener('click', function (e) {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const tr = e.target.closest('tr[data-id]');
+      if (!tr) return;
+      const id = tr.getAttribute('data-id');
+      const row = currentRows.find(function (r) { return String(r.id) === String(id); });
+      if (!row) return;
+      const action = btn.getAttribute('data-action');
+
+      if (action === 'edit') {
+        openModal('edit', row);
+        return;
+      }
+
+      if (action === 'delete') {
+        const name = row.center_name || row.center_code || '';
+        if (!confirm('确认删除：' + name + ' ?')) return;
+        setLoading(true);
+        apiDelete('/api/site-ledger/' + encodeURIComponent(String(id))).then(function () {
+          alert('删除成功');
+          load();
+        }).catch(function (err) {
+          alert('删除失败：' + err.message);
+        }).finally(function () {
+          setLoading(false);
+        });
+      }
+    });
+
+    pager.addEventListener('click', function (e) {
+      const btn = e.target.closest('button.pagination-btn');
+      if (!btn || btn.disabled) return;
+      const p = parseInt(btn.dataset.page, 10);
+      if (!isNaN(p) && p >= 1) {
+        currentPage = p;
+        load();
+      }
+    });
+
+    addBtn.addEventListener('click', function () {
+      openModal('add', null);
+    });
+
+    importBtn.addEventListener('click', function () {
+      if (!confirm('将从本地 `data/provinces_centers.csv` 导入/覆盖通讯录数据（按中心编码更新）。继续？')) return;
+      setLoading(true);
+      apiPost('/api/site-ledger/import/provinces-centers', {}).then(function (resp) {
+        const msg = (resp && resp.message) ? resp.message : '导入完成';
+        alert(msg + '：共 ' + (resp.total || 0) + ' 行，新增 ' + (resp.inserted || 0) + '，更新 ' + (resp.updated || 0) + '，跳过 ' + (resp.skipped || 0));
+        currentPage = 1;
+        load();
+      }).catch(function (err) {
+        alert('导入失败：' + err.message);
+      }).finally(function () {
+        setLoading(false);
+      });
+    });
+
+    exportBtn.addEventListener('click', exportCsv);
+
+    resetBtn.addEventListener('click', function () {
+      provinceSelect.value = '';
+      partitionSelect.value = '';
+      centerSelect.value = '';
+      searchInput.value = '';
+      currentPage = 1;
+      refreshPartitionOptions();
+      refreshCenterOptions();
+      load();
+    });
+
+    provinceSelect.addEventListener('change', function () {
+      currentPage = 1;
+      refreshPartitionOptions();
+      refreshCenterOptions();
+      load();
+    });
+    partitionSelect.addEventListener('change', function () {
+      currentPage = 1;
+      load();
+    });
+    centerSelect.addEventListener('change', function () {
+      currentPage = 1;
+      load();
+    });
+    searchInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        currentPage = 1;
+        load();
+      }
+    });
+
+    modalClose.addEventListener('click', closeModal);
+    modalCancel.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', function (e) {
+      if (e.target === modalOverlay) closeModal();
+    });
+    modalSave.addEventListener('click', saveForm);
+
+    fetchLocationsData().then(function () {
+      refreshProvinceOptions();
+      refreshPartitionOptions();
+      refreshCenterOptions();
+      load();
+    }).catch(function () {
+      // 即便主数据加载失败，也允许直接按关键字查询
+      load();
+    });
   }
 
   // ============ 园区综合管理 ============

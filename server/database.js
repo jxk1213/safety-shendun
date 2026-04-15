@@ -163,6 +163,31 @@ async function initializeTables() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
+    await promisePool.query(`CREATE TABLE IF NOT EXISTS facility_site_ledger (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      province_code VARCHAR(20),
+      province_name VARCHAR(120),
+      partition_name VARCHAR(80),
+      operation_manager VARCHAR(80),
+      center_code VARCHAR(30) NOT NULL,
+      center_name VARCHAR(200) NOT NULL,
+      center_short_name VARCHAR(120),
+      site_type VARCHAR(50),
+      site_level VARCHAR(50),
+      site_attribute VARCHAR(50),
+      manager VARCHAR(80),
+      phone VARCHAR(50),
+      address TEXT,
+      area_m2 DECIMAL(12,2) NULL,
+      usage_desc VARCHAR(200),
+      safety_facilities TEXT,
+      remark TEXT,
+      source VARCHAR(50) DEFAULT 'manual',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uk_center_code (center_code)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
     console.log('MySQL 数据表初始化完成');
   } catch (err) {
     console.error('建表失败:', err.message);
