@@ -168,6 +168,10 @@
       title: '培训课程库',
       breadcrumb: ['首页', '培训与文化', '申安学堂', '培训课程库']
     },
+    'create-course': {
+      title: '创建课程',
+      breadcrumb: ['首页', '培训与文化', '申安学堂', '培训课程库', '创建课程']
+    },
     'publicity-materials-library': {
       title: '宣传资料库',
       breadcrumb: ['首页', '培训与文化', '申安学堂', '宣传资料库']
@@ -179,6 +183,10 @@
     'training-plan': {
       title: '培训计划',
       breadcrumb: ['首页', '培训与文化', '申安学堂', '培训计划']
+    },
+    'training-plan-create': {
+      title: '创建培训计划',
+      breadcrumb: ['首页', '培训与文化', '申安学堂', '培训计划', '创建培训计划']
     },
     'online-exam': {
       title: '在线考试',
@@ -211,9 +219,11 @@
     '制度与文档管理': 'document',
     '系统与权限管理': 'system',
     '培训课程库': 'training-course-library',
+    '创建课程': 'create-course',
     '宣传资料库': 'publicity-materials-library',
     '上传资料': 'upload-materials',
     '培训计划': 'training-plan',
+    '创建培训计划': 'training-plan-create',
     '在线考试': 'online-exam',
     '三级教育': 'three-education'
   };
@@ -428,6 +438,10 @@
         mainContent.innerHTML = renderTrainingCourseLibrary();
         initTrainingCourseLibrary();
         break;
+      case 'create-course':
+        mainContent.innerHTML = renderCreateCoursePage();
+        initCreateCoursePage();
+        break;
       case 'publicity-materials-library':
         mainContent.innerHTML = renderPublicityMaterialsLibrary();
         initPublicityMaterialsLibrary();
@@ -439,6 +453,10 @@
       case 'training-plan':
         mainContent.innerHTML = renderTrainingPlan();
         initTrainingPlan();
+        break;
+      case 'training-plan-create':
+        mainContent.innerHTML = renderCreateTrainingPlanPage();
+        initCreateTrainingPlanPage();
         break;
       case 'online-exam':
         mainContent.innerHTML = renderOnlineExam();
@@ -5280,17 +5298,65 @@
   }
 
   // ============ 培训课程库 ============
-  function renderTrainingCourseLibrary() {
-    const courses = [
-      { id: 1, title: '新员工入职安全第一课', category: '通用安全', type: 'online', duration: '45分钟', progress: 100, thumb: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=400&q=80' },
-      { id: 2, title: '有限空间作业安全技术规范', category: '专项安全', type: 'online', duration: '120分钟', progress: 65, thumb: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=400&q=80' },
-      { id: 3, title: '消防设施器材使用与实操演练', category: '消防安全', type: 'offline', duration: '4课时', progress: 0, thumb: 'https://images.unsplash.com/photo-1599833719482-600fed77017b?auto=format&fit=crop&w=400&q=80' },
-      { id: 4, title: '危化品包装与运输安全要求', category: '专项安全', type: 'online', duration: '90分钟', progress: 30, thumb: 'https://images.unsplash.com/photo-1586528116311-ad86d6263012?auto=format&fit=crop&w=400&q=80' },
-      { id: 5, title: '急救常识：心肺复苏(CPR)', category: '应急救援', type: 'online', duration: '30分钟', progress: 85, thumb: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=400&q=80' },
-      { id: 6, title: '叉车驾驶员岗位安全操作规程', category: '设备安全', type: 'offline', duration: '8课时', progress: 0, thumb: 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?auto=format&fit=crop&w=400&q=80' },
-      { id: 7, title: '劳动防护用品(PPE)选配指南', category: '个人防护', type: 'online', duration: '20分钟', progress: 100, thumb: 'https://images.unsplash.com/photo-1590402444582-43d16d655f9f?auto=format&fit=crop&w=400&q=80' },
-      { id: 8, title: '转运中心作业场所风险辨识', category: '风险管控', type: 'online', duration: '60分钟', progress: 10, thumb: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=400&q=80' }
+  function getBaseCourseLibraryCourses() {
+    return [
+      { id: 1, title: '新员工入职安全第一课', category: '通用安全', type: 'online', duration: '45分钟', thumb: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=400&q=80' },
+      { id: 2, title: '有限空间作业安全技术规范', category: '专项安全', type: 'online', duration: '120分钟', thumb: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=400&q=80' },
+      { id: 3, title: '消防设施器材使用与实操演练', category: '消防安全', type: 'offline', duration: '4课时', thumb: 'https://images.unsplash.com/photo-1599833719482-600fed77017b?auto=format&fit=crop&w=400&q=80' },
+      { id: 4, title: '危化品包装与运输安全要求', category: '专项安全', type: 'online', duration: '90分钟', thumb: 'https://images.unsplash.com/photo-1586528116311-ad86d6263012?auto=format&fit=crop&w=400&q=80' },
+      { id: 5, title: '急救常识：心肺复苏(CPR)', category: '应急救援', type: 'online', duration: '30分钟', thumb: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=400&q=80' },
+      { id: 6, title: '叉车驾驶员岗位安全操作规程', category: '设备安全', type: 'offline', duration: '8课时', thumb: 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?auto=format&fit=crop&w=400&q=80' },
+      { id: 7, title: '劳动防护用品(PPE)选配指南', category: '个人防护', type: 'online', duration: '20分钟', thumb: 'https://images.unsplash.com/photo-1590402444582-43d16d655f9f?auto=format&fit=crop&w=400&q=80' },
+      { id: 8, title: '转运中心作业场所风险辨识', category: '风险管控', type: 'online', duration: '60分钟', thumb: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=400&q=80' }
     ];
+  }
+
+  function getCourseLibraryStorageKey() {
+    return 'sd_course_library_custom_v1';
+  }
+
+  function safeJsonParse(text, fallback) {
+    try { return JSON.parse(text); } catch (e) { return fallback; }
+  }
+
+  function loadCustomCourses() {
+    const raw = localStorage.getItem(getCourseLibraryStorageKey());
+    const list = safeJsonParse(raw, []);
+    return Array.isArray(list) ? list : [];
+  }
+
+  function saveCustomCourses(list) {
+    localStorage.setItem(getCourseLibraryStorageKey(), JSON.stringify(list || []));
+  }
+
+  function pickCourseThumbByCategory(category) {
+    const map = {
+      '通用安全': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=400&q=80',
+      '专项安全': 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=400&q=80',
+      '消防安全': 'https://images.unsplash.com/photo-1599833719482-600fed77017b?auto=format&fit=crop&w=400&q=80',
+      '应急救援': 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=400&q=80',
+      '设备安全': 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?auto=format&fit=crop&w=400&q=80',
+      '个人防护': 'https://images.unsplash.com/photo-1590402444582-43d16d655f9f?auto=format&fit=crop&w=400&q=80',
+      '风险管控': 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=400&q=80'
+    };
+    return map[category] || map['通用安全'];
+  }
+
+  function addCustomCourse(course) {
+    const list = loadCustomCourses();
+    list.unshift(course);
+    // 控制体积，避免 localStorage 过大
+    saveCustomCourses(list.slice(0, 200));
+  }
+
+  function getMergedCourseLibraryCourses(baseCourses) {
+    const custom = loadCustomCourses();
+    // 自定义课程优先展示
+    return custom.concat(baseCourses || []);
+  }
+
+  function renderTrainingCourseLibrary() {
+    const courses = getMergedCourseLibraryCourses(getBaseCourseLibraryCourses());
 
     let coursesHtml = '';
     courses.forEach(course => {
@@ -5309,18 +5375,6 @@
               </span>
             </div>
             <div class="course-title" title="${course.title}">${course.title}</div>
-            <div class="course-progress-container">
-              <div class="course-progress-bar">
-                <div class="course-progress-inner" style="width: ${course.progress}%"></div>
-              </div>
-              <div class="course-progress-info">
-                <span>学习进度</span>
-                <span>${course.progress}%</span>
-              </div>
-            </div>
-          </div>
-          <div class="course-actions">
-            <button class="btn btn-primary btn-sm btn-learn">${course.progress === 100 ? '再次学习' : (course.progress > 0 ? '继续学习' : '开始学习')}</button>
           </div>
         </div>
       `;
@@ -5334,13 +5388,9 @@
             <div class="page-desc">全集团安全培训课程资源，支持按需学习与管理</div>
           </div>
           <div class="page-actions">
-            <button class="btn btn-primary">
+            <button class="btn btn-primary" data-page="create-course">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               创建课程
-            </button>
-            <button class="btn btn-outline">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              导入课程
             </button>
           </div>
         </div>
@@ -5348,7 +5398,7 @@
         <div class="course-stats">
           <div class="course-stat-card">
             <div class="course-stat-label">已上线课程</div>
-            <div class="course-stat-value">86 门</div>
+            <div class="course-stat-value">${courses.length} 门</div>
           </div>
           <div class="course-stat-card">
             <div class="course-stat-label">本月必修</div>
@@ -5378,6 +5428,8 @@
                 <option value="消防安全">消防安全</option>
                 <option value="应急救援">应急救援</option>
                 <option value="设备安全">设备安全</option>
+                <option value="个人防护">个人防护</option>
+                <option value="风险管控">风险管控</option>
               </select>
               <select class="course-filter-select" id="courseTypeFilter">
                 <option value="all">所有方式</option>
@@ -5426,6 +5478,245 @@
     if (searchInput) searchInput.addEventListener('input', filterCourses);
     if (categoryFilter) categoryFilter.addEventListener('change', filterCourses);
     if (typeFilter) typeFilter.addEventListener('change', filterCourses);
+  }
+
+  // ============ 创建课程 ============
+  function renderCreateCoursePage() {
+    return `
+      <div class="sub-page course-create">
+        <div class="page-header">
+          <div>
+            <div class="page-title">创建课程</div>
+            <div class="page-desc">上传课程资源并完善基础信息，保存后在课程库统一管理</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-outline" id="backToCourseLibraryBtn">返回课程库</button>
+            <button class="btn btn-primary" id="submitCourseTopBtn">保存课程</button>
+          </div>
+        </div>
+
+        <div class="course-create-card">
+          <form id="createCourseForm" class="course-create-form">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label class="required">课程标题</label>
+                <input type="text" id="courseTitleInput" class="form-control" placeholder="例如：新员工入职安全第一课">
+              </div>
+
+              <div class="form-group">
+                <label class="required">课程类别</label>
+                <select id="courseCategorySelect" class="form-control">
+                  <option value="">请选择类别</option>
+                  <option value="通用安全">通用安全</option>
+                  <option value="专项安全">专项安全</option>
+                  <option value="消防安全">消防安全</option>
+                  <option value="应急救援">应急救援</option>
+                  <option value="设备安全">设备安全</option>
+                  <option value="风险管控">风险管控</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="required">资源格式</label>
+                <select id="courseTypeSelect" class="form-control">
+                  <option value="">请选择格式</option>
+                  <option value="video">视频</option>
+                  <option value="pdf">PDF / 文档</option>
+                  <option value="ppt">PPT 课件</option>
+                  <option value="package">压缩包</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>时长</label>
+                <input type="text" id="courseDurationInput" class="form-control" placeholder="例如：45分钟 / 2课时">
+              </div>
+
+              <div class="form-group">
+                <label>备注</label>
+                <input type="text" id="courseRemarkInput" class="form-control" placeholder="可选：适用对象、版本等">
+              </div>
+
+              <div class="form-group full-width">
+                <label class="required">上传课程资源</label>
+                <div class="course-upload-row">
+                  <label class="course-upload-drop" for="courseFileInput">
+                    <div class="course-upload-inner">
+                      <div class="course-upload-icon">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      </div>
+                      <div class="course-upload-text">
+                        <strong>点击选择文件</strong>
+                        <span id="courseAcceptHint">支持 MP4、PDF、PPT、ZIP 等常见格式</span>
+                      </div>
+                    </div>
+                    <input type="file" id="courseFileInput" class="course-upload-input">
+                  </label>
+
+                  <div class="course-upload-preview" id="courseFilePreview"></div>
+                </div>
+                <div class="course-upload-meta">
+                  <span>已选文件大小：<strong id="courseSelectedFileSize">--</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="course-create-footer">
+              <button type="button" class="btn btn-outline" id="saveCourseDraftBtn">保存草稿</button>
+              <button type="submit" class="btn btn-primary">保存课程</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  function initCreateCoursePage() {
+    const form = document.getElementById('createCourseForm');
+    const titleInput = document.getElementById('courseTitleInput');
+    const categorySelect = document.getElementById('courseCategorySelect');
+    const typeSelect = document.getElementById('courseTypeSelect');
+    const durationInput = document.getElementById('courseDurationInput');
+    const remarkInput = document.getElementById('courseRemarkInput');
+    const fileInput = document.getElementById('courseFileInput');
+    const filePreview = document.getElementById('courseFilePreview');
+    const acceptHint = document.getElementById('courseAcceptHint');
+    const selectedFileSize = document.getElementById('courseSelectedFileSize');
+    const topSubmitBtn = document.getElementById('submitCourseTopBtn');
+    const backBtn = document.getElementById('backToCourseLibraryBtn');
+    const saveDraftBtn = document.getElementById('saveCourseDraftBtn');
+
+    function formatFileSize(size) {
+      if (!size && size !== 0) return '--';
+      if (size < 1024) return size + ' B';
+      if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+      if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(1) + ' MB';
+      return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
+
+    function getTypeMeta(type) {
+      const map = {
+        video: { accept: 'video/*,.mp4,.mov,.avi,.mkv', hint: '支持 MP4、MOV、AVI、MKV 等视频格式' },
+        pdf: { accept: '.pdf,.doc,.docx', hint: '支持 PDF、Word 文档格式' },
+        ppt: { accept: '.ppt,.pptx,.pdf', hint: '支持 PPT、PPTX、PDF 课件格式' },
+        package: { accept: '.zip,.rar,.7z', hint: '支持 ZIP、RAR、7Z 压缩包格式' }
+      };
+      return map[type] || { accept: '', hint: '支持 MP4、PDF、PPT、ZIP 等常见格式' };
+    }
+
+    function renderFilePreview(file) {
+      if (!file) {
+        filePreview.innerHTML = `
+          <div class="course-upload-empty">
+            <div class="course-upload-empty-title">未选择文件</div>
+            <div class="course-upload-empty-desc">选择后将展示文件名称与大小摘要。</div>
+          </div>
+        `;
+        selectedFileSize.textContent = '--';
+        return;
+      }
+
+      filePreview.innerHTML = `
+        <div class="course-upload-file">
+          <div class="course-upload-file-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="course-upload-file-info">
+            <strong title="${file.name}">${file.name}</strong>
+            <span>${file.type || '未知格式'} · ${formatFileSize(file.size)}</span>
+          </div>
+          <button type="button" class="course-upload-remove" id="removeCourseFileBtn">移除</button>
+        </div>
+      `;
+      selectedFileSize.textContent = formatFileSize(file.size);
+
+      const removeBtn = document.getElementById('removeCourseFileBtn');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function () {
+          fileInput.value = '';
+          renderFilePreview(null);
+        });
+      }
+    }
+
+    function updateTypeMeta() {
+      const meta = getTypeMeta(typeSelect.value);
+      acceptHint.textContent = meta.hint;
+      if (meta.accept) fileInput.setAttribute('accept', meta.accept);
+      else fileInput.removeAttribute('accept');
+    }
+
+    function validateForm() {
+      if (!titleInput.value.trim() || !categorySelect.value || !typeSelect.value || !fileInput.files.length) {
+        alert('请填写课程标题、类别、资源格式，并上传课程文件。');
+        return false;
+      }
+      return true;
+    }
+
+    if (backBtn) {
+      backBtn.addEventListener('click', function () {
+        navigateTo('training-course-library');
+      });
+    }
+
+    if (topSubmitBtn) {
+      topSubmitBtn.addEventListener('click', function () {
+        if (form) form.requestSubmit();
+      });
+    }
+
+    if (typeSelect) {
+      typeSelect.addEventListener('change', updateTypeMeta);
+      updateTypeMeta();
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener('change', function () {
+        renderFilePreview(fileInput.files[0]);
+      });
+    }
+
+    if (saveDraftBtn) {
+      saveDraftBtn.addEventListener('click', function () {
+        const draftTitle = titleInput.value.trim() || '未命名课程';
+        alert('草稿已保存：' + draftTitle);
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!validateForm()) return;
+        const title = titleInput.value.trim();
+        const category = categorySelect.value;
+        const type = typeSelect.value;
+        const duration = durationInput.value.trim();
+        const remark = remarkInput.value.trim();
+
+        // 轻量化前端保存：仅保存元信息与文件名（不存真实文件内容）
+        const file = fileInput.files[0];
+        addCustomCourse({
+          id: Date.now(),
+          title: title,
+          category: category,
+          // 课程库目前按“在线/线下”筛选，这里默认归为在线资源
+          type: 'online',
+          duration: duration || '--',
+          thumb: pickCourseThumbByCategory(category),
+          resource_format: type,
+          resource_name: file ? file.name : '',
+          resource_size: file ? file.size : 0,
+          remark: remark,
+          created_at: new Date().toISOString()
+        });
+
+        alert('课程《' + title + '》已保存并加入课程库。');
+        navigateTo('training-course-library');
+      });
+    }
+
+    renderFilePreview(null);
   }
 
   // ============ 宣传资料库 ============
@@ -6036,8 +6327,28 @@
   }
 
   // ============ 培训计划 ============
+  function getTrainingPlanStorageKey() {
+    return 'sd_training_plan_custom_v1';
+  }
+
+  function loadCustomTrainingPlans() {
+    const raw = localStorage.getItem(getTrainingPlanStorageKey());
+    const list = safeJsonParse(raw, []);
+    return Array.isArray(list) ? list : [];
+  }
+
+  function saveCustomTrainingPlans(list) {
+    localStorage.setItem(getTrainingPlanStorageKey(), JSON.stringify(list || []));
+  }
+
+  function addCustomTrainingPlan(plan) {
+    const list = loadCustomTrainingPlans();
+    list.unshift(plan);
+    saveCustomTrainingPlans(list.slice(0, 200));
+  }
+
   function renderTrainingPlan() {
-    const plans = [
+    const basePlans = [
       { id: 1, name: '2026年度全员消防安全知识大轮训', category: '消防安全', period: '2026-03 至 2026-06', target: '全体员工', status: 'ongoing', progress: 65 },
       { id: 2, name: '转运中心特种设备操作人员取证培训', category: '设备安全', period: '2026-04 至 2026-05', target: '特种设备操作工', status: 'planned', progress: 0 },
       { id: 3, name: '第一季度新员工入职安全教育', category: '通用安全', period: '2026-01 至 2026-03', target: 'Q1入职员工', status: 'completed', progress: 100 },
@@ -6047,6 +6358,11 @@
       { id: 7, name: '春季百日安全无事故劳动竞赛宣贯', category: '安全教育', period: '2026-03 至 2026-05', target: '全网驾驶员', status: 'ongoing', progress: 40 },
       { id: 8, name: '应急救援预案演练：火灾与疏散', category: '应急响应', period: '2026-06-15', target: '园区办公楼人员', status: 'delayed', progress: 10 }
     ];
+    const plans = loadCustomTrainingPlans().concat(basePlans);
+    const totalCount = plans.length;
+    const ongoingCount = plans.filter(function (p) { return p && p.status === 'ongoing'; }).length;
+    const completedCount = plans.filter(function (p) { return p && p.status === 'completed'; }).length;
+    const avgProgress = totalCount ? Math.round(plans.reduce(function (sum, p) { return sum + (Number(p.progress) || 0); }, 0) / totalCount) : 0;
 
     let rowHtml = '';
     plans.forEach(plan => {
@@ -6101,7 +6417,7 @@
             <div class="page-desc">年度与季度安全培训任务清单，实时追踪执行进度</div>
           </div>
           <div class="page-actions">
-            <button class="btn btn-primary">
+            <button class="btn btn-primary" type="button" data-page="training-plan-create">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               创建计划
             </button>
@@ -6115,19 +6431,19 @@
         <div class="course-stats">
           <div class="course-stat-card">
             <div class="course-stat-label">计划总数</div>
-            <div class="course-stat-value">12 期</div>
+            <div class="course-stat-value">${totalCount} 期</div>
           </div>
           <div class="course-stat-card">
             <div class="course-stat-label">执行中</div>
-            <div class="course-stat-value">5 期</div>
+            <div class="course-stat-value">${ongoingCount} 期</div>
           </div>
           <div class="course-stat-card">
             <div class="course-stat-label">已完成计</div>
-            <div class="course-stat-value">4 期</div>
+            <div class="course-stat-value">${completedCount} 期</div>
           </div>
           <div class="course-stat-card">
             <div class="course-stat-label">整体进度</div>
-            <div class="course-stat-value">72%</div>
+            <div class="course-stat-value">${avgProgress}%</div>
           </div>
         </div>
 
@@ -6169,57 +6485,6 @@
               ${rowHtml}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      <!-- 创建计划弹窗 -->
-      <div class="modal-overlay" id="createPlanModalOverlay" style="display:none;">
-        <div class="modal" style="max-width: 600px;">
-          <div class="modal-header">
-            <div class="modal-title">创建培训计划</div>
-            <button class="modal-close" type="button" onclick="document.getElementById('createPlanModalOverlay').style.display='none'">×</button>
-          </div>
-          <div class="modal-body">
-            <div class="modal-hint">请填写年度/季度培训计划的基础信息，下发后将转入执行阶段。</div>
-            <form id="createPlanForm">
-              <div class="form-group full-width" style="margin-bottom: 16px;">
-                <label>计划名称</label>
-                <input type="text" class="form-control" name="name" placeholder="请输入计划名称，例如：2026年Q2消防演练" required>
-              </div>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>培训类别</label>
-                  <select class="form-control" name="category">
-                    <option value="消防安全">消防安全</option>
-                    <option value="设备安全">设备安全</option>
-                    <option value="专项安全">专项安全</option>
-                    <option value="通用安全">通用安全</option>
-                    <option value="应急响应">应急响应</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>目标对象</label>
-                  <input type="text" class="form-control" name="target" placeholder="如：全体员工、驾驶员" required>
-                </div>
-                <div class="form-group">
-                  <label>开始日期</label>
-                  <input type="date" class="form-control" name="startDate" required>
-                </div>
-                <div class="form-group">
-                  <label>结束日期</label>
-                  <input type="date" class="form-control" name="endDate" required>
-                </div>
-              </div>
-              <div class="form-group full-width">
-                <label>计划描述</label>
-                <textarea class="form-control" name="desc" rows="3" placeholder="简述培训内容与目标..."></textarea>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-outline" type="button" onclick="document.getElementById('createPlanModalOverlay').style.display='none'">取消</button>
-            <button class="btn btn-primary" type="submit" form="createPlanForm">立即创建</button>
-          </div>
         </div>
       </div>
 
@@ -6292,10 +6557,111 @@
     const createBtn = document.querySelector('.page-actions .btn-primary');
     const createModal = document.getElementById('createPlanModalOverlay');
     const createForm = document.getElementById('createPlanForm');
+    const regionSelect = document.getElementById('planRegionSelect');
+    const provinceSelect = document.getElementById('planProvinceSelect');
+    const centerSelect = document.getElementById('planCenterSelect');
+    const coursesSelect = document.getElementById('planCoursesSelect');
+
+    const REGION_SCOPE_MAP = {
+      '南部': {
+        '广东': ['广州中心', '深圳中心'],
+        '福建': ['福州中心', '厦门中心'],
+        '广西': ['南宁中心']
+      },
+      '中部': {
+        '湖北': ['武汉中心', '襄阳中心'],
+        '湖南': ['长沙中心'],
+        '河南': ['郑州中心']
+      },
+      '北部': {
+        '北京': ['北京中心'],
+        '河北': ['石家庄中心'],
+        '辽宁': ['沈阳中心', '大连中心']
+      }
+    };
+
+    function getSelectedValues(selectEl) {
+      if (!selectEl) return [];
+      return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.value; }).filter(Boolean);
+    }
+
+    function setSelectOptions(selectEl, options, placeholder) {
+      if (!selectEl) return;
+      const current = new Set(getSelectedValues(selectEl));
+      let html = '';
+      if (placeholder) {
+        html += '<option value="">' + placeholder + '</option>';
+      }
+      (options || []).forEach(function (opt) {
+        const selected = current.has(opt) ? ' selected' : '';
+        html += '<option value="' + opt + '"' + selected + '>' + opt + '</option>';
+      });
+      selectEl.innerHTML = html;
+    }
+
+    function updateProvinceAndCenterOptions() {
+      if (!regionSelect || !provinceSelect || !centerSelect) return;
+      const region = regionSelect.value;
+      const map = REGION_SCOPE_MAP[region] || {};
+      const provinces = Object.keys(map);
+      setSelectOptions(provinceSelect, provinces);
+
+      const selectedProvinces = getSelectedValues(provinceSelect);
+      const unionCenters = [];
+      selectedProvinces.forEach(function (p) {
+        (map[p] || []).forEach(function (c) {
+          if (unionCenters.indexOf(c) === -1) unionCenters.push(c);
+        });
+      });
+
+      // 若未选省区，默认展示该区域下全部中心，方便直接多选
+      if (!selectedProvinces.length) {
+        provinces.forEach(function (p) {
+          (map[p] || []).forEach(function (c) {
+            if (unionCenters.indexOf(c) === -1) unionCenters.push(c);
+          });
+        });
+      }
+      setSelectOptions(centerSelect, unionCenters);
+    }
+
+    function updateCoursesOptions() {
+      if (!coursesSelect) return;
+      const courses = getMergedCourseLibraryCourses(getBaseCourseLibraryCourses());
+      const titles = new Map();
+      courses.forEach(function (c) {
+        if (!c || !c.title) return;
+        // value 使用 id，展示 title（去重）
+        if (!titles.has(String(c.id))) titles.set(String(c.id), c.title);
+      });
+      const entries = Array.from(titles.entries()).map(function (pair) { return { id: pair[0], title: pair[1] }; });
+      entries.sort(function (a, b) { return (a.title || '').localeCompare(b.title || ''); });
+      coursesSelect.innerHTML = entries.map(function (item) {
+        return '<option value="' + item.id + '">' + item.title + '</option>';
+      }).join('');
+    }
 
     if (createBtn && createModal) {
       createBtn.addEventListener('click', () => {
         createModal.style.display = 'flex';
+        updateCoursesOptions();
+        updateProvinceAndCenterOptions();
+      });
+    }
+
+    if (regionSelect) {
+      regionSelect.addEventListener('change', function () {
+        // 切换区域时清空省区/中心选择，避免残留
+        if (provinceSelect) provinceSelect.selectedIndex = -1;
+        if (centerSelect) centerSelect.selectedIndex = -1;
+        updateProvinceAndCenterOptions();
+      });
+    }
+
+    if (provinceSelect) {
+      provinceSelect.addEventListener('change', function () {
+        if (centerSelect) centerSelect.selectedIndex = -1;
+        updateProvinceAndCenterOptions();
       });
     }
 
@@ -6303,10 +6669,36 @@
       createForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const formData = new FormData(createForm);
-        const name = formData.get('name');
-        const category = formData.get('category');
-        const target = formData.get('target');
-        const period = `${formData.get('startDate')} 至 ${formData.get('endDate')}`;
+        const name = (formData.get('name') || '').toString();
+        const category = (formData.get('category') || '').toString();
+        const region = (formData.get('region') || '').toString();
+        const startDate = (formData.get('startDate') || '').toString();
+        const endDate = (formData.get('endDate') || '').toString();
+
+        const provinces = getSelectedValues(provinceSelect);
+        const centers = getSelectedValues(centerSelect);
+        const selectedCourseIds = getSelectedValues(coursesSelect);
+
+        if (!region) {
+          alert('请选择目标对象范围（南部/中部/北部）。');
+          return;
+        }
+        if (!startDate || !endDate) {
+          alert('请选择开始日期与结束日期。');
+          return;
+        }
+        if (!selectedCourseIds.length) {
+          alert('请选择需要学习的课程（可多选）。');
+          return;
+        }
+
+        const period = `${startDate} 至 ${endDate}`;
+
+        const scopeParts = [];
+        scopeParts.push(region);
+        if (provinces.length) scopeParts.push('省区:' + provinces.join('、'));
+        if (centers.length) scopeParts.push('中心:' + centers.join('、'));
+        const target = scopeParts.join(' / ');
 
         // 动态添加一行
         const newRow = document.createElement('tr');
@@ -6423,6 +6815,421 @@
     [createModal, dispatchModal].forEach(m => {
       if (m) m.addEventListener('click', (e) => { if(e.target === m) m.style.display = 'none'; });
     });
+  }
+
+  function renderCreateTrainingPlanPage() {
+    return `
+      <div class="sub-page training-plan-create">
+        <div class="page-header">
+          <div>
+            <div class="page-title">创建培训计划</div>
+            <div class="page-desc">独立页面创建年度/季度培训任务，下发前可灵活配置南北部、省区与中心范围</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-outline" type="button" id="backToTrainingPlanBtn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+              返回列表
+            </button>
+            <button class="btn btn-primary" type="button" id="submitTrainingPlanTopBtn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+              创建计划
+            </button>
+          </div>
+        </div>
+
+        <div class="course-create-card">
+          <form id="createTrainingPlanPageForm" class="course-create-form">
+            <div class="modal-hint">请填写计划基础信息；南北部、省区、中心将按《公司同学录分布》主数据联动筛选。</div>
+
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label class="required">培训计划名称</label>
+                <input type="text" class="form-control" id="trainingPlanNameInput" name="name" maxlength="60" placeholder="例如：2026年Q2消防演练" required>
+              </div>
+
+              <div class="form-group">
+                <label class="required">培训类别</label>
+                <select class="form-control" id="trainingPlanCategorySelect" name="category" required>
+                  <option value="">请选择类别</option>
+                  <option value="消防安全">消防安全</option>
+                  <option value="设备安全">设备安全</option>
+                  <option value="专项安全">专项安全</option>
+                  <option value="通用安全">通用安全</option>
+                  <option value="应急响应">应急响应</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="required">南北部</label>
+                <select class="form-control" id="trainingPlanRegionSelect" name="region" required>
+                  <option value="">请选择</option>
+                  <option value="南部">南部</option>
+                  <option value="中部">中部</option>
+                  <option value="北部">北部</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="required">开始日期</label>
+                <input type="date" class="form-control" id="trainingPlanStartDateInput" name="startDate" required>
+              </div>
+
+              <div class="form-group">
+                <label class="required">结束日期</label>
+                <input type="date" class="form-control" id="trainingPlanEndDateInput" name="endDate" required>
+              </div>
+
+              <div class="form-group">
+                <label>省区（可多选）</label>
+                <select class="form-control" id="trainingPlanProvinceSelect" name="provinces" multiple size="6" disabled></select>
+                <div class="form-help">先选择南北部，再按需选择省区；不选省区则默认覆盖该南北部全部中心。</div>
+              </div>
+
+              <div class="form-group">
+                <label>中心（可多选）</label>
+                <select class="form-control" id="trainingPlanCenterSelect" name="centers" multiple size="6" disabled></select>
+                <div class="form-help">中心列表随省区联动过滤；可直接多选中心作为精细下发范围。</div>
+              </div>
+
+              <div class="form-group full-width">
+                <label class="required">需要学习的课程（下拉可多选）</label>
+                <div class="multi-select" id="trainingPlanCoursesMulti">
+                  <button type="button" class="form-control multi-select-trigger" id="trainingPlanCoursesTrigger" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="multi-select-trigger-text" id="trainingPlanCoursesTriggerText">请选择课程（可多选）</span>
+                    <span class="multi-select-trigger-count" id="trainingPlanCoursesTriggerCount">0</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  <div class="multi-select-panel" id="trainingPlanCoursesPanel" style="display:none;">
+                    <div class="multi-select-search">
+                      <input type="text" class="form-control" id="trainingPlanCoursesSearchInput" placeholder="搜索课程名称...">
+                    </div>
+                    <div class="multi-select-options" id="trainingPlanCoursesOptions" role="listbox" aria-multiselectable="true"></div>
+                    <div class="multi-select-footer">
+                      <button type="button" class="multi-select-clear" id="trainingPlanCoursesClearBtn">清空已选</button>
+                      <span class="multi-select-hint">课程来自“课程库”（包含你新建并保存的课程）</span>
+                    </div>
+                  </div>
+                  <input type="hidden" id="trainingPlanCourseIdsInput" name="courseIds" value="">
+                </div>
+              </div>
+
+              <div class="form-group full-width">
+                <label>备注</label>
+                <textarea class="form-control" id="trainingPlanRemarkInput" name="desc" rows="3" placeholder="可选：学习要求、考核方式、提醒频次等..."></textarea>
+              </div>
+            </div>
+
+            <div class="course-create-footer">
+              <button type="button" class="btn btn-outline" id="cancelTrainingPlanBtn">取消</button>
+              <button type="submit" class="btn btn-primary">创建计划</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  function initCreateTrainingPlanPage() {
+    const form = document.getElementById('createTrainingPlanPageForm');
+    const nameInput = document.getElementById('trainingPlanNameInput');
+    const categorySelect = document.getElementById('trainingPlanCategorySelect');
+    const regionSelect = document.getElementById('trainingPlanRegionSelect');
+    const startDateInput = document.getElementById('trainingPlanStartDateInput');
+    const endDateInput = document.getElementById('trainingPlanEndDateInput');
+    const provinceSelect = document.getElementById('trainingPlanProvinceSelect');
+    const centerSelect = document.getElementById('trainingPlanCenterSelect');
+
+    const topSubmitBtn = document.getElementById('submitTrainingPlanTopBtn');
+    const backBtn = document.getElementById('backToTrainingPlanBtn');
+    const cancelBtn = document.getElementById('cancelTrainingPlanBtn');
+
+    const trigger = document.getElementById('trainingPlanCoursesTrigger');
+    const triggerText = document.getElementById('trainingPlanCoursesTriggerText');
+    const triggerCount = document.getElementById('trainingPlanCoursesTriggerCount');
+    const panel = document.getElementById('trainingPlanCoursesPanel');
+    const searchInput = document.getElementById('trainingPlanCoursesSearchInput');
+    const optionsEl = document.getElementById('trainingPlanCoursesOptions');
+    const clearBtn = document.getElementById('trainingPlanCoursesClearBtn');
+    const hiddenCourseIdsInput = document.getElementById('trainingPlanCourseIdsInput');
+
+    if (backBtn) backBtn.addEventListener('click', function () { navigateTo('training-plan'); });
+    if (cancelBtn) cancelBtn.addEventListener('click', function () { navigateTo('training-plan'); });
+    if (topSubmitBtn && form) topSubmitBtn.addEventListener('click', function () { form.requestSubmit(); });
+
+    function normalizeProvinceDisplayName(name) {
+      return String(name || '').replace(/(省公司|大区)$/g, '');
+    }
+
+    function getCenterDisplayName(center) {
+      const shortName = center && center.shortName ? String(center.shortName) : '';
+      if (shortName) return shortName + '中心';
+      const full = String((center && center.name) || '');
+      if (!full) return '';
+      if (full.indexOf('转运中心') >= 0) return full.replace('转运中心', '中心');
+      if (full.indexOf('中心') >= 0) return full;
+      return full + '中心';
+    }
+
+    function getSelectedValues(selectEl) {
+      if (!selectEl) return [];
+      return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.value; }).filter(Boolean);
+    }
+
+    function setSelectOptions(selectEl, items) {
+      if (!selectEl) return;
+      const current = new Set(getSelectedValues(selectEl));
+      selectEl.innerHTML = (items || []).map(function (item) {
+        const selected = current.has(item.value) ? ' selected' : '';
+        return '<option value="' + item.value + '"' + selected + '>' + item.label + '</option>';
+      }).join('');
+    }
+
+    function getCourseEntries() {
+      const courses = getMergedCourseLibraryCourses(getBaseCourseLibraryCourses());
+      const byId = new Map();
+      courses.forEach(function (c) {
+        if (!c || !c.title) return;
+        const id = String(c.id);
+        if (!byId.has(id)) byId.set(id, { id: id, title: c.title, category: c.category || '' });
+      });
+      const entries = Array.from(byId.values());
+      entries.sort(function (a, b) { return (a.title || '').localeCompare(b.title || ''); });
+      return entries;
+    }
+
+    const selectedCourseIds = new Set();
+    let courseEntriesCache = [];
+
+    function syncCoursesHiddenInput() {
+      if (hiddenCourseIdsInput) hiddenCourseIdsInput.value = Array.from(selectedCourseIds).join(',');
+    }
+
+    function updateCoursesTrigger() {
+      const selectedCount = selectedCourseIds.size;
+      if (triggerCount) triggerCount.textContent = String(selectedCount);
+      if (!triggerText) return;
+      if (!selectedCount) {
+        triggerText.textContent = '请选择课程（可多选）';
+        return;
+      }
+      const titles = [];
+      courseEntriesCache.forEach(function (item) {
+        if (selectedCourseIds.has(String(item.id))) titles.push(item.title);
+      });
+      const shown = titles.slice(0, 2);
+      triggerText.textContent = shown.join('、') + (selectedCount > 2 ? (' 等' + selectedCount + '门') : '');
+    }
+
+    function renderCourseOptions() {
+      if (!optionsEl) return;
+      courseEntriesCache = getCourseEntries();
+      optionsEl.innerHTML = courseEntriesCache.map(function (item) {
+        const checked = selectedCourseIds.has(String(item.id)) ? ' checked' : '';
+        const safeTitle = String(item.title || '');
+        const safeCategory = String(item.category || '');
+        return `
+          <label class="multi-select-option" data-title="${safeTitle.toLowerCase()}">
+            <input type="checkbox" value="${item.id}"${checked}>
+            <span class="multi-select-option-title">${safeTitle}</span>
+            ${safeCategory ? `<span class="multi-select-option-meta">${safeCategory}</span>` : ''}
+          </label>
+        `;
+      }).join('');
+      updateCoursesTrigger();
+      syncCoursesHiddenInput();
+    }
+
+    function openCoursesPanel() {
+      if (!panel || !trigger) return;
+      panel.style.display = 'block';
+      trigger.setAttribute('aria-expanded', 'true');
+      if (searchInput) searchInput.focus();
+    }
+
+    function closeCoursesPanel() {
+      if (!panel || !trigger) return;
+      panel.style.display = 'none';
+      trigger.setAttribute('aria-expanded', 'false');
+      if (searchInput) searchInput.value = '';
+      if (optionsEl) {
+        Array.from(optionsEl.querySelectorAll('.multi-select-option')).forEach(function (node) {
+          node.style.display = '';
+        });
+      }
+    }
+
+    function toggleCoursesPanel() {
+      if (!panel) return;
+      if (panel.style.display === 'none' || !panel.style.display) openCoursesPanel();
+      else closeCoursesPanel();
+    }
+
+    if (trigger) {
+      trigger.addEventListener('click', function (e) {
+        e.preventDefault();
+        toggleCoursesPanel();
+      });
+    }
+
+    if (optionsEl) {
+      optionsEl.addEventListener('change', function (e) {
+        const checkbox = e.target && e.target.closest ? e.target.closest('input[type="checkbox"]') : null;
+        if (!checkbox) return;
+        const val = String(checkbox.value || '');
+        if (!val) return;
+        if (checkbox.checked) selectedCourseIds.add(val);
+        else selectedCourseIds.delete(val);
+        updateCoursesTrigger();
+        syncCoursesHiddenInput();
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        const term = String(searchInput.value || '').trim().toLowerCase();
+        const nodes = optionsEl ? Array.from(optionsEl.querySelectorAll('.multi-select-option')) : [];
+        nodes.forEach(function (node) {
+          const title = String(node.dataset.title || '');
+          node.style.display = (!term || title.indexOf(term) >= 0) ? '' : 'none';
+        });
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        selectedCourseIds.clear();
+        if (optionsEl) {
+          Array.from(optionsEl.querySelectorAll('input[type="checkbox"]')).forEach(function (cb) { cb.checked = false; });
+        }
+        updateCoursesTrigger();
+        syncCoursesHiddenInput();
+      });
+    }
+
+    document.addEventListener('click', function (e) {
+      if (!panel || !trigger) return;
+      const target = e.target;
+      const inside = (target && target.closest) ? target.closest('#trainingPlanCoursesMulti') : null;
+      if (!inside && panel.style.display === 'block') closeCoursesPanel();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeCoursesPanel();
+    });
+
+    function updateProvinceAndCenterOptions() {
+      if (!regionSelect || !provinceSelect || !centerSelect) return;
+      const region = regionSelect.value;
+      if (!region) {
+        provinceSelect.innerHTML = '';
+        centerSelect.innerHTML = '';
+        provinceSelect.disabled = true;
+        centerSelect.disabled = true;
+        return;
+      }
+
+      const provinces = (provincesData || []).filter(function (p) { return p && p.northSouth === region; });
+      const provinceItems = provinces.map(function (p) {
+        return { value: p.code, label: normalizeProvinceDisplayName(p.name) };
+      }).sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
+
+      provinceSelect.disabled = false;
+      setSelectOptions(provinceSelect, provinceItems);
+
+      const selectedProvinceCodes = getSelectedValues(provinceSelect);
+      const allowedProvinceCodes = new Set(provinces.map(function (p) { return p.code; }));
+      const centerCandidates = (centersData || []).filter(function (c) { return c && allowedProvinceCodes.has(c.provinceCode); });
+      const filteredCenters = selectedProvinceCodes.length
+        ? centerCandidates.filter(function (c) { return selectedProvinceCodes.indexOf(c.provinceCode) >= 0; })
+        : centerCandidates;
+
+      const centerItems = filteredCenters.map(function (c) {
+        return { value: c.code, label: getCenterDisplayName(c) };
+      }).sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
+
+      centerSelect.disabled = false;
+      setSelectOptions(centerSelect, centerItems);
+    }
+
+    if (regionSelect) {
+      regionSelect.addEventListener('change', function () {
+        if (provinceSelect) provinceSelect.selectedIndex = -1;
+        if (centerSelect) centerSelect.selectedIndex = -1;
+        updateProvinceAndCenterOptions();
+      });
+    }
+
+    if (provinceSelect) {
+      provinceSelect.addEventListener('change', function () {
+        if (centerSelect) centerSelect.selectedIndex = -1;
+        updateProvinceAndCenterOptions();
+      });
+    }
+
+    renderCourseOptions();
+
+    fetchLocationsData().then(function () {
+      updateProvinceAndCenterOptions();
+    }).catch(function () {
+      updateProvinceAndCenterOptions();
+    });
+
+    function getSelectedLabels(selectEl) {
+      if (!selectEl) return [];
+      return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.textContent; }).filter(Boolean);
+    }
+
+    function validateForm() {
+      const name = String((nameInput && nameInput.value) || '').trim();
+      const category = String((categorySelect && categorySelect.value) || '').trim();
+      const region = String((regionSelect && regionSelect.value) || '').trim();
+      const startDate = String((startDateInput && startDateInput.value) || '').trim();
+      const endDate = String((endDateInput && endDateInput.value) || '').trim();
+
+      if (!name) { alert('请填写培训计划名称。'); return false; }
+      if (!category) { alert('请选择培训类别。'); return false; }
+      if (!region) { alert('请选择南北部。'); return false; }
+      if (!startDate || !endDate) { alert('请选择开始日期与结束日期。'); return false; }
+      if (startDate && endDate && startDate > endDate) { alert('开始日期不能晚于结束日期。'); return false; }
+      if (!selectedCourseIds.size) { alert('请选择需要学习的课程（可多选）。'); return false; }
+      return true;
+    }
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!validateForm()) return;
+
+        const name = String(nameInput.value || '').trim();
+        const category = String(categorySelect.value || '').trim();
+        const region = String(regionSelect.value || '').trim();
+        const startDate = String(startDateInput.value || '').trim();
+        const endDate = String(endDateInput.value || '').trim();
+
+        const provinces = getSelectedLabels(provinceSelect);
+        const centers = getSelectedLabels(centerSelect);
+
+        const period = startDate + ' 至 ' + endDate;
+        const scopeParts = [region];
+        if (provinces.length) scopeParts.push('省区:' + provinces.join('、'));
+        if (centers.length) scopeParts.push('中心:' + centers.join('、'));
+        const target = scopeParts.join(' / ');
+
+        addCustomTrainingPlan({
+          id: Date.now(),
+          name: name,
+          category: category,
+          period: period,
+          target: target,
+          status: 'planned',
+          progress: 0,
+          courseIds: Array.from(selectedCourseIds)
+        });
+
+        alert('已创建培训计划：' + name);
+        navigateTo('training-plan');
+      });
+    }
   }
 
   // ============ 在线考试 ============
