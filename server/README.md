@@ -46,7 +46,7 @@
 
 ### 风险管理 (Risk Management)
 - `POST /api/risks` : 上报新风险
-- `GET /api/risks` : 获取风险列表
+- `GET /api/risks` : 获取风险列表（默认按 `id` 升序返回）
 - `PATCH /api/risks/:id/review` : 后端评审及 LEC 打分
 
 ### 隐患治理 (Hazard Management & Governance)

@@ -29,7 +29,8 @@ router.get('/', (req, res) => {
     query += ` WHERE status = ?`;
     params.push(status);
   }
-  query += ` ORDER BY created_at DESC`;
+  // 默认按导入/创建顺序展示（旧数据多为按 id 递增导入）
+  query += ` ORDER BY id ASC`;
   db.query(query, params, (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });

@@ -183,6 +183,10 @@
     'online-exam': {
       title: '在线考试',
       breadcrumb: ['首页', '培训与文化', '申安学堂', '在线考试']
+    },
+    'three-education': {
+      title: '三级教育',
+      breadcrumb: ['首页', '培训与文化', '申安学堂', '三级教育']
     }
   };
 
@@ -210,7 +214,8 @@
     '宣传资料库': 'publicity-materials-library',
     '上传资料': 'upload-materials',
     '培训计划': 'training-plan',
-    '在线考试': 'online-exam'
+    '在线考试': 'online-exam',
+    '三级教育': 'three-education'
   };
 
   /**
@@ -332,6 +337,13 @@
       const featureCard = e.target.closest('.feature-card[data-page]');
       if (featureCard) {
         navigateTo(featureCard.dataset.page);
+        return;
+      }
+
+      // Support in-page navigation buttons/links (e.g. "Back" actions)
+      const anyNavTarget = e.target.closest('[data-page]');
+      if (anyNavTarget && anyNavTarget.dataset && anyNavTarget.dataset.page) {
+        navigateTo(anyNavTarget.dataset.page);
       }
     });
 
@@ -431,6 +443,10 @@
       case 'online-exam':
         mainContent.innerHTML = renderOnlineExam();
         initOnlineExam();
+        break;
+      case 'three-education':
+        mainContent.innerHTML = renderThreeEducation();
+        initThreeEducation();
         break;
       case 'data-center': mainContent.innerHTML = renderDataCenter(); break;
       case 'document': mainContent.innerHTML = renderDocument(); break;
@@ -614,10 +630,10 @@
                 '<th style="width:60px;">序号</th>' +
                 '<th style="width:100px;">风险区域</th>' +
                 '<th style="width:250px;">风险点描述</th>' +
-                '<th>L</th>' +
-                '<th>E</th>' +
-                '<th>C</th>' +
-                '<th>D</th>' +
+                '<th class="lec-col">L</th>' +
+                '<th class="lec-col">E</th>' +
+                '<th class="lec-col">C</th>' +
+                '<th class="lec-col">D</th>' +
                 '<th style="width:140px;">风险等级</th>' +
                 '<th style="width:110px;">管控层级</th>' +
                 '<th style="width:360px;">管控措施</th>' +
@@ -3125,10 +3141,10 @@
             '<td>' + count + '</td>' +
             '<td>' + escapeHtml(r.risk_area || '-') + '</td>' +
             '<td>' + descHtml + '</td>' +
-            '<td>' + L + '</td>' +
-            '<td>' + E + '</td>' +
-            '<td>' + C + '</td>' +
-            '<td>' + D + '</td>' +
+            '<td class="lec-col">' + L + '</td>' +
+            '<td class="lec-col">' + E + '</td>' +
+            '<td class="lec-col">' + C + '</td>' +
+            '<td class="lec-col">' + D + '</td>' +
             '<td><span class="risk-badge ' + badgeClass + '">' + rl + '</span></td>' +
             '<td>' + escapeHtml(r.control_level || '') + '</td>' +
             '<td>' + nl2br(escapeHtml(r.control_measures || '')) + '</td>' +
@@ -5037,17 +5053,154 @@
   function renderTrainingFeatureCards(activeTab) {
     const featureCardMap = {
       'safety-training':
-        buildFeatureCard('培训课程库', '安全培训课程分类管理，支持在线学习与线下签到', 'var(--primary-light)', 'var(--primary)', '课程总量 86 门', 'training-course-library') +
-        buildFeatureCard('培训计划', '年度、季度培训计划制定与执行追踪', 'var(--info-light)', 'var(--info)', '本年度 12 期', 'training-plan') +
-        buildFeatureCard('学习记录', '员工个人学习进度追踪与学时统计', 'var(--success-light)', 'var(--success)', '人均学时 24h'),
+        buildFeatureCard('培训课程库', '课程分级管理，支持在线学习与线下签到', 'var(--primary-light)', 'var(--primary)', '课程 86 门', 'training-course-library') +
+        buildFeatureCard('培训计划', '计划制定与执行追踪', 'var(--info-light)', 'var(--info)', '本年 12 期', 'training-plan') +
+        buildFeatureCard('三级教育', '三级闭环管理，扫码签到与补录', 'var(--success-light)', 'var(--success)', '闭环 81.6%', 'three-education'),
       'publicity-materials':
-        buildFeatureCard('宣传资料库', '安全标语、海报、视频等宣教材料统一管理', 'var(--warning-light)', 'var(--warning)', '资料 256 份', 'publicity-materials-library'),
+        buildFeatureCard('宣传资料库', '宣教资料统一管理与分发', 'var(--warning-light)', 'var(--warning)', '资料 256 份', 'publicity-materials-library'),
       'exam-assessment':
-        buildFeatureCard('在线考试', '安全知识在线考试系统，自动阅卷与成绩管理', 'var(--danger-light)', 'var(--danger)', '本月考试 3 场', 'online-exam') +
-        buildFeatureCard('证书管理', '培训合格证书生成与查询', 'var(--primary-light)', 'var(--primary)', '已发放 892 张')
+        buildFeatureCard('在线考试', '在线组卷与成绩管理', 'var(--danger-light)', 'var(--danger)', '本月 3 场', 'online-exam') +
+        buildFeatureCard('证书管理', '证书生成与查询', 'var(--primary-light)', 'var(--primary)', '已发放 892 张')
     };
 
     return featureCardMap[activeTab] || featureCardMap['safety-training'];
+  }
+
+  function renderThreeEducationPanel() {
+    const activeTab = 'template-management';
+    return '' +
+      '<section class="three-education-panel three-education-panel-compact" style="margin-top:0;">' +
+        '<div class="tab-nav three-education-tabs" data-three-education-tabs>' +
+          '<div class="tab-item active" data-three-education-tab="template-management">模板管理</div>' +
+          '<div class="tab-item" data-three-education-tab="onboarding-training">入职培训</div>' +
+          '<div class="tab-item" data-three-education-tab="record-query">记录查询</div>' +
+        '</div>' +
+        '<div class="three-education-tab-title" id="threeEducationTabTitle">模板管理</div>' +
+        '<div class="three-education-tab-body" id="threeEducationTabBody">' +
+          renderThreeEducationTabBody(activeTab) +
+        '</div>' +
+      '</section>';
+  }
+
+  function renderThreeEducationTabBody(activeTab) {
+    const tabMap = {
+      'template-management': renderThreeEducationTemplateManagement(),
+      'onboarding-training': renderThreeEducationOnboardingTraining(),
+      'record-query': renderThreeEducationRecordQuery()
+    };
+    return tabMap[activeTab] || tabMap['template-management'];
+  }
+
+  function renderThreeEducationTemplateManagement() {
+    return '' +
+      '<div class="three-education-card">' +
+        '<div class="three-education-card-header">' +
+          '<div>' +
+            '<div class="section-title no-marker">标准培训模板</div>' +
+            '<div class="three-education-subtitle">统一维护三级教育内容口径，支持版本追溯与快速复用。</div>' +
+          '</div>' +
+          '<button class="btn btn-outline btn-sm">新建模板</button>' +
+        '</div>' +
+        '<div class="template-list">' +
+          '<div class="template-item">' +
+            '<div>' +
+              '<div class="template-title">公司级安全教育</div>' +
+              '<div class="template-desc">制度、红线、全员履责要点</div>' +
+            '</div>' +
+            '<span class="template-tag company">5 个课件</span>' +
+          '</div>' +
+          '<div class="template-item">' +
+            '<div>' +
+              '<div class="template-title">转运中心级教育</div>' +
+              '<div class="template-desc">场地风险、设备操作、特殊作业禁令</div>' +
+            '</div>' +
+            '<span class="template-tag center">7 个模板</span>' +
+          '</div>' +
+          '<div class="template-item">' +
+            '<div>' +
+              '<div class="template-title">班组级教育</div>' +
+              '<div class="template-desc">岗位 SOP、班前交底、应急动作卡</div>' +
+            '</div>' +
+            '<span class="template-tag team">6 个模板</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderThreeEducationOnboardingTraining() {
+    return '' +
+      '<div class="three-education-card">' +
+        '<div class="three-education-card-header">' +
+          '<div>' +
+            '<div class="section-title no-marker">入职培训组织</div>' +
+            '<div class="three-education-subtitle">创建场次后生成动态二维码，员工扫码确认并电子签名。</div>' +
+          '</div>' +
+          '<div class="three-education-card-actions">' +
+            '<button class="btn btn-primary btn-sm">新建培训场次</button>' +
+            '<button class="btn btn-outline btn-sm">生成签到二维码</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="scan-flow scan-flow-compact">' +
+          '<div class="scan-step"><span>1</span><p>选择模板与级别，填写时间地点与参训人数</p></div>' +
+          '<div class="scan-step"><span>2</span><p>系统生成动态二维码（默认 2 小时有效）</p></div>' +
+          '<div class="scan-step"><span>3</span><p>员工扫码带出信息，勾选确认并签名</p></div>' +
+          '<div class="scan-step"><span>4</span><p>记录自动归档，可导出用于审计留痕</p></div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderThreeEducationRecordQuery() {
+    return '' +
+      '<div class="three-education-card">' +
+        '<div class="three-education-card-header">' +
+          '<div>' +
+            '<div class="section-title no-marker">记录查询</div>' +
+            '<div class="three-education-subtitle">按员工/中心/时间快速检索三级完成情况，支持导出。</div>' +
+          '</div>' +
+          '<div class="three-education-search">' +
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+            '<input type="text" placeholder="搜索姓名 / 工号...">' +
+          '</div>' +
+        '</div>' +
+        '<table class="three-education-status-table three-education-status-table-compact">' +
+          '<thead><tr><th>员工</th><th>公司级</th><th>中心级</th><th>班组级</th><th>状态</th></tr></thead>' +
+          '<tbody>' +
+            '<tr><td>王磊 / 分拣员</td><td><span class="mini-badge done">已完成</span></td><td><span class="mini-badge done">已完成</span></td><td><span class="mini-badge pending">待签到</span></td><td><span class="mini-badge open">未闭环</span></td></tr>' +
+            '<tr><td>刘芳 / 设备员</td><td><span class="mini-badge done">线上完成</span></td><td><span class="mini-badge done">线下补录</span></td><td><span class="mini-badge done">已完成</span></td><td><span class="mini-badge success">已闭环</span></td></tr>' +
+            '<tr><td>赵强 / 装卸班长</td><td><span class="mini-badge done">已完成</span></td><td><span class="mini-badge progress">进行中</span></td><td><span class="mini-badge wait">未开始</span></td><td><span class="mini-badge open">未闭环</span></td></tr>' +
+          '</tbody>' +
+        '</table>' +
+        '<div class="three-education-status-actions">' +
+          '<button class="btn btn-outline btn-sm">导出记录</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function initThreeEducation() {
+    const tabNav = document.querySelector('.tab-nav[data-three-education-tabs]');
+    const title = document.getElementById('threeEducationTabTitle');
+    const body = document.getElementById('threeEducationTabBody');
+    if (!tabNav || !title || !body) return;
+
+    const labelMap = {
+      'template-management': '模板管理',
+      'onboarding-training': '入职培训',
+      'record-query': '记录查询'
+    };
+
+    tabNav.addEventListener('click', function (e) {
+      const tab = e.target.closest('.tab-item[data-three-education-tab]');
+      if (!tab) return;
+
+      tabNav.querySelectorAll('.tab-item[data-three-education-tab]').forEach(function (item) {
+        item.classList.remove('active');
+      });
+      tab.classList.add('active');
+
+      const key = tab.dataset.threeEducationTab;
+      title.textContent = labelMap[key] || '模板管理';
+      body.innerHTML = renderThreeEducationTabBody(key);
+    });
   }
 
   function renderTraining() {
@@ -5069,12 +5222,6 @@
           '</div>' +
         '</div>' +
 
-        '<div class="tab-nav">' +
-          '<div class="tab-item active" data-training-tab="safety-training">安全培训</div>' +
-          '<div class="tab-item" data-training-tab="publicity-materials">宣传资料</div>' +
-          '<div class="tab-item" data-training-tab="exam-assessment">考试考核</div>' +
-        '</div>' +
-
         '<div class="stats-row">' +
           buildStatCard('进行中培训', '5', '本月新增 3 场', 'up',
             '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>', 'blue') +
@@ -5084,6 +5231,12 @@
             '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>', 'orange') +
           buildStatCard('考试通过率', '93.2%', '较上月 +1.8%', 'up',
             '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>', 'green') +
+        '</div>' +
+
+        '<div class="tab-nav">' +
+          '<div class="tab-item active" data-training-tab="safety-training">安全培训</div>' +
+          '<div class="tab-item" data-training-tab="publicity-materials">宣传资料</div>' +
+          '<div class="tab-item" data-training-tab="exam-assessment">考试考核</div>' +
         '</div>' +
 
         '<div class="feature-grid" id="trainingFeatureGrid">' +
@@ -5107,6 +5260,23 @@
       tab.classList.add('active');
       featureGrid.innerHTML = renderTrainingFeatureCards(tab.dataset.trainingTab);
     });
+  }
+
+  // ============ 三级教育 ============
+  function renderThreeEducation() {
+    return '' +
+      '<div class="sub-page">' +
+        '<div class="page-header">' +
+          '<div>' +
+            '<div class="page-title">三级教育</div>' +
+            '<div class="page-desc">公司级、转运中心级、班组级安全教育全流程数字化管理</div>' +
+          '</div>' +
+          '<div class="page-actions">' +
+            '<button class="btn btn-outline" data-page="training">返回申安学堂</button>' +
+          '</div>' +
+        '</div>' +
+        renderThreeEducationPanel() +
+      '</div>';
   }
 
   // ============ 培训课程库 ============
