@@ -1572,6 +1572,16 @@ input {
   color: var(--text-primary);
 }
 
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pagination-btn:disabled:hover {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
 .pagination-btn.active {
   background: var(--primary);
   color: #ffffff;
@@ -4300,6 +4310,18 @@ input {
   border-radius: 16px;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid var(--border-light);
+}
+
+.three-education-assets-table td:last-child {
+  white-space: nowrap;
+}
+
+.three-education-assets-table td:last-child .btn {
+  margin-right: 8px;
+}
+
+.three-education-assets-table td:last-child .btn:last-child {
+  margin-right: 0;
 }
 
 .template-title {

@@ -5620,37 +5620,142 @@
     return tabMap[activeTab] || tabMap['template-management'];
   }
 
+  function getThreeEducationStoredAssets() {
+    try {
+      var raw = localStorage.getItem('threeEducationAssets_v1');
+      var parsed = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(parsed)) return parsed;
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveThreeEducationStoredAssets(assets) {
+    try {
+      localStorage.setItem('threeEducationAssets_v1', JSON.stringify(Array.isArray(assets) ? assets : []));
+    } catch (e) { }
+  }
+
+  function ensureThreeEducationSeedAssets() {
+    var existing = getThreeEducationStoredAssets();
+    if (existing && existing.length) return;
+    var now = Date.now();
+    var seed = [
+      { id: 'seed_company_courseware_1', type: 'courseware', level: 'company', title: '公司安全红线与制度宣贯课件', desc: '制度、红线、全员履责要点', version: 'v1.0', updatedAt: now - 86400000 * 20 },
+      { id: 'seed_company_courseware_2', type: 'courseware', level: 'company', title: '全员安全责任与履职要点', desc: '履责清单与典型案例', version: 'v1.0', updatedAt: now - 86400000 * 18 },
+      { id: 'seed_company_courseware_3', type: 'courseware', level: 'company', title: '事故警示教育（公司级）', desc: '典型事故案例复盘', version: 'v1.0', updatedAt: now - 86400000 * 12 },
+      { id: 'seed_company_courseware_4', type: 'courseware', level: 'company', title: '消防基础与应急疏散', desc: '消防器材与疏散要点', version: 'v1.0', updatedAt: now - 86400000 * 10 },
+      { id: 'seed_company_courseware_5', type: 'courseware', level: 'company', title: '个人防护与劳保用品规范', desc: 'PPE 选用与佩戴', version: 'v1.0', updatedAt: now - 86400000 * 7 },
+      { id: 'seed_center_template_1', type: 'template', level: 'center', title: '转运中心级入职教育签到表模板', desc: '含二维码签到与补录字段', version: 'v1.0', updatedAt: now - 86400000 * 15 },
+      { id: 'seed_center_template_2', type: 'template', level: 'center', title: '设备操作安全考核模板', desc: '叉车/输送设备安全题库模板', version: 'v1.0', updatedAt: now - 86400000 * 13 },
+      { id: 'seed_center_template_3', type: 'template', level: 'center', title: '特殊作业安全告知书模板', desc: '动火/高处/有限空间', version: 'v1.0', updatedAt: now - 86400000 * 9 },
+      { id: 'seed_center_template_4', type: 'template', level: 'center', title: '场地风险辨识清单模板', desc: '区域风险与控制措施', version: 'v1.0', updatedAt: now - 86400000 * 6 },
+      { id: 'seed_center_template_5', type: 'template', level: 'center', title: '应急演练记录模板', desc: '演练流程与照片留痕', version: 'v1.0', updatedAt: now - 86400000 * 5 },
+      { id: 'seed_center_template_6', type: 'template', level: 'center', title: '新员工三级教育考核试卷模板', desc: '选择/判断/简答', version: 'v1.0', updatedAt: now - 86400000 * 4 },
+      { id: 'seed_center_template_7', type: 'template', level: 'center', title: '班前会安全交底模板（中心）', desc: '当班风险与注意事项', version: 'v1.0', updatedAt: now - 86400000 * 3 },
+      { id: 'seed_team_template_1', type: 'template', level: 'team', title: '班组级岗位 SOP 考核模板', desc: '岗位操作标准与考核', version: 'v1.0', updatedAt: now - 86400000 * 11 },
+      { id: 'seed_team_template_2', type: 'template', level: 'team', title: '班前交底记录模板（班组）', desc: '交底要点与签字', version: 'v1.0', updatedAt: now - 86400000 * 8 },
+      { id: 'seed_team_template_3', type: 'template', level: 'team', title: '应急动作卡确认单模板', desc: '关键应急动作确认', version: 'v1.0', updatedAt: now - 86400000 * 6 },
+      { id: 'seed_team_template_4', type: 'template', level: 'team', title: '劳保发放与佩戴检查表模板', desc: '班组现场抽查', version: 'v1.0', updatedAt: now - 86400000 * 5 },
+      { id: 'seed_team_template_5', type: 'template', level: 'team', title: '新员工班组带教记录模板', desc: '师徒带教与评价', version: 'v1.0', updatedAt: now - 86400000 * 4 },
+      { id: 'seed_team_template_6', type: 'template', level: 'team', title: '班组级安全教育试题模板', desc: '岗位风险与防护', version: 'v1.0', updatedAt: now - 86400000 * 2 }
+    ];
+    saveThreeEducationStoredAssets(seed);
+  }
+
+  function formatThreeEducationDate(ts) {
+    if (!ts) return '-';
+    try {
+      var d = new Date(ts);
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      var hh = String(d.getHours()).padStart(2, '0');
+      var mm = String(d.getMinutes()).padStart(2, '0');
+      return y + '-' + m + '-' + day + ' ' + hh + ':' + mm;
+    } catch (e) {
+      return '-';
+    }
+  }
+
+  function getThreeEducationLevelLabel(level) {
+    if (level === 'company') return '公司级';
+    if (level === 'center') return '中心级';
+    if (level === 'team') return '班组级';
+    return '未知';
+  }
+
+  function getThreeEducationTypeLabel(type) {
+    if (type === 'courseware') return '课件';
+    if (type === 'template') return '考核模板';
+    return '未知';
+  }
+
+  function getThreeEducationCounts(assets) {
+    var counts = {
+      company: { courseware: 0, template: 0 },
+      center: { courseware: 0, template: 0 },
+      team: { courseware: 0, template: 0 }
+    };
+    (assets || []).forEach(function (a) {
+      if (!a || !counts[a.level] || !counts[a.level][a.type]) return;
+      counts[a.level][a.type] += 1;
+    });
+    return counts;
+  }
+
   function renderThreeEducationTemplateManagement() {
+    ensureThreeEducationSeedAssets();
     return '' +
       '<div class="three-education-card">' +
         '<div class="three-education-card-header">' +
           '<div>' +
-            '<div class="section-title no-marker">标准培训模板</div>' +
-            '<div class="three-education-subtitle">统一维护三级教育内容口径，支持版本追溯与快速复用。</div>' +
+            '<div class="section-title no-marker">模板与课件管理</div>' +
+            '<div class="three-education-subtitle">安全员维护入职教育的培训课件与考核模板；支持新建、导入、上传与下载留痕。</div>' +
           '</div>' +
-          '<button class="btn btn-outline btn-sm">新建模板</button>' +
+          '<div class="three-education-card-actions">' +
+            '<button class="btn btn-primary btn-sm" type="button" id="threeEduNewTemplateBtn">新建模板</button>' +
+            '<button class="btn btn-outline btn-sm" type="button" id="threeEduImportAssetsBtn">导入模板</button>' +
+            '<button class="btn btn-outline btn-sm" type="button" id="threeEduUploadCoursewareBtn">上传课件</button>' +
+            '<button class="btn btn-outline btn-sm" type="button" id="threeEduExportAssetsBtn">下载模板/课件清单</button>' +
+          '</div>' +
         '</div>' +
-        '<div class="template-list">' +
-          '<div class="template-item">' +
-            '<div>' +
-              '<div class="template-title">公司级安全教育</div>' +
-              '<div class="template-desc">制度、红线、全员履责要点</div>' +
+        '<div class="data-table-wrapper" style="margin-top:18px;">' +
+          '<div class="table-toolbar">' +
+            '<div class="table-toolbar-left">' +
+              '<div class="table-filter">' +
+                '<span>级别：</span>' +
+                '<select id="threeEduAssetLevelFilter">' +
+                  '<option value=\"\">全部</option>' +
+                  '<option value=\"company\">公司级</option>' +
+                  '<option value=\"center\">中心级</option>' +
+                  '<option value=\"team\">班组级</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="table-filter">' +
+                '<span>类型：</span>' +
+                '<select id="threeEduAssetTypeFilter">' +
+                  '<option value=\"\">全部</option>' +
+                  '<option value=\"courseware\">课件</option>' +
+                  '<option value=\"template\">考核模板</option>' +
+                '</select>' +
+              '</div>' +
             '</div>' +
-            '<span class="template-tag company">5 个课件</span>' +
+            '<div class="table-search">' +
+              '<svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"M21 21l-4.35-4.35\"/></svg>' +
+              '<input type="text" id="threeEduAssetSearchInput" placeholder="搜索名称 / 说明...">' +
+            '</div>' +
           '</div>' +
-          '<div class="template-item">' +
-            '<div>' +
-              '<div class="template-title">转运中心级教育</div>' +
-              '<div class="template-desc">场地风险、设备操作、特殊作业禁令</div>' +
-            '</div>' +
-            '<span class="template-tag center">7 个模板</span>' +
-          '</div>' +
-          '<div class="template-item">' +
-            '<div>' +
-              '<div class="template-title">班组级教育</div>' +
-              '<div class="template-desc">岗位 SOP、班前交底、应急动作卡</div>' +
-            '</div>' +
-            '<span class="template-tag team">6 个模板</span>' +
+        '<table class="data-table three-education-assets-table" id="threeEduAssetsTable">' +
+            '<thead><tr>' +
+              '<th>名称</th><th>级别</th><th>类型</th><th>版本</th><th>更新时间</th><th>附件</th><th>操作</th>' +
+            '</tr></thead>' +
+            '<tbody id="threeEduAssetsTbody"></tbody>' +
+          '</table>' +
+          '<div class="table-pagination">' +
+            '<span id="threeEduAssetsCount">共 0 条记录</span>' +
+            '<div class="pagination-btns" id="threeEduAssetsPager"></div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -5729,7 +5834,511 @@
       const key = tab.dataset.threeEducationTab;
       title.textContent = labelMap[key] || '模板管理';
       body.innerHTML = renderThreeEducationTabBody(key);
+      if (key === 'template-management') initThreeEducationTemplateManagement();
     });
+
+    initThreeEducationTemplateManagement();
+  }
+
+  function initThreeEducationTemplateManagement() {
+    var newTemplateBtn = document.getElementById('threeEduNewTemplateBtn');
+    var importBtn = document.getElementById('threeEduImportAssetsBtn');
+    var uploadCoursewareBtn = document.getElementById('threeEduUploadCoursewareBtn');
+    var exportBtn = document.getElementById('threeEduExportAssetsBtn');
+    var levelFilter = document.getElementById('threeEduAssetLevelFilter');
+    var typeFilter = document.getElementById('threeEduAssetTypeFilter');
+    var searchInput = document.getElementById('threeEduAssetSearchInput');
+    var tbody = document.getElementById('threeEduAssetsTbody');
+    var countEl = document.getElementById('threeEduAssetsCount');
+    var pagerEl = document.getElementById('threeEduAssetsPager');
+
+    if (!tbody) return;
+
+    var pageSize = 10;
+    var currentPage = 1;
+
+    function openThreeEduDb() {
+      return new Promise(function (resolve, reject) {
+        if (!window.indexedDB) { reject(new Error('IndexedDB not supported')); return; }
+        var req = indexedDB.open('threeEducationAssetsDb_v1', 1);
+        req.onupgradeneeded = function () {
+          var db = req.result;
+          if (!db.objectStoreNames.contains('files')) {
+            db.createObjectStore('files', { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = function () { resolve(req.result); };
+        req.onerror = function () { reject(req.error || new Error('open db failed')); };
+      });
+    }
+
+    function dbPutFile(fileId, file) {
+      return openThreeEduDb().then(function (db) {
+        return new Promise(function (resolve, reject) {
+          var tx = db.transaction('files', 'readwrite');
+          tx.oncomplete = function () { db.close(); resolve(); };
+          tx.onerror = function () { db.close(); reject(tx.error || new Error('tx failed')); };
+          tx.objectStore('files').put({
+            id: fileId,
+            name: file && file.name ? file.name : '附件',
+            type: file && file.type ? file.type : '',
+            blob: file,
+            updatedAt: Date.now()
+          });
+        });
+      });
+    }
+
+    function dbGetFile(fileId) {
+      return openThreeEduDb().then(function (db) {
+        return new Promise(function (resolve, reject) {
+          var tx = db.transaction('files', 'readonly');
+          var req = tx.objectStore('files').get(fileId);
+          req.onsuccess = function () { db.close(); resolve(req.result || null); };
+          req.onerror = function () { db.close(); reject(req.error || new Error('get failed')); };
+        });
+      });
+    }
+
+    function dbDeleteFile(fileId) {
+      return openThreeEduDb().then(function (db) {
+        return new Promise(function (resolve, reject) {
+          var tx = db.transaction('files', 'readwrite');
+          var req = tx.objectStore('files').delete(fileId);
+          tx.oncomplete = function () { db.close(); resolve(); };
+          tx.onerror = function () { db.close(); reject(tx.error || new Error('delete failed')); };
+          req.onerror = function () { };
+        });
+      });
+    }
+
+    function downloadBlob(blob, filename) {
+      try {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename || 'download';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      } catch (e) {
+        alert('下载失败：' + (e && e.message ? e.message : '未知错误'));
+      }
+    }
+
+    function getAssets() {
+      ensureThreeEducationSeedAssets();
+      var list = getThreeEducationStoredAssets();
+      return Array.isArray(list) ? list.slice() : [];
+    }
+
+    function saveAssets(list) {
+      saveThreeEducationStoredAssets(list);
+    }
+
+    function applyFilters(assets) {
+      var level = levelFilter ? String(levelFilter.value || '').trim() : '';
+      var type = typeFilter ? String(typeFilter.value || '').trim() : '';
+      var term = searchInput ? String(searchInput.value || '').trim().toLowerCase() : '';
+
+      return (assets || []).filter(function (a) {
+        if (!a) return false;
+        if (level && a.level !== level) return false;
+        if (type && a.type !== type) return false;
+        if (term) {
+          var hay = (String(a.title || '') + ' ' + String(a.desc || '')).toLowerCase();
+          if (hay.indexOf(term) < 0) return false;
+        }
+        return true;
+      }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); });
+    }
+
+    function renderPager(totalCount) {
+      if (!pagerEl) return;
+      var totalPages = totalCount ? Math.ceil(totalCount / pageSize) : 0;
+      if (!totalPages || totalPages <= 1) {
+        pagerEl.innerHTML = '';
+        return;
+      }
+
+      if (currentPage < 1) currentPage = 1;
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      function btn(page, label, active, disabled) {
+        var cls = 'pagination-btn' + (active ? ' active' : '');
+        var dis = disabled ? ' disabled' : '';
+        return '<button class="' + cls + '" type="button" data-page="' + page + '"' + dis + '>' + label + '</button>';
+      }
+      function ellipsis() {
+        return '<button class="pagination-btn" type="button" disabled>...</button>';
+      }
+
+      var html = '';
+      html += btn('prev', '&lt;', false, currentPage === 1);
+
+      if (totalPages <= 7) {
+        for (var p = 1; p <= totalPages; p++) {
+          html += btn(String(p), String(p), p === currentPage, false);
+        }
+      } else {
+        html += btn('1', '1', currentPage === 1, false);
+
+        var start = Math.max(2, currentPage - 2);
+        var end = Math.min(totalPages - 1, currentPage + 2);
+
+        if (start > 2) html += ellipsis();
+        for (var i = start; i <= end; i++) {
+          html += btn(String(i), String(i), i === currentPage, false);
+        }
+        if (end < totalPages - 1) html += ellipsis();
+
+        html += btn(String(totalPages), String(totalPages), currentPage === totalPages, false);
+      }
+
+      html += btn('next', '&gt;', false, currentPage === totalPages);
+      pagerEl.innerHTML = html;
+    }
+
+    function renderTable() {
+      var assets = getAssets();
+      var shown = applyFilters(assets);
+
+      var totalCount = shown.length;
+      var totalPages = totalCount ? Math.ceil(totalCount / pageSize) : 1;
+      if (currentPage < 1) currentPage = 1;
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      var startIndex = (currentPage - 1) * pageSize;
+      var pageItems = shown.slice(startIndex, startIndex + pageSize);
+
+      tbody.innerHTML = pageItems.map(function (a) {
+        var hasFile = !!(a && a.fileId);
+        var fileName = a && a.fileName ? String(a.fileName) : '-';
+        var downloadDisabled = hasFile ? '' : ' disabled';
+        var downloadTitle = hasFile ? '' : ' title="未上传附件"';
+        var exportBtnHtml = (a.type === 'template')
+          ? '<button class="btn btn-outline btn-sm" type="button" data-three-edu-action="export" data-id="' + a.id + '">导出</button>'
+          : '';
+        return '' +
+          '<tr data-id="' + a.id + '">' +
+            '<td style="font-weight:700;">' + String(a.title || '-') + '<div style="margin-top:4px;font-size:12px;color:var(--text-tertiary);line-height:1.4;">' + String(a.desc || '') + '</div></td>' +
+            '<td>' + getThreeEducationLevelLabel(a.level) + '</td>' +
+            '<td>' + getThreeEducationTypeLabel(a.type) + '</td>' +
+            '<td>' + String(a.version || '-') + '</td>' +
+            '<td style="font-family:monospace;">' + formatThreeEducationDate(a.updatedAt) + '</td>' +
+            '<td>' + fileName + '</td>' +
+            '<td>' +
+              '<button class="btn btn-outline btn-sm"' + downloadDisabled + downloadTitle + ' type="button" data-three-edu-action="download" data-id="' + a.id + '">下载</button>' +
+              exportBtnHtml +
+              '<button class="btn btn-outline btn-sm" type="button" data-three-edu-action="delete" data-id="' + a.id + '">删除</button>' +
+            '</td>' +
+          '</tr>';
+      }).join('');
+
+      if (countEl) {
+        if (!totalCount) countEl.textContent = '共 0 条记录';
+        else countEl.textContent = '共 ' + totalCount + ' 条记录，第 ' + currentPage + '/' + totalPages + ' 页';
+      }
+      renderPager(totalCount);
+    }
+
+    function ensureAssetModal() {
+      if (document.getElementById('threeEduAssetModalOverlay')) return;
+      document.body.insertAdjacentHTML('beforeend', '' +
+        '<div class="modal-overlay" id="threeEduAssetModalOverlay" style="display:none;">' +
+          '<div class="modal" role="dialog" aria-modal="true" style="max-width:680px;">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title" id="threeEduAssetModalTitle">新建</div>' +
+              '<button class="modal-close" type="button" id="threeEduAssetModalCloseBtn">×</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+              '<form id="threeEduAssetModalForm">' +
+                '<div class="form-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;">' +
+                  '<div class="form-group">' +
+                    '<label class="required">级别</label>' +
+                    '<select class="form-control" id="threeEduAssetLevelSelect" required>' +
+                      '<option value=\"\">请选择</option>' +
+                      '<option value=\"company\">公司级</option>' +
+                      '<option value=\"center\">中心级</option>' +
+                      '<option value=\"team\">班组级</option>' +
+                    '</select>' +
+                  '</div>' +
+                  '<div class="form-group">' +
+                    '<label>版本</label>' +
+                    '<input class="form-control" id="threeEduAssetVersionInput" placeholder="例如：v1.0">' +
+                  '</div>' +
+                  '<div class="form-group full-width">' +
+                    '<label class="required" id="threeEduAssetNameLabel">名称</label>' +
+                    '<input class="form-control" id="threeEduAssetTitleInput" maxlength="60" required placeholder="请输入名称">' +
+                  '</div>' +
+                  '<div class="form-group full-width">' +
+                    '<label>说明</label>' +
+                    '<textarea class="form-control" id="threeEduAssetDescInput" rows="3" maxlength="200" placeholder="可选：适用范围、考核要点、课件内容摘要..."></textarea>' +
+                  '</div>' +
+                  '<div class="form-group full-width">' +
+                    '<label id="threeEduAssetFileLabel">上传附件（可选）</label>' +
+                    '<input class="form-control" type="file" id="threeEduAssetFileInput">' +
+                    '<div class="form-help" id="threeEduAssetFileHelp">支持课件/模板文件；上传后可在列表中下载。</div>' +
+                  '</div>' +
+                '</div>' +
+                '<input type="hidden" id="threeEduAssetTypeHidden" value="template">' +
+              '</form>' +
+            '</div>' +
+            '<div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;">' +
+              '<button class="btn btn-outline" type="button" id="threeEduAssetModalCancelBtn">取消</button>' +
+              '<button class="btn btn-primary" type="button" id="threeEduAssetModalSaveBtn">保存</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>');
+
+      var overlay = document.getElementById('threeEduAssetModalOverlay');
+      var closeBtn = document.getElementById('threeEduAssetModalCloseBtn');
+      var cancelBtn = document.getElementById('threeEduAssetModalCancelBtn');
+      function close() { if (overlay) overlay.style.display = 'none'; }
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      if (cancelBtn) cancelBtn.addEventListener('click', close);
+      if (overlay) overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    }
+
+    function openAssetModal(type) {
+      ensureAssetModal();
+      var overlay = document.getElementById('threeEduAssetModalOverlay');
+      var titleEl = document.getElementById('threeEduAssetModalTitle');
+      var levelSel = document.getElementById('threeEduAssetLevelSelect');
+      var versionInput = document.getElementById('threeEduAssetVersionInput');
+      var titleInput = document.getElementById('threeEduAssetTitleInput');
+      var descInput = document.getElementById('threeEduAssetDescInput');
+      var fileLabel = document.getElementById('threeEduAssetFileLabel');
+      var fileHelp = document.getElementById('threeEduAssetFileHelp');
+      var fileInput = document.getElementById('threeEduAssetFileInput');
+      var typeHidden = document.getElementById('threeEduAssetTypeHidden');
+      if (typeHidden) typeHidden.value = type === 'courseware' ? 'courseware' : 'template';
+
+      if (titleEl) titleEl.textContent = (type === 'courseware') ? '上传课件' : '新建模板';
+      if (levelSel) levelSel.value = (levelFilter && levelFilter.value) ? levelFilter.value : '';
+      if (versionInput) versionInput.value = 'v1.0';
+      if (titleInput) titleInput.value = '';
+      if (descInput) descInput.value = '';
+      if (fileInput) fileInput.value = '';
+
+      if (fileLabel) fileLabel.textContent = (type === 'courseware') ? '上传课件附件（必填）' : '上传模板附件（可选）';
+      if (fileHelp) fileHelp.textContent = (type === 'courseware')
+        ? '建议上传 PDF/PPT/视频等课件文件。'
+        : '可选：上传试卷/签到表/告知书等模板文件。';
+
+      if (overlay) overlay.style.display = 'flex';
+    }
+
+    function addAssetFromModal() {
+      var levelSel = document.getElementById('threeEduAssetLevelSelect');
+      var versionInput = document.getElementById('threeEduAssetVersionInput');
+      var titleInput = document.getElementById('threeEduAssetTitleInput');
+      var descInput = document.getElementById('threeEduAssetDescInput');
+      var fileInput = document.getElementById('threeEduAssetFileInput');
+      var typeHidden = document.getElementById('threeEduAssetTypeHidden');
+      var overlay = document.getElementById('threeEduAssetModalOverlay');
+
+      var type = typeHidden ? String(typeHidden.value || '').trim() : 'template';
+      var level = levelSel ? String(levelSel.value || '').trim() : '';
+      var titleVal = titleInput ? String(titleInput.value || '').trim() : '';
+      var descVal = descInput ? String(descInput.value || '').trim() : '';
+      var versionVal = versionInput ? String(versionInput.value || '').trim() : '';
+      var file = (fileInput && fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
+
+      if (!level) { alert('请选择级别。'); return; }
+      if (!titleVal) { alert('请填写名称。'); return; }
+      if (type === 'courseware' && !file) { alert('请上传课件附件。'); return; }
+
+      var id = 'threeEdu_' + Date.now() + '_' + Math.random().toString(16).slice(2, 8);
+      var fileId = file ? id : '';
+      var record = {
+        id: id,
+        type: type === 'courseware' ? 'courseware' : 'template',
+        level: level,
+        title: titleVal,
+        desc: descVal,
+        version: versionVal || 'v1.0',
+        fileId: fileId || '',
+        fileName: file ? file.name : '',
+        fileMime: file ? (file.type || '') : '',
+        updatedAt: Date.now()
+      };
+
+      var assets = getAssets();
+      function finish() {
+        assets.unshift(record);
+        saveAssets(assets);
+        if (overlay) overlay.style.display = 'none';
+        renderTable();
+      }
+
+      if (!file) { finish(); return; }
+
+      dbPutFile(fileId, file).then(function () {
+        finish();
+      }).catch(function (e) {
+        alert('附件保存失败：' + (e && e.message ? e.message : '未知错误'));
+      });
+    }
+
+    function exportAssetsList() {
+      var assets = getAssets();
+      var payload = {
+        version: 1,
+        exportedAt: Date.now(),
+        assets: assets
+      };
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+      var d = new Date();
+      var stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') +
+        '-' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+      downloadBlob(blob, '三级教育-模板课件清单-' + stamp + '.json');
+    }
+
+    function importAssetsFile(file) {
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var parsed = JSON.parse(String(reader.result || ''));
+          var list = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.assets) ? parsed.assets : []);
+          if (!Array.isArray(list) || !list.length) { alert('未识别到可导入的数据。'); return; }
+
+          var existing = getAssets();
+          var existingIds = new Set(existing.map(function (a) { return a && a.id ? String(a.id) : ''; }).filter(Boolean));
+          var imported = [];
+          list.forEach(function (a) {
+            if (!a) return;
+            var level = a.level;
+            var type = a.type;
+            if (['company', 'center', 'team'].indexOf(level) < 0) return;
+            if (['courseware', 'template'].indexOf(type) < 0) return;
+            var id = String(a.id || '');
+            if (!id || existingIds.has(id)) id = 'threeEdu_' + Date.now() + '_' + Math.random().toString(16).slice(2, 8);
+            existingIds.add(id);
+            imported.push({
+              id: id,
+              type: type,
+              level: level,
+              title: String(a.title || '').trim() || '未命名',
+              desc: String(a.desc || '').trim(),
+              version: String(a.version || '').trim() || 'v1.0',
+              fileId: String(a.fileId || '').trim(),
+              fileName: String(a.fileName || '').trim(),
+              fileMime: String(a.fileMime || '').trim(),
+              updatedAt: Date.now()
+            });
+          });
+
+          if (!imported.length) { alert('导入失败：数据格式不正确。'); return; }
+          var merged = imported.concat(existing);
+          saveAssets(merged);
+          renderTable();
+          alert('已导入 ' + imported.length + ' 条记录。');
+        } catch (e) {
+          alert('导入失败：' + (e && e.message ? e.message : '文件格式错误'));
+        }
+      };
+      reader.onerror = function () { alert('读取文件失败。'); };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    function triggerImport() {
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json,.json';
+      input.addEventListener('change', function () {
+        var f = input.files && input.files[0] ? input.files[0] : null;
+        importAssetsFile(f);
+      });
+      input.click();
+    }
+
+    function handleTableClick(e) {
+      var btn = e.target && e.target.closest ? e.target.closest('button[data-three-edu-action]') : null;
+      if (!btn) return;
+      var action = String(btn.dataset.threeEduAction || '');
+      var id = String(btn.dataset.id || '');
+      if (!id) return;
+
+      var assets = getAssets();
+      var idx = assets.findIndex(function (a) { return a && String(a.id) === id; });
+      if (idx < 0) return;
+      var asset = assets[idx];
+
+      if (action === 'delete') {
+        if (!confirm('确认删除“' + String(asset.title || '') + '”？')) return;
+        assets.splice(idx, 1);
+        saveAssets(assets);
+        if (asset && asset.fileId) {
+          dbDeleteFile(asset.fileId).then(function () { renderTable(); }).catch(function () { renderTable(); });
+        } else {
+          renderTable();
+        }
+        return;
+      }
+
+      if (action === 'export') {
+        var blob = new Blob([JSON.stringify(asset, null, 2)], { type: 'application/json;charset=utf-8' });
+        var safeName = String(asset.title || '模板').replace(/[\\\\/:*?\"<>|]/g, '_');
+        downloadBlob(blob, safeName + '.json');
+        return;
+      }
+
+      if (action === 'download') {
+        if (!asset.fileId) return;
+        btn.disabled = true;
+        dbGetFile(asset.fileId).then(function (row) {
+          btn.disabled = false;
+          if (!row || !row.blob) { alert('未找到附件，请重新上传。'); return; }
+          downloadBlob(row.blob, row.name || asset.fileName || '附件');
+        }).catch(function (err) {
+          btn.disabled = false;
+          alert('下载失败：' + (err && err.message ? err.message : '未知错误'));
+        });
+        return;
+      }
+    }
+
+    var saveBtn = document.getElementById('threeEduAssetModalSaveBtn');
+    if (saveBtn && !saveBtn.dataset.bound) {
+      saveBtn.dataset.bound = '1';
+      saveBtn.addEventListener('click', addAssetFromModal);
+    }
+
+    if (newTemplateBtn) newTemplateBtn.addEventListener('click', function () { openAssetModal('template'); });
+    if (uploadCoursewareBtn) uploadCoursewareBtn.addEventListener('click', function () { openAssetModal('courseware'); });
+    if (importBtn) importBtn.addEventListener('click', triggerImport);
+    if (exportBtn) exportBtn.addEventListener('click', exportAssetsList);
+
+    function resetAndRender() {
+      currentPage = 1;
+      renderTable();
+    }
+
+    if (levelFilter) levelFilter.addEventListener('change', resetAndRender);
+    if (typeFilter) typeFilter.addEventListener('change', resetAndRender);
+    if (searchInput) searchInput.addEventListener('input', resetAndRender);
+
+    tbody.addEventListener('click', handleTableClick);
+    if (pagerEl) {
+      pagerEl.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('button.pagination-btn[data-page]') : null;
+        if (!btn || btn.disabled) return;
+        var page = String(btn.dataset.page || '');
+        if (!page) return;
+        if (page === 'prev') currentPage = Math.max(1, currentPage - 1);
+        else if (page === 'next') currentPage = currentPage + 1;
+        else {
+          var n = parseInt(page, 10);
+          if (!isNaN(n)) currentPage = n;
+        }
+        renderTable();
+      });
+    }
+    renderTable();
   }
 
   function renderTraining() {
@@ -7486,13 +8095,24 @@
       return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.value; }).filter(Boolean);
     }
 
-    function setSelectOptions(selectEl, items) {
+    function setSelectOptions(selectEl, items, selectedValues) {
       if (!selectEl) return;
-      const current = new Set(getSelectedValues(selectEl));
+      const current = new Set(Array.isArray(selectedValues) ? selectedValues : getSelectedValues(selectEl));
       selectEl.innerHTML = (items || []).map(function (item) {
         const selected = current.has(item.value) ? ' selected' : '';
         return '<option value="' + item.value + '"' + selected + '>' + item.label + '</option>';
       }).join('');
+    }
+
+    function enableClickMultiSelect(selectEl) {
+      if (!selectEl || !selectEl.multiple) return;
+      selectEl.addEventListener('mousedown', function (e) {
+        const target = e && e.target;
+        if (!target || target.tagName !== 'OPTION') return;
+        e.preventDefault();
+        target.selected = !target.selected;
+        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+      });
     }
 
     function getCourseEntries() {
@@ -7628,7 +8248,9 @@
       if (e.key === 'Escape') closeCoursesPanel();
     });
 
-    function updateProvinceAndCenterOptions() {
+    let prevSelectedProvinceCodes = new Set();
+
+    function updateProvinceAndCenterOptions(centerSelectionPatch) {
       if (!regionSelect || !provinceSelect || !centerSelect) return;
       const region = regionSelect.value;
       if (!region) {
@@ -7636,6 +8258,7 @@
         centerSelect.innerHTML = '';
         provinceSelect.disabled = true;
         centerSelect.disabled = true;
+        prevSelectedProvinceCodes = new Set();
         return;
       }
 
@@ -7658,22 +8281,49 @@
         return { value: c.code, label: getCenterDisplayName(c) };
       }).sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
 
+      const nextSelectedCenters = new Set(getSelectedValues(centerSelect));
+      const centerItemCodes = new Set(centerItems.map(function (item) { return item.value; }));
+      Array.from(nextSelectedCenters).forEach(function (code) {
+        if (!centerItemCodes.has(code)) nextSelectedCenters.delete(code);
+      });
+
+      if (centerSelectionPatch && Array.isArray(centerSelectionPatch.removeProvinceCodes) && centerSelectionPatch.removeProvinceCodes.length) {
+        const removeProvincesSet = new Set(centerSelectionPatch.removeProvinceCodes);
+        centerCandidates.forEach(function (c) {
+          if (c && removeProvincesSet.has(c.provinceCode)) nextSelectedCenters.delete(c.code);
+        });
+      }
+
+      if (centerSelectionPatch && Array.isArray(centerSelectionPatch.addProvinceCodes) && centerSelectionPatch.addProvinceCodes.length) {
+        const addProvincesSet = new Set(centerSelectionPatch.addProvinceCodes);
+        centerCandidates.forEach(function (c) {
+          if (!c || !addProvincesSet.has(c.provinceCode)) return;
+          if (centerItemCodes.has(c.code)) nextSelectedCenters.add(c.code);
+        });
+      }
+
       centerSelect.disabled = false;
-      setSelectOptions(centerSelect, centerItems);
+      setSelectOptions(centerSelect, centerItems, Array.from(nextSelectedCenters));
     }
 
     if (regionSelect) {
       regionSelect.addEventListener('change', function () {
         if (provinceSelect) provinceSelect.selectedIndex = -1;
         if (centerSelect) centerSelect.selectedIndex = -1;
+        prevSelectedProvinceCodes = new Set();
         updateProvinceAndCenterOptions();
       });
     }
 
     if (provinceSelect) {
       provinceSelect.addEventListener('change', function () {
-        if (centerSelect) centerSelect.selectedIndex = -1;
-        updateProvinceAndCenterOptions();
+        const nextProvinceCodes = new Set(getSelectedValues(provinceSelect));
+        const added = [];
+        const removed = [];
+        nextProvinceCodes.forEach(function (code) { if (!prevSelectedProvinceCodes.has(code)) added.push(code); });
+        prevSelectedProvinceCodes.forEach(function (code) { if (!nextProvinceCodes.has(code)) removed.push(code); });
+        prevSelectedProvinceCodes = nextProvinceCodes;
+        updateProvinceAndCenterOptions({ addProvinceCodes: added, removeProvinceCodes: removed });
       });
     }
 
@@ -7684,6 +8334,9 @@
     }).catch(function () {
       updateProvinceAndCenterOptions();
     });
+
+    enableClickMultiSelect(provinceSelect);
+    enableClickMultiSelect(centerSelect);
 
     function getSelectedLabels(selectEl) {
       if (!selectEl) return [];
