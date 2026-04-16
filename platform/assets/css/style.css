@@ -4320,6 +4320,12 @@ input {
   margin-right: 8px;
 }
 
+.three-edu-onb-actions .btn {
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .three-education-assets-table td:last-child .btn:last-child {
   margin-right: 0;
 }

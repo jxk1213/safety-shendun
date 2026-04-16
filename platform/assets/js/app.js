@@ -5692,6 +5692,275 @@
     return '未知';
   }
 
+  // ============ QR Code (轻量版，固定 Version 4 / EC Level L / Mask 0) ============
+  // 说明：用于生成较短 URL（建议使用 /ot/:token 形式），适配本项目“入职培训”二维码展示与下载。
+  function renderThreeEduQr(canvas, text, outSize) {
+    var input = String(text || '');
+    if (!input) throw new Error('empty');
+    var modules = makeQrV4LMask0(input);
+    drawQrToCanvas(canvas, modules, outSize || 220);
+  }
+
+  function utf8Bytes(str) {
+    try {
+      if (window.TextEncoder) return Array.from(new TextEncoder().encode(str));
+    } catch (e) { }
+    // fallback
+    var s = unescape(encodeURIComponent(str));
+    var bytes = [];
+    for (var i = 0; i < s.length; i++) bytes.push(s.charCodeAt(i) & 0xff);
+    return bytes;
+  }
+
+  function makeQrV4LMask0(text) {
+    // Version 4: 33x33, Level L: data cw=80, ecc cw=20, total cw=100.
+    var bytes = utf8Bytes(text);
+    // Byte-mode capacity (v4-L) ~ 78 bytes (after overhead)
+    if (bytes.length > 78) throw new Error('内容过长，建议使用更短域名/路径');
+
+    var dataCw = makeV4LDataCodewords(bytes);
+    var eccCw = reedSolomonCompute(dataCw, 20);
+    var codewords = dataCw.concat(eccCw);
+
+    var size = 33;
+    var modules = [];
+    var isFunc = [];
+    for (var r = 0; r < size; r++) {
+      modules[r] = [];
+      isFunc[r] = [];
+      for (var c = 0; c < size; c++) { modules[r][c] = null; isFunc[r][c] = false; }
+    }
+
+    function setFunc(r, c, val) {
+      if (r < 0 || c < 0 || r >= size || c >= size) return;
+      modules[r][c] = !!val;
+      isFunc[r][c] = true;
+    }
+
+    function addFinder(r0, c0) {
+      for (var r = -1; r <= 7; r++) {
+        for (var c = -1; c <= 7; c++) {
+          var rr = r0 + r;
+          var cc = c0 + c;
+          if (rr < 0 || cc < 0 || rr >= size || cc >= size) continue;
+          var isBorder = (r === -1 || r === 7 || c === -1 || c === 7);
+          var isDark = (r >= 0 && r <= 6 && c >= 0 && c <= 6 &&
+            (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4)));
+          setFunc(rr, cc, !isBorder && isDark);
+        }
+      }
+    }
+
+    function addTiming() {
+      for (var i = 8; i < size - 8; i++) {
+        var bit = (i % 2 === 0);
+        if (!isFunc[6][i]) setFunc(6, i, bit);
+        if (!isFunc[i][6]) setFunc(i, 6, bit);
+      }
+    }
+
+    function addAlignment(centerR, centerC) {
+      for (var r = -2; r <= 2; r++) {
+        for (var c = -2; c <= 2; c++) {
+          var rr = centerR + r;
+          var cc = centerC + c;
+          var isDark = (Math.max(Math.abs(r), Math.abs(c)) !== 1);
+          setFunc(rr, cc, isDark);
+        }
+      }
+    }
+
+    // patterns
+    addFinder(0, 0);
+    addFinder(0, size - 7);
+    addFinder(size - 7, 0);
+    addTiming();
+    // alignment (v4: positions [6,26], only (26,26) applicable)
+    addAlignment(26, 26);
+
+    // reserve format info areas
+    for (var i = 0; i < 9; i++) {
+      if (i !== 6) { setFunc(8, i, false); setFunc(i, 8, false); }
+    }
+    for (var j = 0; j < 8; j++) setFunc(8, size - 1 - j, false);
+    for (var k = 0; k < 7; k++) setFunc(size - 1 - k, 8, false);
+    // dark module (fixed)
+    setFunc(size - 8, 8, true);
+
+    // place data bits
+    var bitLen = codewords.length * 8;
+    var bitIndex = 0;
+    var upward = true;
+    for (var col = size - 1; col > 0; col -= 2) {
+      if (col === 6) col--;
+      for (var rowStep = 0; rowStep < size; rowStep++) {
+        var r = upward ? (size - 1 - rowStep) : rowStep;
+        for (var ccOff = 0; ccOff < 2; ccOff++) {
+          var c = col - ccOff;
+          if (modules[r][c] !== null) continue;
+          var bit = false;
+          if (bitIndex < bitLen) {
+            var b = codewords[(bitIndex / 8) | 0];
+            bit = (((b >>> (7 - (bitIndex & 7))) & 1) === 1);
+          }
+          bitIndex++;
+          // mask 0
+          if (((r + c) & 1) === 0) bit = !bit;
+          modules[r][c] = bit;
+        }
+      }
+      upward = !upward;
+    }
+
+    // setup format info (Level L=01, mask=000)
+    var format = makeFormatInfoBits(1, 0);
+    for (var t = 0; t < 15; t++) {
+      var bit2 = ((format >>> t) & 1) === 1;
+      // vertical: col 8
+      var vr = (t < 6) ? t : (t < 8 ? t + 1 : size - 15 + t);
+      setFunc(vr, 8, bit2);
+      // horizontal: row 8
+      var hc = (t < 8) ? (size - 1 - t) : (14 - t);
+      setFunc(8, hc, bit2);
+    }
+
+    // fill remaining nulls with light modules
+    for (var rr = 0; rr < size; rr++) {
+      for (var cc = 0; cc < size; cc++) {
+        if (modules[rr][cc] === null) modules[rr][cc] = false;
+      }
+    }
+    return modules;
+  }
+
+  function makeV4LDataCodewords(bytes) {
+    var dataCodewords = 80;
+    var bits = [];
+    function pushBits(val, len) {
+      for (var i = len - 1; i >= 0; i--) bits.push(((val >>> i) & 1) === 1);
+    }
+    // mode indicator: byte mode = 0100
+    pushBits(0x4, 4);
+    pushBits(bytes.length, 8);
+    for (var i = 0; i < bytes.length; i++) pushBits(bytes[i], 8);
+    // terminator up to 4 zeros
+    var maxBits = dataCodewords * 8;
+    for (var t = 0; t < 4 && bits.length < maxBits; t++) bits.push(false);
+    // pad to byte boundary
+    while (bits.length % 8 !== 0) bits.push(false);
+    // codewords
+    var cw = [];
+    for (var b = 0; b < bits.length; b += 8) {
+      var v = 0;
+      for (var k = 0; k < 8; k++) v = (v << 1) | (bits[b + k] ? 1 : 0);
+      cw.push(v);
+    }
+    // pad bytes 0xEC, 0x11
+    var pads = [0xEC, 0x11];
+    var pi = 0;
+    while (cw.length < dataCodewords) {
+      cw.push(pads[pi & 1]);
+      pi++;
+    }
+    return cw;
+  }
+
+  function gfTables() {
+    var exp = new Array(512);
+    var log = new Array(256);
+    var x = 1;
+    for (var i = 0; i < 255; i++) {
+      exp[i] = x;
+      log[x] = i;
+      x <<= 1;
+      if (x & 0x100) x ^= 0x11d;
+    }
+    for (var j = 255; j < 512; j++) exp[j] = exp[j - 255];
+    log[0] = 0;
+    return { exp: exp, log: log };
+  }
+
+  function gfMul(a, b, tab) {
+    if (a === 0 || b === 0) return 0;
+    return tab.exp[tab.log[a] + tab.log[b]];
+  }
+
+  function polyMul(p, q, tab) {
+    var res = new Array(p.length + q.length - 1);
+    for (var i = 0; i < res.length; i++) res[i] = 0;
+    for (var i2 = 0; i2 < p.length; i2++) {
+      for (var j = 0; j < q.length; j++) {
+        res[i2 + j] ^= gfMul(p[i2], q[j], tab);
+      }
+    }
+    return res;
+  }
+
+  function rsGeneratorPoly(deg, tab) {
+    var poly = [1];
+    for (var i = 0; i < deg; i++) {
+      poly = polyMul(poly, [1, tab.exp[i]], tab);
+    }
+    return poly;
+  }
+
+  function reedSolomonCompute(data, eccLen) {
+    var tab = gfTables();
+    var gen = rsGeneratorPoly(eccLen, tab); // length eccLen+1
+    var ecc = new Array(eccLen);
+    for (var i = 0; i < eccLen; i++) ecc[i] = 0;
+
+    for (var d = 0; d < data.length; d++) {
+      var factor = data[d] ^ ecc[0];
+      for (var e = 0; e < eccLen - 1; e++) ecc[e] = ecc[e + 1];
+      ecc[eccLen - 1] = 0;
+      for (var j = 0; j < eccLen; j++) {
+        ecc[j] ^= gfMul(gen[j + 1], factor, tab);
+      }
+    }
+    return ecc;
+  }
+
+  function bchDigit(data) {
+    var digit = 0;
+    while (data !== 0) { digit++; data >>>= 1; }
+    return digit;
+  }
+
+  function makeFormatInfoBits(eclBits, mask) {
+    var data = ((eclBits & 0x3) << 3) | (mask & 0x7);
+    var d = data << 10;
+    var g = 0x537; // 10100110111
+    while (bchDigit(d) - bchDigit(g) >= 0) {
+      d ^= (g << (bchDigit(d) - bchDigit(g)));
+    }
+    var bits = ((data << 10) | d) ^ 0x5412;
+    return bits & 0x7fff;
+  }
+
+  function drawQrToCanvas(canvas, modules, outSize) {
+    var ctx = canvas.getContext('2d');
+    var size = modules.length;
+    var quiet = 4;
+    var full = size + quiet * 2;
+    var scale = Math.floor(outSize / full);
+    if (scale < 1) scale = 1;
+    var actual = full * scale;
+    canvas.width = actual;
+    canvas.height = actual;
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, actual, actual);
+    ctx.fillStyle = '#000';
+    for (var r = 0; r < size; r++) {
+      for (var c = 0; c < size; c++) {
+        if (modules[r][c]) {
+          ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+        }
+      }
+    }
+  }
+
   function getThreeEducationCounts(assets) {
     var counts = {
       company: { courseware: 0, template: 0 },
@@ -5767,18 +6036,27 @@
         '<div class="three-education-card-header">' +
           '<div>' +
             '<div class="section-title no-marker">入职培训组织</div>' +
-            '<div class="three-education-subtitle">创建场次后生成动态二维码，员工扫码确认并电子签名。</div>' +
+            '<div class="three-education-subtitle">新建培训场次时选择课件与考核模板；创建后生成二维码供员工扫码签到（手机端答题待开发）。</div>' +
           '</div>' +
-          '<div class="three-education-card-actions">' +
-            '<button class="btn btn-primary btn-sm">新建培训场次</button>' +
-            '<button class="btn btn-outline btn-sm">生成签到二维码</button>' +
+          '<div class="three-education-card-actions three-edu-onb-actions">' +
+            '<button class="btn btn-primary" type="button" id="threeEduNewOnboardingTrainingBtn">新建培训场次</button>' +
+            '<button class="btn btn-outline" type="button" id="threeEduRefreshOnboardingTrainingBtn">刷新</button>' +
           '</div>' +
         '</div>' +
-        '<div class="scan-flow scan-flow-compact">' +
-          '<div class="scan-step"><span>1</span><p>选择模板与级别，填写时间地点与参训人数</p></div>' +
-          '<div class="scan-step"><span>2</span><p>系统生成动态二维码（默认 2 小时有效）</p></div>' +
-          '<div class="scan-step"><span>3</span><p>员工扫码带出信息，勾选确认并签名</p></div>' +
-          '<div class="scan-step"><span>4</span><p>记录自动归档，可导出用于审计留痕</p></div>' +
+        '<div class="data-table-wrapper" style="margin-top:0;">' +
+          '<div class="table-toolbar">' +
+            '<div class="table-toolbar-left"></div>' +
+          '</div>' +
+          '<table class="data-table">' +
+            '<thead><tr>' +
+              '<th>场次</th><th>时间</th><th>地点</th><th>课件</th><th>考核模板</th><th>二维码有效期</th><th>签到</th><th>存档</th><th>操作</th>' +
+            '</tr></thead>' +
+            '<tbody id="threeEduOnboardingTrainingTbody"></tbody>' +
+          '</table>' +
+          '<div class="table-pagination" style="justify-content:space-between;">' +
+            '<span id="threeEduOnboardingTrainingCount">共 0 条记录</span>' +
+            '<div class="pagination-btns" id="threeEduOnbPager"></div>' +
+          '</div>' +
         '</div>' +
       '</div>';
   }
@@ -5793,19 +6071,15 @@
           '</div>' +
           '<div class="three-education-search">' +
             '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
-            '<input type="text" placeholder="搜索姓名 / 工号...">' +
+            '<input type="text" id="threeEduRecordQuerySearch" placeholder="搜索姓名 / 工号...">' +
           '</div>' +
         '</div>' +
         '<table class="three-education-status-table three-education-status-table-compact">' +
-          '<thead><tr><th>员工</th><th>公司级</th><th>中心级</th><th>班组级</th><th>状态</th></tr></thead>' +
-          '<tbody>' +
-            '<tr><td>王磊 / 分拣员</td><td><span class="mini-badge done">已完成</span></td><td><span class="mini-badge done">已完成</span></td><td><span class="mini-badge pending">待签到</span></td><td><span class="mini-badge open">未闭环</span></td></tr>' +
-            '<tr><td>刘芳 / 设备员</td><td><span class="mini-badge done">线上完成</span></td><td><span class="mini-badge done">线下补录</span></td><td><span class="mini-badge done">已完成</span></td><td><span class="mini-badge success">已闭环</span></td></tr>' +
-            '<tr><td>赵强 / 装卸班长</td><td><span class="mini-badge done">已完成</span></td><td><span class="mini-badge progress">进行中</span></td><td><span class="mini-badge wait">未开始</span></td><td><span class="mini-badge open">未闭环</span></td></tr>' +
-          '</tbody>' +
+          '<thead><tr><th>员工</th><th>培训时间</th><th>公司级</th><th>中心级</th><th>班组级</th><th>状态</th><th>详情</th></tr></thead>' +
+          '<tbody id="threeEduRecordQueryTbody"></tbody>' +
         '</table>' +
         '<div class="three-education-status-actions">' +
-          '<button class="btn btn-outline btn-sm">导出记录</button>' +
+          '<button class="btn btn-outline btn-sm" type="button" id="threeEduRecordQueryExportBtn">导出记录</button>' +
         '</div>' +
       '</div>';
   }
@@ -5835,9 +6109,942 @@
       title.textContent = labelMap[key] || '模板管理';
       body.innerHTML = renderThreeEducationTabBody(key);
       if (key === 'template-management') initThreeEducationTemplateManagement();
+      if (key === 'onboarding-training') initThreeEducationOnboardingTraining();
+      if (key === 'record-query') initThreeEducationRecordQuery();
     });
 
     initThreeEducationTemplateManagement();
+  }
+
+  function initThreeEducationRecordQuery() {
+    var tbody = document.getElementById('threeEduRecordQueryTbody');
+    var searchInput = document.getElementById('threeEduRecordQuerySearch');
+    var exportBtn = document.getElementById('threeEduRecordQueryExportBtn');
+    if (!tbody) return;
+
+    function esc(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDt(val) {
+      if (!val) return '-';
+      try {
+        var d = new Date(val);
+        if (isNaN(d.getTime())) return String(val);
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        var hh = String(d.getHours()).padStart(2, '0');
+        var mm = String(d.getMinutes()).padStart(2, '0');
+        return y + '-' + m + '-' + day + ' ' + hh + ':' + mm;
+      } catch (e) {
+        return String(val);
+      }
+    }
+
+    function badge(text) {
+      var t = String(text || '');
+      // simple mapping
+      var cls = 'wait';
+      if (t === '已完成' || t === '线上完成' || t === '线下补录') cls = 'done';
+      else if (t === '待签到' || t === '待考核') cls = 'pending';
+      else if (t === '进行中') cls = 'progress';
+      else if (t === '未闭环') cls = 'open';
+      else if (t === '已闭环') cls = 'success';
+      return '<span class="mini-badge ' + cls + '">' + esc(t || '-') + '</span>';
+    }
+
+    function seedRows() {
+      return [
+        {
+          id: 'u1',
+          name: '王磊',
+          employeeNo: 'STO001',
+          trainingTime: '2026-04-16 11:17:00',
+          company: '已完成',
+          center: '已完成',
+          team: '待签到',
+          status: '未闭环',
+          detail: {
+            summary: '班组级待完成；可补录纸质考核照片。',
+            photos: []
+          }
+        },
+        {
+          id: 'u2',
+          name: '刘芳',
+          employeeNo: 'STO002',
+          trainingTime: '2026-04-15 15:30:00',
+          company: '线上完成',
+          center: '线下补录',
+          team: '已完成',
+          status: '已闭环',
+          detail: {
+            summary: '中心级线下补录；照片存档待接入按人维度。',
+            photos: []
+          }
+        },
+        {
+          id: 'u3',
+          name: '赵强',
+          employeeNo: 'STO003',
+          trainingTime: '2026-04-10 09:00:00',
+          company: '已完成',
+          center: '进行中',
+          team: '未开始',
+          status: '未闭环',
+          detail: {
+            summary: '中心级进行中；班组级未开始。',
+            photos: []
+          }
+        }
+      ];
+    }
+
+    var rows = seedRows();
+    var current = rows.slice();
+
+    function render(list) {
+      current = Array.isArray(list) ? list.slice() : [];
+      if (!current.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-tertiary);padding:16px 0;">暂无记录</td></tr>';
+        return;
+      }
+      tbody.innerHTML = current.map(function (r) {
+        return '' +
+          '<tr data-id="' + esc(r.id) + '">' +
+            '<td style="font-weight:700;">' + esc(r.name || '-') + '<div style="margin-top:4px;font-size:12px;color:var(--text-tertiary);font-family:monospace;">' + esc(r.employeeNo || '-') + '</div></td>' +
+            '<td style="font-family:monospace;">' + esc(formatDt(r.trainingTime)) + '</td>' +
+            '<td>' + badge(r.company) + '</td>' +
+            '<td>' + badge(r.center) + '</td>' +
+            '<td>' + badge(r.team) + '</td>' +
+            '<td>' + badge(r.status) + '</td>' +
+            '<td><button class="btn btn-outline btn-sm" type="button" data-three-edu-record-action="detail">查看</button></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function ensureDetailModal() {
+      if (document.getElementById('threeEduRecordDetailModalOverlay')) return;
+      document.body.insertAdjacentHTML('beforeend', '' +
+        '<div class="modal-overlay" id="threeEduRecordDetailModalOverlay" style="display:none;">' +
+          '<div class="modal modal-hazard-detail" role="dialog" aria-modal="true" style="max-width:860px;">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title">员工三级教育详情</div>' +
+              '<button class="modal-close" type="button" data-close>×</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+              '<div class="hazard-detail-info" id="threeEduRecordDetailInfo"></div>' +
+              '<div class="hazard-detail-section">' +
+                '<div class="form-label">考试/考核照片（示例占位）</div>' +
+                '<div class="hazard-imgs-row" id="threeEduRecordDetailPhotos"></div>' +
+                '<div class="text-muted" style="margin-top:8px;line-height:1.6;">当前为轻量版：按“员工维度”的成绩/照片存档接口待接入；可先在“入职培训”场次维度上传纸质考核照片进行归档。</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>');
+
+      var overlay = document.getElementById('threeEduRecordDetailModalOverlay');
+      if (overlay) {
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) overlay.style.display = 'none';
+        });
+        overlay.querySelectorAll('[data-close]').forEach(function (btn) {
+          btn.addEventListener('click', function () { overlay.style.display = 'none'; });
+        });
+      }
+    }
+
+    function openDetail(row) {
+      ensureDetailModal();
+      var infoEl = document.getElementById('threeEduRecordDetailInfo');
+      var photosEl = document.getElementById('threeEduRecordDetailPhotos');
+      if (infoEl) {
+        infoEl.innerHTML = '' +
+          '<div class="hazard-detail-row"><div class="label">员工</div><div>' + esc(row.name || '-') + '</div></div>' +
+          '<div class="hazard-detail-row"><div class="label">工号</div><div style="font-family:monospace;">' + esc(row.employeeNo || '-') + '</div></div>' +
+          '<div class="hazard-detail-row"><div class="label">培训时间</div><div style="font-family:monospace;">' + esc(formatDt(row.trainingTime)) + '</div></div>' +
+          '<div class="hazard-detail-row"><div class="label">公司级</div><div>' + badge(row.company) + '</div></div>' +
+          '<div class="hazard-detail-row"><div class="label">中心级</div><div>' + badge(row.center) + '</div></div>' +
+          '<div class="hazard-detail-row"><div class="label">班组级</div><div>' + badge(row.team) + '</div></div>' +
+          '<div class="hazard-detail-row"><div class="label">备注</div><div>' + esc(row.detail && row.detail.summary ? row.detail.summary : '-') + '</div></div>';
+      }
+      if (photosEl) {
+        var list = row.detail && Array.isArray(row.detail.photos) ? row.detail.photos : [];
+        if (!list.length) photosEl.innerHTML = '<div class="text-muted">暂无照片</div>';
+        else {
+          photosEl.innerHTML = list.map(function (src) {
+            return '<a href="' + esc(src) + '" target="_blank" rel="noopener"><img class="hazard-detail-img" src="' + esc(src) + '" alt="photo"></a>';
+          }).join('');
+        }
+      }
+      var overlay = document.getElementById('threeEduRecordDetailModalOverlay');
+      if (overlay) overlay.style.display = 'flex';
+    }
+
+    function applySearch() {
+      var term = searchInput ? String(searchInput.value || '').trim().toLowerCase() : '';
+      if (!term) { render(rows); return; }
+      render(rows.filter(function (r) {
+        var hay = (String(r.name || '') + ' ' + String(r.employeeNo || '')).toLowerCase();
+        return hay.indexOf(term) > -1;
+      }));
+    }
+
+    render(rows);
+    if (searchInput) searchInput.addEventListener('input', applySearch);
+    if (exportBtn) exportBtn.addEventListener('click', function () {
+      try {
+        var blob = new Blob([JSON.stringify(current, null, 2)], { type: 'application/json;charset=utf-8' });
+        var stamp = new Date();
+        var name = '三级教育-记录查询-' + stamp.getFullYear() + String(stamp.getMonth() + 1).padStart(2, '0') + String(stamp.getDate()).padStart(2, '0') + '.json';
+        downloadBlob(blob, name);
+      } catch (e) {
+        alert('导出失败：' + (e && e.message ? e.message : '未知错误'));
+      }
+    });
+
+    tbody.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('button[data-three-edu-record-action]') : null;
+      if (!btn) return;
+      var tr = btn.closest('tr[data-id]');
+      if (!tr) return;
+      var id = String(tr.dataset.id || '');
+      var row = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (String(rows[i].id) === id) { row = rows[i]; break; }
+      }
+      if (!row) return;
+      if (btn.dataset.threeEduRecordAction === 'detail') openDetail(row);
+    });
+  }
+
+  function initThreeEducationOnboardingTraining() {
+    ensureThreeEducationSeedAssets();
+
+    var newBtn = document.getElementById('threeEduNewOnboardingTrainingBtn');
+    var refreshBtn = document.getElementById('threeEduRefreshOnboardingTrainingBtn');
+    var tbody = document.getElementById('threeEduOnboardingTrainingTbody');
+    var countEl = document.getElementById('threeEduOnboardingTrainingCount');
+    var pagerEl = document.getElementById('threeEduOnbPager');
+    if (!tbody) return;
+
+    function esc(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDt(val) {
+      if (!val) return '-';
+      try {
+        var d = new Date(val);
+        if (isNaN(d.getTime())) return String(val);
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        var hh = String(d.getHours()).padStart(2, '0');
+        var mm = String(d.getMinutes()).padStart(2, '0');
+        return y + '-' + m + '-' + day + ' ' + hh + ':' + mm;
+      } catch (e) {
+        return String(val);
+      }
+    }
+
+    function toMySqlDatetime(localVal) {
+      if (!localVal) return null;
+      var s = String(localVal).trim();
+      if (!s) return null;
+      // datetime-local returns "YYYY-MM-DDTHH:mm"
+      if (s.indexOf('T') > -1) s = s.replace('T', ' ');
+      if (s.length === 16) s = s + ':00';
+      return s;
+    }
+
+    function getAssets() {
+      var list = getThreeEducationStoredAssets();
+      return Array.isArray(list) ? list.slice() : [];
+    }
+
+    function pickAssetById(assetId) {
+      var assets = getAssets();
+      for (var i = 0; i < assets.length; i++) {
+        if (assets[i] && String(assets[i].id) === String(assetId)) return assets[i];
+      }
+      return null;
+    }
+
+    function ensureModals() {
+      if (!document.getElementById('threeEduOnboardingModalOverlay')) {
+        document.body.insertAdjacentHTML('beforeend', '' +
+          '<div class="modal-overlay" id="threeEduOnboardingModalOverlay" style="display:none;">' +
+            '<div class="modal" role="dialog" aria-modal="true" style="max-width:720px;">' +
+              '<div class="modal-header">' +
+                '<div class="modal-title">新建入职培训场次</div>' +
+                '<button class="modal-close" type="button" data-close>×</button>' +
+              '</div>' +
+              '<div class="modal-body">' +
+                '<div class="form-grid" style="grid-template-columns:1fr 1fr;">' +
+                  '<div class="form-group" style="grid-column:1/3;">' +
+                    '<label class="form-label">场次名称<span style="color:var(--danger);"> *</span></label>' +
+                    '<input class="form-input" id="threeEduOnbTitle" placeholder="例如：2026年4月入职培训（夜班）">' +
+                  '</div>' +
+                  '<div class="form-group">' +
+                    '<label class="form-label">开始时间</label>' +
+                    '<input class="form-input" id="threeEduOnbStart" type="datetime-local">' +
+                  '</div>' +
+                  '<div class="form-group">' +
+                    '<label class="form-label">结束时间</label>' +
+                    '<input class="form-input" id="threeEduOnbEnd" type="datetime-local">' +
+                  '</div>' +
+                  '<div class="form-group" style="grid-column:1/3;">' +
+                    '<label class="form-label">地点</label>' +
+                    '<input class="form-input" id="threeEduOnbLocation" placeholder="例如：分拣场地会议室">' +
+                  '</div>' +
+                  '<div class="form-group">' +
+                    '<label class="form-label">预计参训人数</label>' +
+                    '<input class="form-input" id="threeEduOnbExpected" type="number" min="0" value="0">' +
+                  '</div>' +
+                  '<div class="form-group">' +
+                    '<label class="form-label">课件</label>' +
+                    '<select class="form-input" id="threeEduOnbCourseware"></select>' +
+                  '</div>' +
+                  '<div class="form-group" style="grid-column:1/3;">' +
+                    '<label class="form-label">考核模板</label>' +
+                    '<select class="form-input" id="threeEduOnbTemplate"></select>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="text-muted" style="margin-top:10px;line-height:1.6;">' +
+                  '说明：二维码默认 2 小时有效；如无法手机扫码，可打印试卷线下考核后拍照上传存档。' +
+                '</div>' +
+              '</div>' +
+              '<div class="modal-footer">' +
+                '<button class="btn btn-outline" type="button" data-close>取消</button>' +
+                '<button class="btn btn-primary" type="button" id="threeEduOnbSaveBtn">创建并生成二维码</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>');
+      }
+
+      if (!document.getElementById('threeEduOnbQrModalOverlay')) {
+        document.body.insertAdjacentHTML('beforeend', '' +
+          '<div class="modal-overlay" id="threeEduOnbQrModalOverlay" style="display:none;">' +
+            '<div class="modal" role="dialog" aria-modal="true" style="max-width:640px;">' +
+              '<div class="modal-header">' +
+                '<div class="modal-title">签到二维码</div>' +
+                '<button class="modal-close" type="button" data-close>×</button>' +
+              '</div>' +
+              '<div class="modal-body">' +
+                '<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">' +
+                  '<div id="threeEduOnbQrWrap" style="width:220px;height:220px;border:1px solid var(--border);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;background:#fff;"></div>' +
+                  '<div style="flex:1;min-width:240px;">' +
+                    '<div class="text-muted" id="threeEduOnbQrInfo" style="line-height:1.7;"></div>' +
+                    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">' +
+                      '<button class="btn btn-outline btn-sm" type="button" id="threeEduOnbCopyLinkBtn">复制链接</button>' +
+                      '<button class="btn btn-outline btn-sm" type="button" id="threeEduOnbDownloadQrBtn">下载二维码</button>' +
+                      '<button class="btn btn-primary btn-sm" type="button" id="threeEduOnbRegenQrBtn">重新生成（2小时）</button>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>');
+      }
+
+      if (!document.getElementById('threeEduOnbArchiveModalOverlay')) {
+        document.body.insertAdjacentHTML('beforeend', '' +
+          '<div class="modal-overlay" id="threeEduOnbArchiveModalOverlay" style="display:none;">' +
+            '<div class="modal" role="dialog" aria-modal="true" style="max-width:620px;">' +
+              '<div class="modal-header">' +
+                '<div class="modal-title">上传考核存档</div>' +
+                '<button class="modal-close" type="button" data-close>×</button>' +
+              '</div>' +
+              '<div class="modal-body">' +
+                '<div class="form-group">' +
+                  '<label class="form-label">拍照/选择图片（最多 12 张）</label>' +
+                  '<input class="form-input" id="threeEduOnbArchiveFiles" type="file" accept="image/*" multiple>' +
+                '</div>' +
+                '<div class="text-muted" style="line-height:1.6;">建议：每张照片尽量清晰包含姓名、工号、成绩/签字等信息。</div>' +
+              '</div>' +
+              '<div class="modal-footer">' +
+                '<button class="btn btn-outline" type="button" data-close>取消</button>' +
+                '<button class="btn btn-primary" type="button" id="threeEduOnbArchiveUploadBtn">上传</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>');
+      }
+
+      if (!document.getElementById('threeEduOnbDetailModalOverlay')) {
+        document.body.insertAdjacentHTML('beforeend', '' +
+          '<div class="modal-overlay" id="threeEduOnbDetailModalOverlay" style="display:none;">' +
+            '<div class="modal modal-hazard-detail" role="dialog" aria-modal="true" style="max-width:860px;">' +
+              '<div class="modal-header">' +
+                '<div class="modal-title">场次详情</div>' +
+                '<button class="modal-close" type="button" data-close>×</button>' +
+              '</div>' +
+              '<div class="modal-body">' +
+                '<div class="hazard-detail-info" id="threeEduOnbDetailInfo"></div>' +
+                '<div class="hazard-detail-section">' +
+                  '<div class="form-label">拍照存档</div>' +
+                  '<div class="hazard-imgs-row" id="threeEduOnbDetailArchives"></div>' +
+                '</div>' +
+                '<div class="hazard-detail-section">' +
+                  '<div class="form-label">签到记录（最多展示 200 条）</div>' +
+                  '<div class="data-table-wrapper" style="margin-top:8px;">' +
+                    '<table class="data-table" style="margin:0;">' +
+                      '<thead><tr><th>姓名</th><th>工号</th><th>手机号</th><th>时间</th></tr></thead>' +
+                      '<tbody id="threeEduOnbDetailAttendance"></tbody>' +
+                    '</table>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>');
+      }
+
+      // bind close handlers once
+      document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+        if (!overlay || overlay.dataset.closeBound) return;
+        overlay.dataset.closeBound = '1';
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) overlay.style.display = 'none';
+        });
+        overlay.querySelectorAll('[data-close]').forEach(function (btn) {
+          btn.addEventListener('click', function () { overlay.style.display = 'none'; });
+        });
+      });
+    }
+
+    function openOverlay(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = 'flex';
+    }
+
+    function closeOverlay(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = 'none';
+    }
+
+    function copyText(txt) {
+      var text = String(txt || '');
+      if (!text) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          alert('已复制');
+        }).catch(function () {
+          fallbackCopy(text);
+        });
+        return;
+      }
+      fallbackCopy(text);
+    }
+
+    function fallbackCopy(text) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        alert('已复制');
+      } catch (e) {
+        alert('复制失败，请手动复制链接。');
+      }
+    }
+
+    function fetchJson(url, opts) {
+      return fetch(url, opts).then(function (r) {
+        return r.json().catch(function () { return null; }).then(function (data) {
+          if (!r.ok) {
+            var msg = data && (data.error || data.message) ? (data.error || data.message) : (r.status + ' ' + r.statusText);
+            throw new Error(msg);
+          }
+          return data;
+        });
+      });
+    }
+
+    var cachedRows = [];
+    var totalCount = 0;
+    var pageSize = 10;
+    var currentPage = 1;
+    var activeTrainingForQr = null;
+    var activeTrainingForArchive = null;
+
+    function renderPager() {
+      if (!pagerEl) return;
+      pagerEl.innerHTML = '';
+      var pages = totalCount ? Math.ceil(totalCount / pageSize) : 0;
+      if (!pages || pages <= 1) return;
+
+      if (currentPage < 1) currentPage = 1;
+      if (currentPage > pages) currentPage = pages;
+
+      function btn(page, label, active, disabled) {
+        var cls = 'pagination-btn' + (active ? ' active' : '');
+        var dis = disabled ? ' disabled' : '';
+        return '<button class="' + cls + '" type="button" data-page="' + page + '"' + dis + '>' + label + '</button>';
+      }
+      function ellipsis() {
+        return '<button class="pagination-btn" type="button" disabled>...</button>';
+      }
+
+      var html = '';
+      html += btn('prev', '&lt;', false, currentPage === 1);
+      if (pages <= 7) {
+        for (var p = 1; p <= pages; p++) html += btn(String(p), String(p), p === currentPage, false);
+      } else {
+        html += btn('1', '1', currentPage === 1, false);
+        var start = Math.max(2, currentPage - 2);
+        var end = Math.min(pages - 1, currentPage + 2);
+        if (start > 2) html += ellipsis();
+        for (var i = start; i <= end; i++) html += btn(String(i), String(i), i === currentPage, false);
+        if (end < pages - 1) html += ellipsis();
+        html += btn(String(pages), String(pages), currentPage === pages, false);
+      }
+      html += btn('next', '&gt;', false, currentPage === pages);
+      pagerEl.innerHTML = html;
+    }
+
+    function renderTable(rows) {
+      cachedRows = Array.isArray(rows) ? rows.slice() : [];
+      var shown = cachedRows;
+      tbody.innerHTML = (shown || []).map(function (r) {
+        var coursewareTitle = r.courseware_asset && r.courseware_asset.title ? r.courseware_asset.title : '-';
+        var templateTitle = r.assessment_template_asset && r.assessment_template_asset.title ? r.assessment_template_asset.title : '-';
+        var timeText = (r.start_time || r.end_time) ? (formatDt(r.start_time) + ' ~ ' + formatDt(r.end_time)) : '-';
+        var expText = r.qr_expires_at ? formatDt(r.qr_expires_at) : '-';
+        var attendanceCount = r.attendance_count == null ? '-' : String(r.attendance_count);
+        var archiveCount = r.archive_count == null ? '-' : String(r.archive_count);
+
+        return '' +
+          '<tr data-id="' + esc(r.id) + '">' +
+            '<td style="font-weight:700;">' + esc(r.title || '-') + '</td>' +
+            '<td>' + esc(timeText) + '</td>' +
+            '<td>' + esc(r.location || '-') + '</td>' +
+            '<td>' + esc(coursewareTitle) + '</td>' +
+            '<td>' + esc(templateTitle) + '</td>' +
+            '<td>' + esc(expText) + '</td>' +
+            '<td>' + esc(attendanceCount) + '</td>' +
+            '<td>' + esc(archiveCount) + '</td>' +
+            '<td>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-onb-action="qr">二维码</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-onb-action="print">打印试卷</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-onb-action="archive">上传存档</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-onb-action="detail">详情</button>' +
+            '</td>' +
+          '</tr>';
+      }).join('');
+
+      if (countEl) countEl.textContent = '共 ' + String(totalCount || 0) + ' 条记录，第 ' + String(currentPage) + '/' + String(Math.max(1, Math.ceil((totalCount || 0) / pageSize))) + ' 页';
+      if (!shown || !shown.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-tertiary);padding:18px 0;">暂无场次，请先新建培训场次</td></tr>';
+      }
+      renderPager();
+    }
+
+    function load() {
+      if (refreshBtn) refreshBtn.disabled = true;
+      var url = '/api/onboarding-trainings?page=' + encodeURIComponent(currentPage) + '&pageSize=' + encodeURIComponent(pageSize);
+      fetchJson(url).then(function (resp) {
+        if (refreshBtn) refreshBtn.disabled = false;
+        totalCount = resp && typeof resp.total === 'number' ? resp.total : 0;
+        var items = resp && Array.isArray(resp.items) ? resp.items : [];
+        renderTable(items);
+      }).catch(function (err) {
+        if (refreshBtn) refreshBtn.disabled = false;
+        alert('加载失败：' + (err && err.message ? err.message : '未知错误'));
+      });
+    }
+
+    function openCreateModal() {
+      ensureModals();
+      var assets = getAssets();
+      var coursewares = assets.filter(function (a) { return a && a.type === 'courseware'; });
+      var templates = assets.filter(function (a) { return a && a.type === 'template'; });
+
+      var coursewareSel = document.getElementById('threeEduOnbCourseware');
+      var templateSel = document.getElementById('threeEduOnbTemplate');
+      if (coursewareSel) {
+        coursewareSel.innerHTML = '<option value=\"\">不选择</option>' + coursewares.map(function (a) {
+          return '<option value=\"' + esc(a.id) + '\">' + esc((a.title || '-') + '（' + getThreeEducationLevelLabel(a.level) + '）') + '</option>';
+        }).join('');
+      }
+      if (templateSel) {
+        templateSel.innerHTML = '<option value=\"\">不选择</option>' + templates.map(function (a) {
+          return '<option value=\"' + esc(a.id) + '\">' + esc((a.title || '-') + '（' + getThreeEducationLevelLabel(a.level) + '）') + '</option>';
+        }).join('');
+      }
+
+      // reset fields
+      var titleEl = document.getElementById('threeEduOnbTitle');
+      var startEl = document.getElementById('threeEduOnbStart');
+      var endEl = document.getElementById('threeEduOnbEnd');
+      var locEl = document.getElementById('threeEduOnbLocation');
+      var expectedEl = document.getElementById('threeEduOnbExpected');
+      if (titleEl) titleEl.value = '';
+      if (startEl) startEl.value = '';
+      if (endEl) endEl.value = '';
+      if (locEl) locEl.value = '';
+      if (expectedEl) expectedEl.value = '0';
+
+      var saveBtn = document.getElementById('threeEduOnbSaveBtn');
+      if (saveBtn && !saveBtn.dataset.bound) {
+        saveBtn.dataset.bound = '1';
+        saveBtn.addEventListener('click', function () {
+          var title = titleEl ? String(titleEl.value || '').trim() : '';
+          if (!title) { alert('请填写场次名称'); return; }
+
+          var payload = {
+            title: title,
+            location: locEl ? String(locEl.value || '').trim() : '',
+            start_time: toMySqlDatetime(startEl ? startEl.value : ''),
+            end_time: toMySqlDatetime(endEl ? endEl.value : ''),
+            expected_participants: expectedEl ? parseInt(expectedEl.value || '0', 10) || 0 : 0
+          };
+
+          var cwId = coursewareSel ? String(coursewareSel.value || '').trim() : '';
+          var tpId = templateSel ? String(templateSel.value || '').trim() : '';
+          if (cwId) payload.courseware_asset = pickAssetById(cwId);
+          if (tpId) payload.assessment_template_asset = pickAssetById(tpId);
+
+          saveBtn.disabled = true;
+          fetchJson('/api/onboarding-trainings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).then(function (created) {
+            saveBtn.disabled = false;
+            closeOverlay('threeEduOnboardingModalOverlay');
+            load();
+            if (created && created.id && created.qr_token) {
+              activeTrainingForQr = { id: created.id, title: payload.title, qr_token: created.qr_token, qr_expires_at: created.qr_expires_at };
+              openQrModal(activeTrainingForQr);
+            }
+          }).catch(function (err) {
+            saveBtn.disabled = false;
+            alert('创建失败：' + (err && err.message ? err.message : '未知错误'));
+          });
+        });
+      }
+
+      openOverlay('threeEduOnboardingModalOverlay');
+    }
+
+    function getJoinUrl(token) {
+      var t = String(token || '').trim();
+      if (!t) return '';
+      return location.origin + '/ot/' + encodeURIComponent(t);
+    }
+
+    function renderQrInto(el, text) {
+      if (!el) return;
+      el.innerHTML = '';
+      try {
+        var canvas = document.createElement('canvas');
+        canvas.width = 220;
+        canvas.height = 220;
+        el.appendChild(canvas);
+        // renderThreeEduQr is defined later; fallback to text if not available
+        if (typeof renderThreeEduQr === 'function') {
+          renderThreeEduQr(canvas, text, 220);
+        } else {
+          el.textContent = '二维码渲染器未加载';
+        }
+        el.dataset.qrCanvas = '1';
+      } catch (e) {
+        el.textContent = '二维码生成失败';
+      }
+    }
+
+    function downloadCanvasPng(canvas, filename) {
+      try {
+        var url = canvas.toDataURL('image/png');
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename || 'qrcode.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (e) {
+        alert('下载失败：' + (e && e.message ? e.message : '未知错误'));
+      }
+    }
+
+    function openQrModal(row) {
+      ensureModals();
+      activeTrainingForQr = row;
+
+      var wrap = document.getElementById('threeEduOnbQrWrap');
+      var info = document.getElementById('threeEduOnbQrInfo');
+      var copyBtn = document.getElementById('threeEduOnbCopyLinkBtn');
+      var dlBtn = document.getElementById('threeEduOnbDownloadQrBtn');
+      var regenBtn = document.getElementById('threeEduOnbRegenQrBtn');
+
+      var joinUrl = getJoinUrl(row && row.qr_token);
+      renderQrInto(wrap, joinUrl);
+
+      if (info) {
+        info.innerHTML = '' +
+          '<div style="font-weight:700;color:var(--text-primary);margin-bottom:6px;">' + esc(row && row.title ? row.title : '入职培训') + '</div>' +
+          '<div>链接：<span style="font-family:monospace;word-break:break-all;">' + esc(joinUrl) + '</span></div>' +
+          '<div>有效期至：' + esc(row && row.qr_expires_at ? formatDt(row.qr_expires_at) : '-') + '</div>' +
+          '<div class="text-muted" style="margin-top:6px;">扫码后可签到；手机端答题功能待开发。</div>';
+      }
+
+      if (copyBtn && !copyBtn.dataset.bound) {
+        copyBtn.dataset.bound = '1';
+        copyBtn.addEventListener('click', function () {
+          var url = getJoinUrl(activeTrainingForQr && activeTrainingForQr.qr_token);
+          copyText(url);
+        });
+      }
+      if (dlBtn && !dlBtn.dataset.bound) {
+        dlBtn.dataset.bound = '1';
+        dlBtn.addEventListener('click', function () {
+          var w = document.getElementById('threeEduOnbQrWrap');
+          var canvas = w ? w.querySelector('canvas') : null;
+          if (!canvas) { alert('未生成二维码'); return; }
+          var name = '入职培训二维码_' + String((activeTrainingForQr && activeTrainingForQr.id) || '') + '.png';
+          downloadCanvasPng(canvas, name);
+        });
+      }
+      if (regenBtn && !regenBtn.dataset.bound) {
+        regenBtn.dataset.bound = '1';
+        regenBtn.addEventListener('click', function () {
+          if (!activeTrainingForQr || !activeTrainingForQr.id) return;
+          regenBtn.disabled = true;
+          fetchJson('/api/onboarding-trainings/' + encodeURIComponent(activeTrainingForQr.id) + '/qr', { method: 'POST' })
+            .then(function (data) {
+              regenBtn.disabled = false;
+              activeTrainingForQr.qr_token = data.qr_token;
+              activeTrainingForQr.qr_expires_at = data.qr_expires_at;
+              openQrModal(activeTrainingForQr);
+              load();
+            })
+            .catch(function (err) {
+              regenBtn.disabled = false;
+              alert('生成失败：' + (err && err.message ? err.message : '未知错误'));
+            });
+        });
+      }
+
+      openOverlay('threeEduOnbQrModalOverlay');
+    }
+
+    function openArchiveModal(row) {
+      ensureModals();
+      activeTrainingForArchive = row;
+      var filesEl = document.getElementById('threeEduOnbArchiveFiles');
+      if (filesEl) filesEl.value = '';
+
+      var uploadBtn = document.getElementById('threeEduOnbArchiveUploadBtn');
+      if (uploadBtn && !uploadBtn.dataset.bound) {
+        uploadBtn.dataset.bound = '1';
+        uploadBtn.addEventListener('click', function () {
+          if (!activeTrainingForArchive || !activeTrainingForArchive.id) return;
+          var files = filesEl ? filesEl.files : null;
+          if (!files || !files.length) { alert('请选择照片'); return; }
+          if (files.length > 12) { alert('最多上传 12 张'); return; }
+
+          var fd = new FormData();
+          for (var i = 0; i < files.length; i++) fd.append('files', files[i]);
+
+          uploadBtn.disabled = true;
+          fetch('/api/onboarding-trainings/' + encodeURIComponent(activeTrainingForArchive.id) + '/archives', {
+            method: 'POST',
+            body: fd
+          }).then(function (r) {
+            return r.json().catch(function () { return null; }).then(function (data) {
+              if (!r.ok) throw new Error(data && (data.error || data.message) ? (data.error || data.message) : '上传失败');
+              return data;
+            });
+          }).then(function () {
+            uploadBtn.disabled = false;
+            closeOverlay('threeEduOnbArchiveModalOverlay');
+            load();
+            alert('上传成功');
+          }).catch(function (err) {
+            uploadBtn.disabled = false;
+            alert('上传失败：' + (err && err.message ? err.message : '未知错误'));
+          });
+        });
+      }
+
+      openOverlay('threeEduOnbArchiveModalOverlay');
+    }
+
+    function openDetailModal(row) {
+      ensureModals();
+      fetchJson('/api/onboarding-trainings/' + encodeURIComponent(row.id)).then(function (detail) {
+        var infoEl = document.getElementById('threeEduOnbDetailInfo');
+        var archivesEl = document.getElementById('threeEduOnbDetailArchives');
+        var attendanceEl = document.getElementById('threeEduOnbDetailAttendance');
+
+        var cwTitle = detail.courseware_asset && detail.courseware_asset.title ? detail.courseware_asset.title : '-';
+        var tpTitle = detail.assessment_template_asset && detail.assessment_template_asset.title ? detail.assessment_template_asset.title : '-';
+        var joinUrl = getJoinUrl(detail.qr_token);
+
+        if (infoEl) {
+          infoEl.innerHTML = '' +
+            '<div class="hazard-detail-row"><div class="label">场次</div><div>' + esc(detail.title || '-') + '</div></div>' +
+            '<div class="hazard-detail-row"><div class="label">时间</div><div>' + esc((detail.start_time || detail.end_time) ? (formatDt(detail.start_time) + ' ~ ' + formatDt(detail.end_time)) : '-') + '</div></div>' +
+            '<div class="hazard-detail-row"><div class="label">地点</div><div>' + esc(detail.location || '-') + '</div></div>' +
+            '<div class="hazard-detail-row"><div class="label">课件</div><div>' + esc(cwTitle) + '</div></div>' +
+            '<div class="hazard-detail-row"><div class="label">考核模板</div><div>' + esc(tpTitle) + '</div></div>' +
+            '<div class="hazard-detail-row"><div class="label">二维码</div><div style="font-family:monospace;word-break:break-all;">' + esc(joinUrl) + '</div></div>';
+        }
+
+        if (archivesEl) {
+          var list = Array.isArray(detail.archives) ? detail.archives : [];
+          if (!list.length) {
+            archivesEl.innerHTML = '<div class="text-muted">暂无存档照片</div>';
+          } else {
+            archivesEl.innerHTML = list.map(function (a) {
+              var src = a && a.file_path ? String(a.file_path) : '';
+              if (!src) return '';
+              return '<a href="' + esc(src) + '" target="_blank" rel="noopener"><img class="hazard-detail-img" src="' + esc(src) + '" alt="archive"></a>';
+            }).join('');
+          }
+        }
+
+        if (attendanceEl) {
+          var alist = Array.isArray(detail.attendance) ? detail.attendance : [];
+          if (!alist.length) {
+            attendanceEl.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-tertiary);padding:12px 0;">暂无签到记录</td></tr>';
+          } else {
+            attendanceEl.innerHTML = alist.map(function (a) {
+              return '' +
+                '<tr>' +
+                  '<td>' + esc(a.name || '-') + '</td>' +
+                  '<td>' + esc(a.employee_no || '-') + '</td>' +
+                  '<td>' + esc(a.phone || '-') + '</td>' +
+                  '<td>' + esc(formatDt(a.checked_in_at)) + '</td>' +
+                '</tr>';
+            }).join('');
+          }
+        }
+
+        openOverlay('threeEduOnbDetailModalOverlay');
+      }).catch(function (err) {
+        alert('加载详情失败：' + (err && err.message ? err.message : '未知错误'));
+      });
+    }
+
+    function openTemplateBlobOrPrint(asset) {
+      var a = asset || {};
+      if (a && a.fileId) {
+        threeEduDbGetFileBlob(a.fileId).then(function (row) {
+          if (!row || !row.blob) { alert('未找到模板附件，请重新上传。'); return; }
+          try {
+            var url = URL.createObjectURL(row.blob);
+            window.open(url, '_blank');
+            setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+          } catch (e) {
+            alert('打开失败：' + (e && e.message ? e.message : '未知错误'));
+          }
+        }).catch(function (err) {
+          alert('读取附件失败：' + (err && err.message ? err.message : '未知错误'));
+        });
+        return;
+      }
+
+      var w = window.open('', '_blank');
+      if (!w) { alert('被浏览器拦截，请允许弹窗后重试。'); return; }
+      var title = a && a.title ? String(a.title) : '考核试卷';
+      w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>' + esc(title) + '</title></head>' +
+        '<body style="font-family:Arial,Helvetica,sans-serif;padding:24px;">' +
+        '<h2 style="margin:0 0 10px;">' + esc(title) + '</h2>' +
+        '<div style="color:#666;margin-bottom:16px;">（模板未上传附件，已生成可打印占位页；请按实际模板补充题目/内容）</div>' +
+        '<div style="margin-bottom:10px;">姓名：__________ 工号：__________ 岗位：__________</div>' +
+        '<div style="margin-bottom:10px;">一、选择题（共 ____ 题）</div>' +
+        '<div style="margin-bottom:10px;">二、判断题（共 ____ 题）</div>' +
+        '<div style="margin-bottom:10px;">三、简答题（共 ____ 题）</div>' +
+        '<div style="margin-top:24px;">成绩：__________ 监考/安全员签字：__________</div>' +
+        '<script>setTimeout(function(){window.print();}, 300);</script>' +
+        '</body></html>');
+      w.document.close();
+    }
+
+    // IndexedDB file blob getter (shared with模板管理)
+    function threeEduDbGetFileBlob(fileId) {
+      return new Promise(function (resolve, reject) {
+        if (!window.indexedDB) { reject(new Error('IndexedDB not supported')); return; }
+        var req = indexedDB.open('threeEducationAssetsDb_v1', 1);
+        req.onupgradeneeded = function () {
+          var db = req.result;
+          if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
+        };
+        req.onsuccess = function () {
+          var db = req.result;
+          var tx = db.transaction('files', 'readonly');
+          var store = tx.objectStore('files');
+          var getReq = store.get(fileId);
+          getReq.onsuccess = function () { db.close(); resolve(getReq.result || null); };
+          getReq.onerror = function () { db.close(); reject(getReq.error || new Error('get failed')); };
+        };
+        req.onerror = function () { reject(req.error || new Error('open db failed')); };
+      });
+    }
+
+    function handleTableClick(e) {
+      var btn = e.target && e.target.closest ? e.target.closest('button[data-onb-action]') : null;
+      if (!btn) return;
+      var tr = btn.closest('tr[data-id]');
+      if (!tr) return;
+      var id = tr.dataset.id;
+      var row = null;
+      for (var i = 0; i < cachedRows.length; i++) {
+        if (String(cachedRows[i].id) === String(id)) { row = cachedRows[i]; break; }
+      }
+      if (!row) return;
+      var action = btn.dataset.onbAction;
+
+      if (action === 'qr') { openQrModal(row); return; }
+      if (action === 'archive') { openArchiveModal(row); return; }
+      if (action === 'detail') { openDetailModal(row); return; }
+      if (action === 'print') {
+        var asset = row.assessment_template_asset;
+        openTemplateBlobOrPrint(asset);
+        return;
+      }
+    }
+
+    ensureModals();
+    if (newBtn) newBtn.addEventListener('click', openCreateModal);
+    if (refreshBtn) refreshBtn.addEventListener('click', function () { currentPage = 1; load(); });
+    tbody.addEventListener('click', handleTableClick);
+    if (pagerEl) {
+      pagerEl.addEventListener('click', function (e) {
+        var b = e.target && e.target.closest ? e.target.closest('button.pagination-btn[data-page]') : null;
+        if (!b || b.disabled) return;
+        var page = String(b.dataset.page || '');
+        var pages = totalCount ? Math.ceil(totalCount / pageSize) : 0;
+        if (page === 'prev') currentPage = Math.max(1, currentPage - 1);
+        else if (page === 'next') currentPage = Math.min(pages || 1, currentPage + 1);
+        else {
+          var n = parseInt(page, 10);
+          if (!isNaN(n)) currentPage = n;
+        }
+        load();
+      });
+    }
+
+    load();
   }
 
   function initThreeEducationTemplateManagement() {

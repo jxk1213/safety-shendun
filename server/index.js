@@ -31,6 +31,7 @@ const taskRoutes = require('./routes/tasks');
 const checklistRoutes = require('./routes/checklists');
 const accidentRoutes = require('./routes/accidents');
 const siteLedgerRoutes = require('./routes/site_ledger');
+const onboardingTrainingRoutes = require('./routes/onboarding_trainings');
 
 app.use('/api/risks', riskRoutes);
 app.use('/api/hazards', hazardRoutes);
@@ -38,6 +39,12 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/checklists', checklistRoutes);
 app.use('/api/accidents', accidentRoutes);
 app.use('/api/site-ledger', siteLedgerRoutes);
+app.use('/api/onboarding-trainings', onboardingTrainingRoutes);
+
+// H5 join page for onboarding training QR (keep URL short)
+app.get('/ot/:token', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'platform', 'h5', 'onboarding-training.html'));
+});
 
 app.use(express.static(path.join(__dirname, '..', 'platform')));
 

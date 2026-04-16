@@ -188,6 +188,43 @@ async function initializeTables() {
       UNIQUE KEY uk_center_code (center_code)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
+    await promisePool.query(`CREATE TABLE IF NOT EXISTS onboarding_trainings (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      location VARCHAR(255),
+      start_time DATETIME NULL,
+      end_time DATETIME NULL,
+      expected_participants INT DEFAULT 0,
+      courseware_asset TEXT,
+      assessment_template_asset TEXT,
+      qr_token VARCHAR(120),
+      qr_expires_at DATETIME NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uk_onboarding_qr_token (qr_token)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+    await promisePool.query(`CREATE TABLE IF NOT EXISTS onboarding_training_attendance (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      training_id INT NOT NULL,
+      name VARCHAR(100) NOT NULL,
+      employee_no VARCHAR(100),
+      phone VARCHAR(50),
+      checked_in_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_training_id (training_id),
+      FOREIGN KEY (training_id) REFERENCES onboarding_trainings (id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+    await promisePool.query(`CREATE TABLE IF NOT EXISTS onboarding_training_archives (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      training_id INT NOT NULL,
+      file_name VARCHAR(255),
+      file_path VARCHAR(512) NOT NULL,
+      uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_training_id (training_id),
+      FOREIGN KEY (training_id) REFERENCES onboarding_trainings (id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
     console.log('MySQL 数据表初始化完成');
   } catch (err) {
     console.error('建表失败:', err.message);

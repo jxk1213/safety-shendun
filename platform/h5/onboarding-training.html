@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>入职培训签到</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: rgba(15, 23, 42, 0.12);
+      --primary: #1a5cff;
+      --danger: #ef4444;
+      --success: #10b981;
+      --radius: 14px;
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 18px 14px 40px; }
+    .title { font-size: 20px; font-weight: 800; margin: 8px 2px 10px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+    }
+    .row { display: flex; gap: 10px; margin: 10px 0; }
+    .label { width: 78px; color: var(--muted); font-size: 13px; line-height: 20px; flex-shrink: 0; }
+    .val { flex: 1; font-size: 14px; line-height: 20px; word-break: break-all; }
+    .muted { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+      border: 1px solid var(--border);
+      background: rgba(26, 92, 255, 0.08); color: var(--primary);
+    }
+    .badge.danger { background: rgba(239, 68, 68, 0.10); color: var(--danger); }
+    .badge.success { background: rgba(16, 185, 129, 0.10); color: var(--success); }
+    .form { margin-top: 12px; display: grid; gap: 10px; }
+    .input {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 15px;
+      outline: none;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      font-size: 15px;
+    }
+    .btn:disabled { opacity: 0.6; }
+    .tip { margin-top: 12px; }
+    .footer { margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title">入职培训签到</div>
+    <div class="card">
+      <div id="statusLine" class="badge">加载中...</div>
+      <div style="height:10px;"></div>
+      <div class="row"><div class="label">场次</div><div class="val" id="tTitle">-</div></div>
+      <div class="row"><div class="label">时间</div><div class="val" id="tTime">-</div></div>
+      <div class="row"><div class="label">地点</div><div class="val" id="tLoc">-</div></div>
+      <div class="footer muted">
+        手机端培训答题功能待开发；本页面仅用于扫码签到。
+      </div>
+    </div>
+
+    <div style="height:12px;"></div>
+
+    <div class="card">
+      <div style="font-weight:800;margin-bottom:8px;">签到信息</div>
+      <div class="form">
+        <input class="input" id="name" placeholder="姓名（必填）" />
+        <input class="input" id="empNo" placeholder="工号（选填）" />
+        <input class="input" id="phone" placeholder="手机号（选填）" inputmode="numeric" />
+        <button class="btn" id="submitBtn">确认签到</button>
+      </div>
+      <div class="tip muted" id="msg"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      function qs(name) {
+        var m = location.search.match(new RegExp('(?:\\?|&)' + name + '=([^&]*)'));
+        return m ? decodeURIComponent(m[1] || '') : '';
+      }
+      function getToken() {
+        var q = qs('token');
+        if (q) return q;
+        // /ot/:token
+        var parts = location.pathname.split('/').filter(Boolean);
+        if (parts.length >= 2 && parts[0] === 'ot') return parts[1];
+        return '';
+      }
+      function esc(str) {
+        return String(str == null ? '' : str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+      function formatDt(val) {
+        if (!val) return '-';
+        try {
+          var d = new Date(val);
+          if (isNaN(d.getTime())) return String(val);
+          var y = d.getFullYear();
+          var m = String(d.getMonth() + 1).padStart(2, '0');
+          var day = String(d.getDate()).padStart(2, '0');
+          var hh = String(d.getHours()).padStart(2, '0');
+          var mm = String(d.getMinutes()).padStart(2, '0');
+          return y + '-' + m + '-' + day + ' ' + hh + ':' + mm;
+        } catch (e) {
+          return String(val);
+        }
+      }
+      function setStatus(text, type) {
+        var el = document.getElementById('statusLine');
+        if (!el) return;
+        el.className = 'badge' + (type ? (' ' + type) : '');
+        el.textContent = text;
+      }
+      function setMsg(text, type) {
+        var el = document.getElementById('msg');
+        if (!el) return;
+        el.style.color = type === 'danger' ? 'var(--danger)' : (type === 'success' ? 'var(--success)' : 'var(--muted)');
+        el.textContent = text || '';
+      }
+      function fetchJson(url, opts) {
+        return fetch(url, opts).then(function (r) {
+          return r.json().catch(function () { return null; }).then(function (data) {
+            if (!r.ok) {
+              var msg = data && (data.error || data.message) ? (data.error || data.message) : (r.status + ' ' + r.statusText);
+              throw new Error(msg);
+            }
+            return data;
+          });
+        });
+      }
+
+      var token = getToken();
+      var submitBtn = document.getElementById('submitBtn');
+
+      if (!token) {
+        setStatus('二维码无效', 'danger');
+        setMsg('未获取到 token，请联系安全员重新生成二维码。', 'danger');
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+      }
+
+      fetchJson('/api/onboarding-trainings/qr/' + encodeURIComponent(token))
+        .then(function (t) {
+          document.getElementById('tTitle').innerHTML = esc(t.title || '-');
+          document.getElementById('tLoc').innerHTML = esc(t.location || '-');
+          document.getElementById('tTime').innerHTML = esc((t.start_time || t.end_time) ? (formatDt(t.start_time) + ' ~ ' + formatDt(t.end_time)) : '-');
+
+          if (t.expired) {
+            setStatus('二维码已过期', 'danger');
+            setMsg('二维码已过期，请联系安全员重新生成。', 'danger');
+            if (submitBtn) submitBtn.disabled = true;
+          } else {
+            setStatus('二维码有效', '');
+            setMsg('请填写姓名并点击“确认签到”。');
+          }
+        })
+        .catch(function (e) {
+          setStatus('二维码无效', 'danger');
+          setMsg(e && e.message ? e.message : '加载失败', 'danger');
+          if (submitBtn) submitBtn.disabled = true;
+        });
+
+      if (submitBtn) {
+        submitBtn.addEventListener('click', function () {
+          var name = (document.getElementById('name').value || '').trim();
+          var employee_no = (document.getElementById('empNo').value || '').trim();
+          var phone = (document.getElementById('phone').value || '').trim();
+          if (!name) { setMsg('请填写姓名。', 'danger'); return; }
+
+          submitBtn.disabled = true;
+          setMsg('提交中...');
+          fetchJson('/api/onboarding-trainings/qr/' + encodeURIComponent(token) + '/checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name, employee_no: employee_no, phone: phone })
+          }).then(function () {
+            submitBtn.disabled = true;
+            setStatus('签到成功', 'success');
+            setMsg('已完成签到，可关闭本页面。', 'success');
+          }).catch(function (e) {
+            submitBtn.disabled = false;
+            setMsg(e && e.message ? e.message : '签到失败', 'danger');
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
+
