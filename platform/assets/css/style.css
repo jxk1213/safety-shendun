@@ -1198,6 +1198,7 @@ input {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .status-badge.success {
@@ -1342,7 +1343,8 @@ input {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
   z-index: 300;
   display: none;
   align-items: center;
@@ -1356,7 +1358,9 @@ input {
   box-shadow: var(--shadow-lg);
   width: min(920px, 100%);
   max-height: calc(100vh - 48px);
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid var(--border-light);
 }
 
@@ -1401,6 +1405,8 @@ input {
 
 .modal-body {
   padding: 16px 20px;
+  flex: 1 1 auto;
+  overflow: auto;
 }
 
 .modal-footer {
@@ -1410,6 +1416,7 @@ input {
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
+  flex: 0 0 auto;
 }
 
 .form-grid {
@@ -3911,6 +3918,12 @@ input {
   border-bottom: 1px solid var(--border-light);
 }
 
+.plan-table th:nth-child(5),
+.plan-table td:nth-child(5) {
+  white-space: nowrap;
+  width: 90px;
+}
+
 .plan-table td {
   padding: 16px;
   font-size: 14px;
@@ -3936,6 +3949,16 @@ input {
 .plan-category {
   font-size: 12px;
   color: var(--text-tertiary);
+}
+
+.plan-target-cell {
+  line-height: 1.5;
+  max-width: 520px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .plan-progress-wrap {
@@ -3966,6 +3989,7 @@ input {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .status-planned { background: #f1f5f9; color: #64748b; }
@@ -3995,6 +4019,33 @@ input {
   border-color: var(--primary);
   color: var(--primary);
   background: var(--primary-light);
+}
+
+.plan-action-btns .dispatch-btn:not(:disabled) {
+  border-color: var(--primary-light);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.btn-icon:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-icon:disabled:hover {
+  border-color: var(--border-light);
+  color: var(--text-secondary);
+  background: white;
+}
+
+.btn-icon.btn-danger {
+  color: var(--danger);
+}
+
+.btn-icon.btn-danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: #fef2f2;
 }
 
 
@@ -4647,24 +4698,214 @@ input {
   margin-bottom: 20px;
 }
 
+.modal-header--accent {
+  background: linear-gradient(135deg, var(--primary-50) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border-light);
+  padding: 18px 24px;
+}
+
+.modal-header--accent .modal-title {
+  font-size: 18px;
+}
+
+.modal-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.modal-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.modal.modal-dispatch-plan {
+  width: min(980px, 100%);
+}
+
+.modal.modal-dispatch-plan .modal-body {
+  padding: 20px 24px;
+}
+
+.dispatch-plan-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 16px;
+}
+
+.dispatch-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+}
+
+.dispatch-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
 .dispatch-summary {
   background: var(--bg-body);
-  padding: 16px;
-  border-radius: 10px;
-  margin-bottom: 20px;
+  padding: 14px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .dispatch-item {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
-.dispatch-item:last-child { margin-bottom: 0; }
+.dispatch-item label {
+  flex: 0 0 84px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
 
-.dispatch-item label { color: var(--text-tertiary); }
-.dispatch-item span { font-weight: 500; color: var(--text-primary); }
+.dispatch-item span {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.dispatch-item.dispatch-item--target span {
+  max-height: 140px;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.dispatch-scope-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.dispatch-confirm-tip {
+  margin-top: 14px;
+  padding: 12px 12px;
+  background: #f8fafc;
+  border: 1px dashed var(--border-light);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.training-plan-detail .plan-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.training-plan-detail .plan-detail-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.training-plan-detail .plan-detail-card-span2 {
+  grid-column: span 2;
+}
+
+.training-plan-detail .plan-detail-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.training-plan-detail .plan-detail-kv {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.training-plan-detail .plan-detail-kv .k {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.training-plan-detail .plan-detail-kv .v {
+  color: var(--text-primary);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.training-plan-detail .plan-detail-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.training-plan-detail .metric-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.training-plan-detail .metric-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.training-plan-detail .plan-detail-course-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 18px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.training-plan-detail .plan-detail-sub {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.training-plan-detail .plan-detail-empty {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 960px) {
+  .dispatch-plan-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dispatch-scope-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .training-plan-detail .plan-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .training-plan-detail .plan-detail-card-span2 {
+    grid-column: span 1;
+  }
+
+  .training-plan-detail .plan-detail-course-list {
+    grid-template-columns: 1fr;
+  }
+}
 
 .status-badge.status-dispatching {
   animation: pulse 2s infinite;

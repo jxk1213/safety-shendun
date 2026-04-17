@@ -188,14 +188,22 @@
       title: '培训计划',
       breadcrumb: ['首页', '培训与文化', '申安学堂', '培训计划']
     },
-    'training-plan-create': {
-      title: '创建培训计划',
-      breadcrumb: ['首页', '培训与文化', '申安学堂', '培训计划', '创建培训计划']
-    },
-    'online-exam': {
-      title: '在线考试',
-      breadcrumb: ['首页', '培训与文化', '申安学堂', '在线考试']
-    },
+	    'training-plan-create': {
+	      title: '创建培训计划',
+	      breadcrumb: ['首页', '培训与文化', '申安学堂', '培训计划', '创建培训计划']
+	    },
+	    'training-plan-edit': {
+	      title: '编辑培训计划',
+	      breadcrumb: ['首页', '培训与文化', '申安学堂', '培训计划', '编辑培训计划']
+	    },
+	    'training-plan-detail': {
+	      title: '培训计划详情',
+	      breadcrumb: ['首页', '培训与文化', '申安学堂', '培训计划', '培训计划详情']
+	    },
+	    'online-exam': {
+	      title: '在线考试',
+	      breadcrumb: ['首页', '培训与文化', '申安学堂', '在线考试']
+	    },
     'three-education': {
       title: '三级教育',
       breadcrumb: ['首页', '培训与文化', '申安学堂', '三级教育']
@@ -227,11 +235,13 @@
     '创建课程': 'create-course',
     '宣传资料库': 'publicity-materials-library',
     '上传资料': 'upload-materials',
-    '培训计划': 'training-plan',
-    '创建培训计划': 'training-plan-create',
-    '在线考试': 'online-exam',
-    '三级教育': 'three-education'
-  };
+	    '培训计划': 'training-plan',
+	    '创建培训计划': 'training-plan-create',
+	    '编辑培训计划': 'training-plan-edit',
+	    '培训计划详情': 'training-plan-detail',
+	    '在线考试': 'online-exam',
+	    '三级教育': 'three-education'
+	  };
 
   /**
    * 隐患类别与二级描述（与《隐患及内容选项.xlsx》Sheet1 一致）
@@ -466,6 +476,14 @@
       case 'training-plan-create':
         mainContent.innerHTML = renderCreateTrainingPlanPage();
         initCreateTrainingPlanPage();
+        break;
+      case 'training-plan-edit':
+        mainContent.innerHTML = renderEditTrainingPlanPage();
+        initEditTrainingPlanPage();
+        break;
+      case 'training-plan-detail':
+        mainContent.innerHTML = renderTrainingPlanDetailPage();
+        initTrainingPlanDetailPage();
         break;
       case 'online-exam':
         mainContent.innerHTML = renderOnlineExam();
@@ -8644,16 +8662,139 @@
     updateTagCount();
   }
 
-  // ============ 培训计划 ============
-  function getTrainingPlanStorageKey() {
-    return 'sd_training_plan_custom_v1';
-  }
+	  // ============ 培训计划 ============
+	  function getTrainingPlanStorageKey() {
+	    return 'sd_training_plan_custom_v1';
+	  }
 
-  function loadCustomTrainingPlans() {
-    const raw = localStorage.getItem(getTrainingPlanStorageKey());
-    const list = safeJsonParse(raw, []);
-    return Array.isArray(list) ? list : [];
-  }
+	  function getTrainingPlanDeletedKey() {
+	    return 'sd_training_plan_deleted_v1';
+	  }
+
+	  function getTrainingPlanSelectedIdKey() {
+	    return 'sd_training_plan_selected_id_v1';
+	  }
+
+	  function setSelectedTrainingPlanId(id) {
+	    try { sessionStorage.setItem(getTrainingPlanSelectedIdKey(), String(id || '')); } catch (e) {}
+	  }
+
+	  function getSelectedTrainingPlanId() {
+	    try { return sessionStorage.getItem(getTrainingPlanSelectedIdKey()) || ''; } catch (e) { return ''; }
+	  }
+
+	  function clearSelectedTrainingPlanId() {
+	    try { sessionStorage.removeItem(getTrainingPlanSelectedIdKey()); } catch (e) {}
+	  }
+
+	  function loadDeletedTrainingPlanIds() {
+	    const raw = localStorage.getItem(getTrainingPlanDeletedKey());
+	    const list = safeJsonParse(raw, []);
+	    const arr = Array.isArray(list) ? list : [];
+	    const set = new Set();
+	    arr.forEach(function (id) {
+	      const n = Number(id);
+	      if (!Number.isNaN(n)) set.add(n);
+	    });
+	    return set;
+	  }
+
+	  function saveDeletedTrainingPlanIds(idSet) {
+	    const arr = Array.from(idSet || []);
+	    localStorage.setItem(getTrainingPlanDeletedKey(), JSON.stringify(arr));
+	  }
+
+	  function getBaseTrainingPlans() {
+	    return [
+	      { id: 1, name: '2026年度全员消防安全知识大轮训', category: '消防安全', period: '2026-03 至 2026-06', target: '全体员工', status: 'ongoing', progress: 65 },
+	      { id: 2, name: '转运中心特种设备操作人员取证培训', category: '设备安全', period: '2026-04 至 2026-05', target: '特种设备操作工', status: 'planned', progress: 0 },
+	      { id: 3, name: '第一季度新员工入职安全教育', category: '通用安全', period: '2026-01 至 2026-03', target: 'Q1入职员工', status: 'completed', progress: 100 },
+	      { id: 4, name: '有限空间作业外包人员安全进场培训', category: '专项安全', period: '2026-04-10 至 2026-04-12', target: '施工单位人员', status: 'planned', progress: 0 },
+	      { id: 5, name: '全网网点负责人安全管理能力提升班', category: '管理层培训', period: '2026-02 至 2026-04', target: '各网点负责人', status: 'ongoing', progress: 85 },
+	      { id: 6, name: '危险化学品包装与装卸现场实操演练', category: '专项安全', period: '2026-03-20', target: '分拣区一线员工', status: 'completed', progress: 100 },
+	      { id: 7, name: '春季百日安全无事故劳动竞赛宣贯', category: '安全教育', period: '2026-03 至 2026-05', target: '全网驾驶员', status: 'ongoing', progress: 40 },
+	      { id: 8, name: '应急救援预案演练：火灾与疏散', category: '应急响应', period: '2026-06-15', target: '园区办公楼人员', status: 'delayed', progress: 10 }
+	    ];
+	  }
+
+	  function mergeTrainingPlans(customPlans, basePlans, deletedIds) {
+	    const deleted = deletedIds || new Set();
+	    const custom = Array.isArray(customPlans) ? customPlans : [];
+	    const base = Array.isArray(basePlans) ? basePlans : [];
+	    const result = [];
+	    const seen = new Set();
+	    custom.forEach(function (plan) {
+	      const id = plan && plan.id != null ? Number(plan.id) : NaN;
+	      if (Number.isNaN(id) || deleted.has(id) || seen.has(id)) return;
+	      seen.add(id);
+	      result.push(plan);
+	    });
+	    base.forEach(function (plan) {
+	      const id = plan && plan.id != null ? Number(plan.id) : NaN;
+	      if (Number.isNaN(id) || deleted.has(id) || seen.has(id)) return;
+	      seen.add(id);
+	      result.push(plan);
+	    });
+	    return result;
+	  }
+
+	  function loadAllTrainingPlans() {
+	    const deletedIds = loadDeletedTrainingPlanIds();
+	    return mergeTrainingPlans(loadCustomTrainingPlans(), getBaseTrainingPlans(), deletedIds);
+	  }
+
+	  function getTrainingPlanById(id) {
+	    const n = Number(id);
+	    if (Number.isNaN(n)) return null;
+	    const list = loadAllTrainingPlans();
+	    for (var i = 0; i < list.length; i++) {
+	      if (Number(list[i] && list[i].id) === n) return list[i];
+	    }
+	    return null;
+	  }
+
+	  function upsertCustomTrainingPlan(nextPlan) {
+	    if (!nextPlan || nextPlan.id == null) return;
+	    const id = Number(nextPlan.id);
+	    if (Number.isNaN(id)) return;
+	    const list = loadCustomTrainingPlans();
+	    var replaced = false;
+	    const next = Object.assign({}, nextPlan, { id: id });
+	    const updated = list.map(function (item) {
+	      const itemId = Number(item && item.id);
+	      if (!Number.isNaN(itemId) && itemId === id) {
+	        replaced = true;
+	        return next;
+	      }
+	      return item;
+	    });
+	    if (!replaced) updated.unshift(next);
+	    saveCustomTrainingPlans(updated.slice(0, 200));
+	    // 如果之前被删除过，编辑/下发会恢复
+	    const deleted = loadDeletedTrainingPlanIds();
+	    if (deleted.has(id)) {
+	      deleted.delete(id);
+	      saveDeletedTrainingPlanIds(deleted);
+	    }
+	  }
+
+	  function deleteTrainingPlanById(id) {
+	    const n = Number(id);
+	    if (Number.isNaN(n)) return;
+	    const list = loadCustomTrainingPlans().filter(function (item) {
+	      return Number(item && item.id) !== n;
+	    });
+	    saveCustomTrainingPlans(list);
+	    const deleted = loadDeletedTrainingPlanIds();
+	    deleted.add(n);
+	    saveDeletedTrainingPlanIds(deleted);
+	  }
+
+	  function loadCustomTrainingPlans() {
+	    const raw = localStorage.getItem(getTrainingPlanStorageKey());
+	    const list = safeJsonParse(raw, []);
+	    return Array.isArray(list) ? list : [];
+	  }
 
   function saveCustomTrainingPlans(list) {
     localStorage.setItem(getTrainingPlanStorageKey(), JSON.stringify(list || []));
@@ -8665,22 +8806,12 @@
     saveCustomTrainingPlans(list.slice(0, 200));
   }
 
-  function renderTrainingPlan() {
-    const basePlans = [
-      { id: 1, name: '2026年度全员消防安全知识大轮训', category: '消防安全', period: '2026-03 至 2026-06', target: '全体员工', status: 'ongoing', progress: 65 },
-      { id: 2, name: '转运中心特种设备操作人员取证培训', category: '设备安全', period: '2026-04 至 2026-05', target: '特种设备操作工', status: 'planned', progress: 0 },
-      { id: 3, name: '第一季度新员工入职安全教育', category: '通用安全', period: '2026-01 至 2026-03', target: 'Q1入职员工', status: 'completed', progress: 100 },
-      { id: 4, name: '有限空间作业外包人员安全进场培训', category: '专项安全', period: '2026-04-10 至 2026-04-12', target: '施工单位人员', status: 'planned', progress: 0 },
-      { id: 5, name: '全网网点负责人安全管理能力提升班', category: '管理层培训', period: '2026-02 至 2026-04', target: '各网点负责人', status: 'ongoing', progress: 85 },
-      { id: 6, name: '危险化学品包装与装卸现场实操演练', category: '专项安全', period: '2026-03-20', target: '分拣区一线员工', status: 'completed', progress: 100 },
-      { id: 7, name: '春季百日安全无事故劳动竞赛宣贯', category: '安全教育', period: '2026-03 至 2026-05', target: '全网驾驶员', status: 'ongoing', progress: 40 },
-      { id: 8, name: '应急救援预案演练：火灾与疏散', category: '应急响应', period: '2026-06-15', target: '园区办公楼人员', status: 'delayed', progress: 10 }
-    ];
-    const plans = loadCustomTrainingPlans().concat(basePlans);
-    const totalCount = plans.length;
-    const ongoingCount = plans.filter(function (p) { return p && p.status === 'ongoing'; }).length;
-    const completedCount = plans.filter(function (p) { return p && p.status === 'completed'; }).length;
-    const avgProgress = totalCount ? Math.round(plans.reduce(function (sum, p) { return sum + (Number(p.progress) || 0); }, 0) / totalCount) : 0;
+	  function renderTrainingPlan() {
+	    const plans = loadAllTrainingPlans();
+	    const totalCount = plans.length;
+	    const ongoingCount = plans.filter(function (p) { return p && p.status === 'ongoing'; }).length;
+	    const completedCount = plans.filter(function (p) { return p && p.status === 'completed'; }).length;
+	    const avgProgress = totalCount ? Math.round(plans.reduce(function (sum, p) { return sum + (Number(p.progress) || 0); }, 0) / totalCount) : 0;
 
     let rowHtml = '';
     plans.forEach(plan => {
@@ -8691,16 +8822,18 @@
         delayed: '已延期'
       };
       
-      rowHtml += `
-        <tr data-status="${plan.status}" data-name="${plan.name}">
-          <td>
-            <div class="plan-name-cell">
-              <span style="font-weight: 600;">${plan.name}</span>
-              <span class="plan-category">${plan.category}</span>
-            </div>
-          </td>
-          <td>${plan.period}</td>
-          <td>${plan.target}</td>
+	      rowHtml += `
+	        <tr data-id="${String(plan.id)}" data-status="${escapeHtml(plan.status)}" data-name="${escapeHtml(plan.name)}">
+	          <td>
+	            <div class="plan-name-cell">
+	              <span style="font-weight: 600;">${escapeHtml(plan.name)}</span>
+	              <span class="plan-category">${escapeHtml(plan.category)}</span>
+	            </div>
+	          </td>
+	          <td>${escapeHtml(plan.period)}</td>
+	          <td>
+	            <div class="plan-target-cell" title="${escapeHtml(plan.target)}">${escapeHtml(plan.target)}</div>
+	          </td>
           <td>
             <div class="plan-progress-wrap">
               <div class="plan-progress-mini">
@@ -8708,24 +8841,29 @@
               </div>
               <span style="font-size: 12px; color: var(--text-secondary); min-width: 30px;">${plan.progress}%</span>
             </div>
-          </td>
-          <td>
-            <span class="status-badge status-${plan.status}">${statusLabel[plan.status]}</span>
-          </td>
-          <td>
-            <div class="plan-action-btns">
-              ${plan.status === 'planned' ? `
-                <button class="btn-icon dispatch-btn" title="下发任务" style="color: var(--primary); border-color: var(--primary-light); background: var(--primary-light);">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                </button>
-              ` : ''}
-              <button class="btn-icon" title="编辑"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-              <button class="btn-icon" title="查看明细"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
-            </div>
-          </td>
-        </tr>
-      `;
-    });
+	          </td>
+	          <td>
+	            <span class="status-badge status-${plan.status}">${statusLabel[plan.status]}</span>
+	          </td>
+	          <td>
+	            <div class="plan-action-btns">
+	              <button class="btn-icon dispatch-btn" title="${plan.status === 'planned' ? '下发任务' : '仅计划中可下发'}" ${plan.status === 'planned' ? '' : 'disabled'}>
+	                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
+	              </button>
+	              <button class="btn-icon edit-btn" title="编辑">
+	                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+	              </button>
+	              <button class="btn-icon detail-btn" title="查看详情">
+	                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+	              </button>
+	              <button class="btn-icon btn-danger delete-btn" title="删除">
+	                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+	              </button>
+	            </div>
+	          </td>
+	        </tr>
+	      `;
+	    });
 
     return `
       <div class="sub-page">
@@ -8806,42 +8944,90 @@
         </div>
       </div>
 
-      <!-- 下发任务确认弹窗 -->
-      <div class="modal-overlay" id="dispatchPlanModalOverlay" style="display:none;">
-        <div class="modal" style="max-width: 450px;">
-          <div class="modal-header">
-            <div class="modal-title">下发培训任务</div>
-            <button class="modal-close" type="button" onclick="document.getElementById('dispatchPlanModalOverlay').style.display='none'">×</button>
-          </div>
-          <div class="modal-body">
-            <div class="dispatch-summary">
-              <div class="dispatch-item"><label>计划名称：</label><span id="dispatchPlanName">-</span></div>
-              <div class="dispatch-item"><label>计划周期：</label><span id="dispatchPlanPeriod">-</span></div>
-              <div class="dispatch-item"><label>拟受众：</label><span id="dispatchPlanTarget">-</span></div>
-            </div>
-            
-            <div class="form-group" style="margin-top: 16px;">
-              <label style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; display: block;">下发人群范围 (筛选项)</label>
-              <select class="form-control" id="dispatchScopeSelect">
-                <option value="all">全网</option>
-                <option value="ns">南北部</option>
-                <option value="province">省区</option>
-                <option value="center">中心</option>
-              </select>
-            </div>
+	      <!-- 下发任务确认弹窗 -->
+	      <div class="modal-overlay" id="dispatchPlanModalOverlay" style="display:none;">
+	        <div class="modal modal-dispatch-plan">
+	          <div class="modal-header modal-header--accent">
+	            <div class="modal-header-left">
+	              <div class="modal-title">下发培训任务</div>
+	              <div class="modal-subtitle">确认下发范围后，将通知对应范围内负责人开始筹备</div>
+	            </div>
+	            <button class="modal-close" type="button" onclick="document.getElementById('dispatchPlanModalOverlay').style.display='none'">×</button>
+	          </div>
+	          <div class="modal-body">
+	            <div class="dispatch-plan-layout">
+	              <div class="dispatch-card">
+	                <div class="dispatch-card-title">计划信息</div>
+	                <div class="dispatch-summary">
+	                  <div class="dispatch-item"><label>计划名称</label><span id="dispatchPlanName">-</span></div>
+	                  <div class="dispatch-item"><label>计划周期</label><span id="dispatchPlanPeriod">-</span></div>
+	                  <div class="dispatch-item dispatch-item--target"><label>拟受众</label><span id="dispatchPlanTarget">-</span></div>
+	                </div>
+	              </div>
+	
+	              <div class="dispatch-card">
+	                <div class="dispatch-card-title">下发范围</div>
+	                <div class="form-group">
+	                  <label>南/中/北部（可选筛选）</label>
+	                  <select class="form-control" id="dispatchRegionSelect">
+	                    <option value="">全网</option>
+	                    <option value="南部">南部</option>
+	                    <option value="中部">中部</option>
+	                    <option value="北部">北部</option>
+	                  </select>
+	                  <div class="form-help">如需精细下发，可先选择南北部，再选择省区/中心（均可多选）。</div>
+	                </div>
+	
+	                <div class="dispatch-scope-grid">
+	                  <div class="form-group">
+	                    <label>省区（可多选）</label>
+	                    <select class="form-control" id="dispatchProvinceSelect" multiple size="8" disabled></select>
+	                  </div>
+	                  <div class="form-group">
+	                    <label>中心（可多选）</label>
+	                    <select class="form-control" id="dispatchCenterSelect" multiple size="8" disabled></select>
+	                  </div>
+	                </div>
+	              </div>
+	            </div>
+	
+	            <div class="dispatch-confirm-tip">
+	              确认下发该计划吗？下发后，系统将通知对应范围内的负责人开始筹备。
+	            </div>
+	          </div>
+	          <div class="modal-footer">
+	            <button class="btn btn-outline" type="button" onclick="document.getElementById('dispatchPlanModalOverlay').style.display='none'">暂不下发</button>
+	            <button class="btn btn-primary" id="confirmDispatchBtn">确认下发</button>
+	          </div>
+	        </div>
+	      </div>
 
-            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-top: 16px;">
-              确认下发该计划吗？下发后，系统将通知对应范围内的负责人开始筹备。
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-outline" type="button" onclick="document.getElementById('dispatchPlanModalOverlay').style.display='none'">暂不下发</button>
-            <button class="btn btn-primary" id="confirmDispatchBtn">确认下发</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
+	      <!-- 删除确认弹窗 -->
+	      <div class="modal-overlay" id="deletePlanModalOverlay" style="display:none;">
+	        <div class="modal" style="max-width: 520px;">
+	          <div class="modal-header modal-header--accent">
+	            <div class="modal-header-left">
+	              <div class="modal-title">删除培训计划</div>
+	              <div class="modal-subtitle">删除后将从列表移除（可重新创建），请谨慎操作</div>
+	            </div>
+	            <button class="modal-close" type="button" onclick="document.getElementById('deletePlanModalOverlay').style.display='none'">×</button>
+	          </div>
+	          <div class="modal-body">
+	            <div class="dispatch-confirm-tip" style="margin-top:0;">
+	              你将删除计划：<span id="deletePlanName" style="font-weight:700;color:var(--text-primary);">-</span>
+	            </div>
+	            <p style="margin-top: 12px; font-size: 13px; color: var(--text-secondary); line-height: 1.7;">
+	              此操作不会影响历史统计报表展示（示例数据除外），但该计划将不再出现在当前列表中。
+	            </p>
+	          </div>
+	          <div class="modal-footer">
+	            <button class="btn btn-outline" type="button" onclick="document.getElementById('deletePlanModalOverlay').style.display='none'">取消</button>
+	            <button class="btn btn-primary" id="confirmDeletePlanBtn" style="background: var(--danger); border-color: var(--danger);">确认删除</button>
+	          </div>
+	        </div>
+	      </div>
+	    `;
+	  }
 
   function initTrainingPlan() {
     const searchInput = document.getElementById('planSearchInput');
@@ -9019,10 +9205,12 @@
         const target = scopeParts.join(' / ');
 
         // 动态添加一行
-        const newRow = document.createElement('tr');
-        newRow.dataset.status = 'planned';
-        newRow.dataset.name = name;
-        newRow.innerHTML = `
+	        const newRow = document.createElement('tr');
+	        const rowId = Date.now();
+	        newRow.dataset.id = String(rowId);
+	        newRow.dataset.status = 'planned';
+	        newRow.dataset.name = name;
+	        newRow.innerHTML = `
           <td>
             <div class="plan-name-cell">
               <span style="font-weight: 600;">${name}</span>
@@ -9030,7 +9218,7 @@
             </div>
           </td>
           <td>${period}</td>
-          <td>${target}</td>
+          <td><div class="plan-target-cell" title="${escapeHtml(target)}">${escapeHtml(target)}</div></td>
           <td>
             <div class="plan-progress-wrap">
               <div class="plan-progress-mini">
@@ -9042,16 +9230,17 @@
           <td>
             <span class="status-badge status-planned">计划中</span>
           </td>
-          <td>
-            <div class="plan-action-btns">
-              <button class="btn-icon dispatch-btn" title="下发任务" style="color: var(--primary); border-color: var(--primary-light); background: var(--primary-light);">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              </button>
-              <button class="btn-icon" title="编辑"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-              <button class="btn-icon" title="查看明细"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
-            </div>
-          </td>
-        `;
+	          <td>
+	            <div class="plan-action-btns">
+	              <button class="btn-icon dispatch-btn" title="下发任务">
+	                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
+	              </button>
+	              <button class="btn-icon edit-btn" title="编辑"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+	              <button class="btn-icon detail-btn" title="查看详情"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+	              <button class="btn-icon btn-danger delete-btn" title="删除"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+	            </div>
+	          </td>
+	        `;
         tableBody.insertBefore(newRow, tableBody.firstChild);
         
         // 重置并隐藏
@@ -9070,39 +9259,218 @@
       });
     }
 
-    // --- 下发任务逻辑 ---
-    const dispatchModal = document.getElementById('dispatchPlanModalOverlay');
-    const confirmDispatchBtn = document.getElementById('confirmDispatchBtn');
-    let currentRowToDispatch = null;
+	    // --- 下发任务逻辑 ---
+	    const dispatchModal = document.getElementById('dispatchPlanModalOverlay');
+	    const confirmDispatchBtn = document.getElementById('confirmDispatchBtn');
+    const dispatchRegionSelect = document.getElementById('dispatchRegionSelect');
+	    const dispatchProvinceSelect = document.getElementById('dispatchProvinceSelect');
+	    const dispatchCenterSelect = document.getElementById('dispatchCenterSelect');
+	    let currentRowToDispatch = null;
 
-    function bindRowEvent(row) {
-      const dispatchBtn = row.querySelector('.dispatch-btn');
-      if (dispatchBtn) {
-        dispatchBtn.addEventListener('click', () => {
-          currentRowToDispatch = row;
-          document.getElementById('dispatchPlanName').textContent = row.dataset.name;
-          document.getElementById('dispatchPlanPeriod').textContent = row.cells[1].textContent;
-          document.getElementById('dispatchPlanTarget').textContent = row.cells[2].textContent;
-          
-          // 重置下发业务范围
-          const scopeSelect = document.getElementById('dispatchScopeSelect');
-          if (scopeSelect) scopeSelect.value = 'all';
-          
-          dispatchModal.style.display = 'flex';
-        });
+	    // --- 删除逻辑 ---
+	    const deleteModal = document.getElementById('deletePlanModalOverlay');
+	    const confirmDeleteBtn = document.getElementById('confirmDeletePlanBtn');
+	    const deletePlanNameEl = document.getElementById('deletePlanName');
+	    let currentRowToDelete = null;
+
+    function normalizeProvinceDisplayName(name) {
+      return String(name || '').replace(/(省公司|大区)$/g, '');
+    }
+
+    function getCenterDisplayName(center) {
+      const shortName = center && center.shortName ? String(center.shortName) : '';
+      if (shortName) return shortName + '中心';
+      const full = String((center && center.name) || '');
+      if (!full) return '';
+      if (full.indexOf('转运中心') >= 0) return full.replace('转运中心', '中心');
+      if (full.indexOf('中心') >= 0) return full;
+      return full + '中心';
+    }
+
+    function getSelectedValues(selectEl) {
+      if (!selectEl) return [];
+      return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.value; }).filter(Boolean);
+    }
+
+    function getSelectedLabels(selectEl) {
+      if (!selectEl) return [];
+      return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.textContent; }).filter(Boolean);
+    }
+
+    function setSelectOptions(selectEl, items, selectedValues) {
+      if (!selectEl) return;
+      const current = new Set(Array.isArray(selectedValues) ? selectedValues : getSelectedValues(selectEl));
+      selectEl.innerHTML = (items || []).map(function (item) {
+        const selected = current.has(item.value) ? ' selected' : '';
+        return '<option value="' + item.value + '"' + selected + '>' + escapeHtml(item.label) + '</option>';
+      }).join('');
+    }
+
+    function enableClickMultiSelect(selectEl) {
+      if (!selectEl || !selectEl.multiple) return;
+      selectEl.addEventListener('mousedown', function (e) {
+        const target = e && e.target;
+        if (!target || target.tagName !== 'OPTION') return;
+        e.preventDefault();
+        target.selected = !target.selected;
+        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+
+    function resetDispatchScopeFilters() {
+      if (dispatchRegionSelect) dispatchRegionSelect.value = '';
+      if (dispatchProvinceSelect) {
+        dispatchProvinceSelect.innerHTML = '';
+        dispatchProvinceSelect.disabled = true;
+      }
+      if (dispatchCenterSelect) {
+        dispatchCenterSelect.innerHTML = '';
+        dispatchCenterSelect.disabled = true;
       }
     }
 
+    function updateDispatchProvinceAndCenterOptions(nextProvinceCodes, nextCenterCodes) {
+      if (!dispatchRegionSelect || !dispatchProvinceSelect || !dispatchCenterSelect) return;
+
+      const region = String(dispatchRegionSelect.value || '').trim();
+      if (!region) {
+        resetDispatchScopeFilters();
+        return;
+      }
+
+      const provinces = (provincesData || []).filter(function (p) { return p && p.northSouth === region; });
+      const provinceItems = provinces.map(function (p) {
+        return { value: p.code, label: normalizeProvinceDisplayName(p.name) };
+      });
+      provinceItems.sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
+
+      dispatchProvinceSelect.disabled = false;
+      setSelectOptions(dispatchProvinceSelect, provinceItems, nextProvinceCodes);
+
+      const selectedProvinceCodes = new Set(Array.isArray(nextProvinceCodes) ? nextProvinceCodes : getSelectedValues(dispatchProvinceSelect));
+      const allowedProvinceCodes = new Set(provinces.map(function (p) { return p.code; }));
+
+      const centerCandidates = (centersData || []).filter(function (c) { return c && allowedProvinceCodes.has(c.provinceCode); });
+      const centers = selectedProvinceCodes.size
+        ? centerCandidates.filter(function (c) { return selectedProvinceCodes.has(c.provinceCode); })
+        : centerCandidates;
+
+      const centerItems = centers.map(function (c) {
+        return { value: c.code, label: getCenterDisplayName(c) };
+      });
+      centerItems.sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
+
+      dispatchCenterSelect.disabled = !centerItems.length;
+      setSelectOptions(dispatchCenterSelect, centerItems, nextCenterCodes);
+    }
+
+    // 初次加载主数据（省区/中心）
+    if (dispatchRegionSelect || dispatchProvinceSelect || dispatchCenterSelect) {
+      fetchLocationsData().then(function () {
+        resetDispatchScopeFilters();
+      }).catch(function () {
+        resetDispatchScopeFilters();
+      });
+    }
+
+    if (dispatchRegionSelect) {
+      dispatchRegionSelect.addEventListener('change', function () {
+        updateDispatchProvinceAndCenterOptions([], []);
+      });
+    }
+
+    if (dispatchProvinceSelect) {
+      dispatchProvinceSelect.addEventListener('change', function () {
+        const provinceCodes = getSelectedValues(dispatchProvinceSelect);
+        const centerCodes = getSelectedValues(dispatchCenterSelect);
+        updateDispatchProvinceAndCenterOptions(provinceCodes, centerCodes);
+      });
+      enableClickMultiSelect(dispatchProvinceSelect);
+    }
+
+    if (dispatchCenterSelect) {
+      enableClickMultiSelect(dispatchCenterSelect);
+    }
+
+	    function bindRowEvent(row) {
+	      const dispatchBtn = row.querySelector('.dispatch-btn');
+	      if (dispatchBtn) {
+	        dispatchBtn.addEventListener('click', () => {
+	          if (dispatchBtn.disabled) return;
+	          currentRowToDispatch = row;
+	          document.getElementById('dispatchPlanName').textContent = row.dataset.name;
+	          document.getElementById('dispatchPlanPeriod').textContent = row.cells[1].textContent;
+	          document.getElementById('dispatchPlanTarget').textContent = row.cells[2].textContent;
+
+          // 重置下发范围筛选
+          resetDispatchScopeFilters();
+          
+	          dispatchModal.style.display = 'flex';
+	        });
+	      }
+
+	      const editBtn = row.querySelector('.edit-btn');
+	      if (editBtn) {
+	        editBtn.addEventListener('click', function () {
+	          setSelectedTrainingPlanId(row.dataset.id || '');
+	          navigateTo('training-plan-edit');
+	        });
+	      }
+
+	      const detailBtn = row.querySelector('.detail-btn');
+	      if (detailBtn) {
+	        detailBtn.addEventListener('click', function () {
+	          setSelectedTrainingPlanId(row.dataset.id || '');
+	          navigateTo('training-plan-detail');
+	        });
+	      }
+
+	      const deleteBtn = row.querySelector('.delete-btn');
+	      if (deleteBtn) {
+	        deleteBtn.addEventListener('click', function () {
+	          currentRowToDelete = row;
+	          if (deletePlanNameEl) deletePlanNameEl.textContent = row.dataset.name || '-';
+	          if (deleteModal) deleteModal.style.display = 'flex';
+	        });
+	      }
+	    }
+
     rows.forEach(bindRowEvent);
 
-    if (confirmDispatchBtn) {
-      confirmDispatchBtn.addEventListener('click', () => {
-        if (!currentRowToDispatch) return;
+	    if (confirmDispatchBtn) {
+	      confirmDispatchBtn.addEventListener('click', () => {
+	        if (!currentRowToDispatch) return;
 
-        // 更新状态标签
-        const statusBadge = currentRowToDispatch.querySelector('.status-badge');
-        statusBadge.className = 'status-badge status-ongoing';
-        statusBadge.textContent = '进行中';
+        // 读取下发范围筛选（南北部/省区/中心）
+        const region = String((dispatchRegionSelect && dispatchRegionSelect.value) || '').trim();
+        const provinces = getSelectedLabels(dispatchProvinceSelect);
+        const centers = getSelectedLabels(dispatchCenterSelect);
+        const scopeParts = [];
+        if (region) scopeParts.push(region);
+        if (provinces.length) scopeParts.push('省区:' + provinces.join('、'));
+        if (centers.length) scopeParts.push('中心:' + centers.join('、'));
+        const dispatchTarget = scopeParts.length ? scopeParts.join(' / ') : '全网';
+
+        // 回写目标对象展示（列表 + 弹窗摘要）
+        const targetCell = currentRowToDispatch.cells && currentRowToDispatch.cells[2];
+        if (targetCell) {
+          const targetDiv = targetCell.querySelector('.plan-target-cell');
+          if (targetDiv) {
+            targetDiv.textContent = dispatchTarget;
+            targetDiv.title = dispatchTarget;
+          } else {
+            targetCell.textContent = dispatchTarget;
+          }
+        }
+        const targetSpan = document.getElementById('dispatchPlanTarget');
+        if (targetSpan) targetSpan.textContent = dispatchTarget;
+        currentRowToDispatch.dataset.target = dispatchTarget;
+
+	        // 更新状态标签
+	        const statusBadge = currentRowToDispatch.querySelector('.status-badge');
+	        statusBadge.className = 'status-badge status-ongoing';
+	        statusBadge.textContent = '进行中';
+	        currentRowToDispatch.dataset.status = 'ongoing';
 
         // 更新进度 (模拟)
         const progressFill = currentRowToDispatch.querySelector('.plan-progress-fill');
@@ -9112,13 +9480,34 @@
           progressText.textContent = '5%';
         }
 
-        // 移除下发按钮
-        const dispatchBtn = currentRowToDispatch.querySelector('.dispatch-btn');
-        if (dispatchBtn) dispatchBtn.remove();
+	        // 移除下发按钮
+	        const dispatchBtn = currentRowToDispatch.querySelector('.dispatch-btn');
+	        if (dispatchBtn) {
+	          dispatchBtn.disabled = true;
+	          dispatchBtn.title = '仅计划中可下发';
+	        }
 
-        // 隐藏弹窗
-        dispatchModal.style.display = 'none';
-        currentRowToDispatch = null;
+	        // 隐藏弹窗
+	        dispatchModal.style.display = 'none';
+
+	        // 持久化（覆盖保存）
+	        const planId = currentRowToDispatch.dataset.id;
+	        const planName = currentRowToDispatch.dataset.name || (currentRowToDispatch.cells[0] && currentRowToDispatch.cells[0].textContent) || '';
+	        const planPeriod = (currentRowToDispatch.cells[1] && currentRowToDispatch.cells[1].textContent) || '';
+	        const planCategoryNode = currentRowToDispatch.querySelector('.plan-category');
+	        const planCategory = planCategoryNode ? planCategoryNode.textContent : '';
+	        const progressVal = progressText ? Number(String(progressText.textContent || '').replace('%', '')) : 0;
+	        upsertCustomTrainingPlan({
+	          id: Number(planId),
+	          name: planName,
+	          category: planCategory,
+	          period: planPeriod,
+	          target: dispatchTarget,
+	          status: 'ongoing',
+	          progress: Number.isNaN(progressVal) ? 0 : progressVal
+	        });
+
+	        currentRowToDispatch = null;
 
         // 更新统计 (模拟)
         const ongoingStat = document.querySelector('.course-stat-card:nth-child(2) .course-stat-value');
@@ -9126,13 +9515,24 @@
           const currentVal = parseInt(ongoingStat.textContent);
           ongoingStat.textContent = (currentVal + 1) + ' 期';
         }
-      });
-    }
+	      });
+	    }
 
-    // 点击蒙层关闭
-    [createModal, dispatchModal].forEach(m => {
-      if (m) m.addEventListener('click', (e) => { if(e.target === m) m.style.display = 'none'; });
-    });
+	    if (confirmDeleteBtn) {
+	      confirmDeleteBtn.addEventListener('click', function () {
+	        if (!currentRowToDelete) return;
+	        const id = currentRowToDelete.dataset.id;
+	        deleteTrainingPlanById(id);
+	        if (deleteModal) deleteModal.style.display = 'none';
+	        currentRowToDelete = null;
+	        navigateTo('training-plan');
+	      });
+	    }
+
+	    // 点击蒙层关闭
+	    [createModal, dispatchModal, deleteModal].forEach(m => {
+	      if (m) m.addEventListener('click', (e) => { if(e.target === m) m.style.display = 'none'; });
+	    });
   }
 
   function renderCreateTrainingPlanPage() {
@@ -9141,7 +9541,7 @@
         <div class="page-header">
           <div>
             <div class="page-title">创建培训计划</div>
-            <div class="page-desc">独立页面创建年度/季度培训任务，下发前可灵活配置南北部、省区与中心范围</div>
+            <div class="page-desc">独立页面创建年度/季度培训任务；下发时可按南北部、省区与中心范围筛选下发对象</div>
           </div>
           <div class="page-actions">
             <button class="btn btn-outline" type="button" id="backToTrainingPlanBtn">
@@ -9157,7 +9557,7 @@
 
         <div class="course-create-card">
           <form id="createTrainingPlanPageForm" class="course-create-form">
-            <div class="modal-hint">请填写计划基础信息；南北部、省区、中心将按《公司同学录分布》主数据联动筛选。</div>
+            <div class="modal-hint">请填写计划基础信息；南北部、省区、中心在“下发培训任务”时按《公司同学录分布》主数据联动筛选。</div>
 
             <div class="form-grid">
               <div class="form-group full-width">
@@ -9178,16 +9578,6 @@
               </div>
 
               <div class="form-group">
-                <label class="required">南北部</label>
-                <select class="form-control" id="trainingPlanRegionSelect" name="region" required>
-                  <option value="">请选择</option>
-                  <option value="南部">南部</option>
-                  <option value="中部">中部</option>
-                  <option value="北部">北部</option>
-                </select>
-              </div>
-
-              <div class="form-group">
                 <label class="required">开始日期</label>
                 <input type="date" class="form-control" id="trainingPlanStartDateInput" name="startDate" required>
               </div>
@@ -9197,16 +9587,29 @@
                 <input type="date" class="form-control" id="trainingPlanEndDateInput" name="endDate" required>
               </div>
 
-              <div class="form-group">
-                <label>省区（可多选）</label>
-                <select class="form-control" id="trainingPlanProvinceSelect" name="provinces" multiple size="6" disabled></select>
-                <div class="form-help">先选择南北部，再按需选择省区；不选省区则默认覆盖该南北部全部中心。</div>
-              </div>
-
-              <div class="form-group">
-                <label>中心（可多选）</label>
-                <select class="form-control" id="trainingPlanCenterSelect" name="centers" multiple size="6" disabled></select>
-                <div class="form-help">中心列表随省区联动过滤；可直接多选中心作为精细下发范围。</div>
+              <div class="form-group full-width">
+                <label>目标对象</label>
+                <div class="dispatch-scope-grid">
+                  <div class="form-group">
+                    <label>南/中/北部（可选筛选）</label>
+                    <select class="form-control" id="trainingPlanTargetRegionSelect">
+                      <option value="">全网</option>
+                      <option value="南部">南部</option>
+                      <option value="中部">中部</option>
+                      <option value="北部">北部</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>省区（可多选）</label>
+                    <select class="form-control" id="trainingPlanTargetProvinceSelect" multiple size="8" disabled></select>
+                  </div>
+                  <div class="form-group">
+                    <label>中心（可多选）</label>
+                    <select class="form-control" id="trainingPlanTargetCenterSelect" multiple size="8" disabled></select>
+                  </div>
+                </div>
+                <div class="form-help">不选择则默认“全网”。如需精细下发，可先选择南北部，再选择省区/中心（均可多选）。</div>
+                <input type="hidden" id="trainingPlanTargetInput" name="target" value="全网">
               </div>
 
               <div class="form-group full-width">
@@ -9247,15 +9650,16 @@
     `;
   }
 
-  function initCreateTrainingPlanPage() {
-    const form = document.getElementById('createTrainingPlanPageForm');
+	  function initCreateTrainingPlanPage() {
+	    const form = document.getElementById('createTrainingPlanPageForm');
     const nameInput = document.getElementById('trainingPlanNameInput');
     const categorySelect = document.getElementById('trainingPlanCategorySelect');
-    const regionSelect = document.getElementById('trainingPlanRegionSelect');
     const startDateInput = document.getElementById('trainingPlanStartDateInput');
     const endDateInput = document.getElementById('trainingPlanEndDateInput');
-    const provinceSelect = document.getElementById('trainingPlanProvinceSelect');
-    const centerSelect = document.getElementById('trainingPlanCenterSelect');
+    const targetRegionSelect = document.getElementById('trainingPlanTargetRegionSelect');
+    const targetProvinceSelect = document.getElementById('trainingPlanTargetProvinceSelect');
+    const targetCenterSelect = document.getElementById('trainingPlanTargetCenterSelect');
+    const targetInput = document.getElementById('trainingPlanTargetInput');
 
     const topSubmitBtn = document.getElementById('submitTrainingPlanTopBtn');
     const backBtn = document.getElementById('backToTrainingPlanBtn');
@@ -9273,45 +9677,6 @@
     if (backBtn) backBtn.addEventListener('click', function () { navigateTo('training-plan'); });
     if (cancelBtn) cancelBtn.addEventListener('click', function () { navigateTo('training-plan'); });
     if (topSubmitBtn && form) topSubmitBtn.addEventListener('click', function () { form.requestSubmit(); });
-
-    function normalizeProvinceDisplayName(name) {
-      return String(name || '').replace(/(省公司|大区)$/g, '');
-    }
-
-    function getCenterDisplayName(center) {
-      const shortName = center && center.shortName ? String(center.shortName) : '';
-      if (shortName) return shortName + '中心';
-      const full = String((center && center.name) || '');
-      if (!full) return '';
-      if (full.indexOf('转运中心') >= 0) return full.replace('转运中心', '中心');
-      if (full.indexOf('中心') >= 0) return full;
-      return full + '中心';
-    }
-
-    function getSelectedValues(selectEl) {
-      if (!selectEl) return [];
-      return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.value; }).filter(Boolean);
-    }
-
-    function setSelectOptions(selectEl, items, selectedValues) {
-      if (!selectEl) return;
-      const current = new Set(Array.isArray(selectedValues) ? selectedValues : getSelectedValues(selectEl));
-      selectEl.innerHTML = (items || []).map(function (item) {
-        const selected = current.has(item.value) ? ' selected' : '';
-        return '<option value="' + item.value + '"' + selected + '>' + item.label + '</option>';
-      }).join('');
-    }
-
-    function enableClickMultiSelect(selectEl) {
-      if (!selectEl || !selectEl.multiple) return;
-      selectEl.addEventListener('mousedown', function (e) {
-        const target = e && e.target;
-        if (!target || target.tagName !== 'OPTION') return;
-        e.preventDefault();
-        target.selected = !target.selected;
-        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-      });
-    }
 
     function getCourseEntries() {
       const courses = getMergedCourseLibraryCourses(getBaseCourseLibraryCourses());
@@ -9445,137 +9810,173 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeCoursesPanel();
     });
-
-    let prevSelectedProvinceCodes = new Set();
-
-    function updateProvinceAndCenterOptions(centerSelectionPatch) {
-      if (!regionSelect || !provinceSelect || !centerSelect) return;
-      const region = regionSelect.value;
-      if (!region) {
-        provinceSelect.innerHTML = '';
-        centerSelect.innerHTML = '';
-        provinceSelect.disabled = true;
-        centerSelect.disabled = true;
-        prevSelectedProvinceCodes = new Set();
-        return;
-      }
-
-      const provinces = (provincesData || []).filter(function (p) { return p && p.northSouth === region; });
-      const provinceItems = provinces.map(function (p) {
-        return { value: p.code, label: normalizeProvinceDisplayName(p.name) };
-      }).sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
-
-      provinceSelect.disabled = false;
-      setSelectOptions(provinceSelect, provinceItems);
-
-      const selectedProvinceCodes = getSelectedValues(provinceSelect);
-      const allowedProvinceCodes = new Set(provinces.map(function (p) { return p.code; }));
-      const centerCandidates = (centersData || []).filter(function (c) { return c && allowedProvinceCodes.has(c.provinceCode); });
-      const filteredCenters = selectedProvinceCodes.length
-        ? centerCandidates.filter(function (c) { return selectedProvinceCodes.indexOf(c.provinceCode) >= 0; })
-        : centerCandidates;
-
-      const centerItems = filteredCenters.map(function (c) {
-        return { value: c.code, label: getCenterDisplayName(c) };
-      }).sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
-
-      const nextSelectedCenters = new Set(getSelectedValues(centerSelect));
-      const centerItemCodes = new Set(centerItems.map(function (item) { return item.value; }));
-      Array.from(nextSelectedCenters).forEach(function (code) {
-        if (!centerItemCodes.has(code)) nextSelectedCenters.delete(code);
-      });
-
-      if (centerSelectionPatch && Array.isArray(centerSelectionPatch.removeProvinceCodes) && centerSelectionPatch.removeProvinceCodes.length) {
-        const removeProvincesSet = new Set(centerSelectionPatch.removeProvinceCodes);
-        centerCandidates.forEach(function (c) {
-          if (c && removeProvincesSet.has(c.provinceCode)) nextSelectedCenters.delete(c.code);
-        });
-      }
-
-      if (centerSelectionPatch && Array.isArray(centerSelectionPatch.addProvinceCodes) && centerSelectionPatch.addProvinceCodes.length) {
-        const addProvincesSet = new Set(centerSelectionPatch.addProvinceCodes);
-        centerCandidates.forEach(function (c) {
-          if (!c || !addProvincesSet.has(c.provinceCode)) return;
-          if (centerItemCodes.has(c.code)) nextSelectedCenters.add(c.code);
-        });
-      }
-
-      centerSelect.disabled = false;
-      setSelectOptions(centerSelect, centerItems, Array.from(nextSelectedCenters));
-    }
-
-    if (regionSelect) {
-      regionSelect.addEventListener('change', function () {
-        if (provinceSelect) provinceSelect.selectedIndex = -1;
-        if (centerSelect) centerSelect.selectedIndex = -1;
-        prevSelectedProvinceCodes = new Set();
-        updateProvinceAndCenterOptions();
-      });
-    }
-
-    if (provinceSelect) {
-      provinceSelect.addEventListener('change', function () {
-        const nextProvinceCodes = new Set(getSelectedValues(provinceSelect));
-        const added = [];
-        const removed = [];
-        nextProvinceCodes.forEach(function (code) { if (!prevSelectedProvinceCodes.has(code)) added.push(code); });
-        prevSelectedProvinceCodes.forEach(function (code) { if (!nextProvinceCodes.has(code)) removed.push(code); });
-        prevSelectedProvinceCodes = nextProvinceCodes;
-        updateProvinceAndCenterOptions({ addProvinceCodes: added, removeProvinceCodes: removed });
-      });
-    }
-
     renderCourseOptions();
 
-    fetchLocationsData().then(function () {
-      updateProvinceAndCenterOptions();
-    }).catch(function () {
-      updateProvinceAndCenterOptions();
-    });
+    // 目标对象：全网 / 南北部 + 省区/中心（多选）
+    function normalizeProvinceDisplayName(name) {
+      return String(name || '').replace(/(省公司|大区)$/g, '');
+    }
 
-    enableClickMultiSelect(provinceSelect);
-    enableClickMultiSelect(centerSelect);
+    function getCenterDisplayName(center) {
+      const shortName = center && center.shortName ? String(center.shortName) : '';
+      if (shortName) return shortName + '中心';
+      const full = String((center && center.name) || '');
+      if (!full) return '';
+      if (full.indexOf('转运中心') >= 0) return full.replace('转运中心', '中心');
+      if (full.indexOf('中心') >= 0) return full;
+      return full + '中心';
+    }
+
+    function getSelectedValues(selectEl) {
+      if (!selectEl) return [];
+      return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.value; }).filter(Boolean);
+    }
 
     function getSelectedLabels(selectEl) {
       if (!selectEl) return [];
       return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.textContent; }).filter(Boolean);
     }
 
+    function setSelectOptions(selectEl, items, selectedValues) {
+      if (!selectEl) return;
+      const current = new Set(Array.isArray(selectedValues) ? selectedValues : getSelectedValues(selectEl));
+      selectEl.innerHTML = (items || []).map(function (item) {
+        const selected = current.has(item.value) ? ' selected' : '';
+        return '<option value="' + item.value + '"' + selected + '>' + escapeHtml(item.label) + '</option>';
+      }).join('');
+    }
+
+    function enableClickMultiSelect(selectEl) {
+      if (!selectEl || !selectEl.multiple) return;
+      selectEl.addEventListener('mousedown', function (e) {
+        const target = e && e.target;
+        if (!target || target.tagName !== 'OPTION') return;
+        e.preventDefault();
+        target.selected = !target.selected;
+        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+
+    function resetTargetScopeFilters() {
+      if (targetRegionSelect) targetRegionSelect.value = '';
+      if (targetProvinceSelect) {
+        targetProvinceSelect.innerHTML = '';
+        targetProvinceSelect.disabled = true;
+      }
+      if (targetCenterSelect) {
+        targetCenterSelect.innerHTML = '';
+        targetCenterSelect.disabled = true;
+      }
+      syncTargetHiddenInput();
+    }
+
+    function updateTargetProvinceAndCenterOptions(nextProvinceCodes, nextCenterCodes) {
+      if (!targetRegionSelect || !targetProvinceSelect || !targetCenterSelect) return;
+      const region = String(targetRegionSelect.value || '').trim();
+      if (!region) {
+        resetTargetScopeFilters();
+        return;
+      }
+
+      const provinces = (provincesData || []).filter(function (p) { return p && p.northSouth === region; });
+      const provinceItems = provinces.map(function (p) {
+        return { value: p.code, label: normalizeProvinceDisplayName(p.name) };
+      });
+      provinceItems.sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
+
+      targetProvinceSelect.disabled = false;
+      setSelectOptions(targetProvinceSelect, provinceItems, nextProvinceCodes);
+
+      const selectedProvinceCodes = new Set(Array.isArray(nextProvinceCodes) ? nextProvinceCodes : getSelectedValues(targetProvinceSelect));
+      const allowedProvinceCodes = new Set(provinces.map(function (p) { return p.code; }));
+
+      const centerCandidates = (centersData || []).filter(function (c) { return c && allowedProvinceCodes.has(c.provinceCode); });
+      const centers = selectedProvinceCodes.size
+        ? centerCandidates.filter(function (c) { return selectedProvinceCodes.has(c.provinceCode); })
+        : centerCandidates;
+
+      const centerItems = centers.map(function (c) {
+        return { value: c.code, label: getCenterDisplayName(c) };
+      });
+      centerItems.sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
+
+      targetCenterSelect.disabled = !centerItems.length;
+      setSelectOptions(targetCenterSelect, centerItems, nextCenterCodes);
+      syncTargetHiddenInput();
+    }
+
+    function syncTargetHiddenInput() {
+      if (!targetInput) return;
+      const region = targetRegionSelect ? String(targetRegionSelect.value || '').trim() : '';
+      if (!region) {
+        targetInput.value = '全网';
+        return;
+      }
+      const provLabels = getSelectedLabels(targetProvinceSelect);
+      const centerLabels = getSelectedLabels(targetCenterSelect);
+      let text = region;
+      if (provLabels.length) text += ' 省区:' + provLabels.join('、');
+      if (centerLabels.length) text += ' 中心:' + centerLabels.join('、');
+      targetInput.value = text || '全网';
+    }
+
+    if (targetRegionSelect || targetProvinceSelect || targetCenterSelect) {
+      fetchLocationsData().then(function () {
+        resetTargetScopeFilters();
+      }).catch(function () {
+        resetTargetScopeFilters();
+      });
+    }
+
+    if (targetRegionSelect) {
+      targetRegionSelect.addEventListener('change', function () {
+        updateTargetProvinceAndCenterOptions([], []);
+      });
+    }
+    if (targetProvinceSelect) {
+      targetProvinceSelect.addEventListener('change', function () {
+        const provinceCodes = getSelectedValues(targetProvinceSelect);
+        const centerCodes = getSelectedValues(targetCenterSelect);
+        updateTargetProvinceAndCenterOptions(provinceCodes, centerCodes);
+      });
+      enableClickMultiSelect(targetProvinceSelect);
+    }
+    if (targetCenterSelect) {
+      targetCenterSelect.addEventListener('change', function () {
+        syncTargetHiddenInput();
+      });
+      enableClickMultiSelect(targetCenterSelect);
+    }
+
     function validateForm() {
       const name = String((nameInput && nameInput.value) || '').trim();
       const category = String((categorySelect && categorySelect.value) || '').trim();
-      const region = String((regionSelect && regionSelect.value) || '').trim();
       const startDate = String((startDateInput && startDateInput.value) || '').trim();
       const endDate = String((endDateInput && endDateInput.value) || '').trim();
 
       if (!name) { alert('请填写培训计划名称。'); return false; }
       if (!category) { alert('请选择培训类别。'); return false; }
-      if (!region) { alert('请选择南北部。'); return false; }
       if (!startDate || !endDate) { alert('请选择开始日期与结束日期。'); return false; }
       if (startDate && endDate && startDate > endDate) { alert('开始日期不能晚于结束日期。'); return false; }
       if (!selectedCourseIds.size) { alert('请选择需要学习的课程（可多选）。'); return false; }
       return true;
     }
 
-    if (form) {
-      form.addEventListener('submit', function (e) {
+	    if (form) {
+	      form.addEventListener('submit', function (e) {
         e.preventDefault();
         if (!validateForm()) return;
 
         const name = String(nameInput.value || '').trim();
         const category = String(categorySelect.value || '').trim();
-        const region = String(regionSelect.value || '').trim();
         const startDate = String(startDateInput.value || '').trim();
         const endDate = String(endDateInput.value || '').trim();
 
-        const provinces = getSelectedLabels(provinceSelect);
-        const centers = getSelectedLabels(centerSelect);
-
         const period = startDate + ' 至 ' + endDate;
-        const scopeParts = [region];
-        if (provinces.length) scopeParts.push('省区:' + provinces.join('、'));
-        if (centers.length) scopeParts.push('中心:' + centers.join('、'));
-        const target = scopeParts.join(' / ');
+        const target = String((targetInput && targetInput.value) || '').trim() || '全网';
+        const targetRegion = targetRegionSelect ? String(targetRegionSelect.value || '').trim() : '';
+        const targetProvinceCodes = targetRegion ? getSelectedValues(targetProvinceSelect) : [];
+        const targetCenterCodes = targetRegion ? getSelectedValues(targetCenterSelect) : [];
 
         addCustomTrainingPlan({
           id: Date.now(),
@@ -9583,20 +9984,729 @@
           category: category,
           period: period,
           target: target,
+          targetRegion: targetRegion,
+          targetProvinceCodes: targetProvinceCodes,
+          targetCenterCodes: targetCenterCodes,
           status: 'planned',
           progress: 0,
           courseIds: Array.from(selectedCourseIds)
         });
 
         alert('已创建培训计划：' + name);
-        navigateTo('training-plan');
-      });
-    }
-  }
+	        navigateTo('training-plan');
+	      });
+	    }
+	  }
 
-  // ============ 在线考试 ============
-  function renderOnlineExam() {
-    const activeExams = [
+	  function parseTrainingPlanPeriodToDateInputs(period) {
+	    const raw = String(period || '').trim();
+	    if (!raw) return { start: '', end: '' };
+
+	    var startPart = raw;
+	    var endPart = raw;
+	    if (raw.indexOf('至') >= 0) {
+	      const parts = raw.split('至').map(function (s) { return String(s || '').trim(); }).filter(Boolean);
+	      startPart = parts[0] || '';
+	      endPart = parts[1] || parts[0] || '';
+	    }
+
+	    function normalize(part, isEnd) {
+	      const s = String(part || '').trim();
+	      if (!s) return '';
+	      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+	      if (/^\d{4}-\d{2}$/.test(s)) {
+	        const bits = s.split('-');
+	        const y = Number(bits[0]);
+	        const m = Number(bits[1]);
+	        if (Number.isNaN(y) || Number.isNaN(m)) return '';
+	        if (!isEnd) return s + '-01';
+	        const last = new Date(y, m, 0).getDate();
+	        const dd = String(last).padStart(2, '0');
+	        return bits[0] + '-' + bits[1] + '-' + dd;
+	      }
+	      return '';
+	    }
+
+	    const start = normalize(startPart, false);
+	    const end = normalize(endPart, true) || start;
+	    return { start: start, end: end };
+	  }
+
+		  function renderEditTrainingPlanPage() {
+		    const id = getSelectedTrainingPlanId();
+		    const plan = getTrainingPlanById(id);
+		    if (!plan) {
+	      return `
+	        <div class="sub-page">
+	          <div class="page-header">
+	            <div>
+	              <div class="page-title">编辑培训计划</div>
+	              <div class="page-desc">未找到要编辑的计划，请从列表重新进入</div>
+	            </div>
+	            <div class="page-actions">
+	              <button class="btn btn-outline" type="button" data-page="training-plan">
+	                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+	                返回列表
+	              </button>
+	            </div>
+	          </div>
+	        </div>
+	      `;
+	    }
+
+		    const dates = parseTrainingPlanPeriodToDateInputs(plan.period);
+		    const target = plan.target != null ? String(plan.target) : '全网';
+		    const progress = plan.progress != null ? Number(plan.progress) : 0;
+
+		    return `
+		      <div class="sub-page training-plan-edit">
+	        <div class="page-header">
+	          <div>
+	            <div class="page-title">编辑培训计划</div>
+	            <div class="page-desc">修改计划基础信息、课程配置与进度状态</div>
+	          </div>
+	          <div class="page-actions">
+	            <button class="btn btn-outline" type="button" id="backToTrainingPlanFromEditBtn">
+	              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+	              返回列表
+	            </button>
+	            <button class="btn btn-primary" type="button" id="submitTrainingPlanEditTopBtn">
+	              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+	              保存修改
+	            </button>
+	          </div>
+	        </div>
+
+		        <div class="course-create-card">
+		          <form id="editTrainingPlanPageForm" class="course-create-form" data-id="${escapeHtml(String(plan.id))}">
+		            <div class="modal-hint">提示：目标对象可在此选择并调整；也可在“下发培训任务”时再进一步确认与细化。</div>
+
+		            <div class="form-grid">
+		              <div class="form-group full-width">
+		                <label class="required">培训计划名称</label>
+		                <input type="text" class="form-control" id="trainingPlanEditNameInput" name="name" maxlength="60" value="${escapeHtml(String(plan.name || ''))}" required>
+		              </div>
+
+	              <div class="form-group">
+	                <label class="required">培训类别</label>
+	                <select class="form-control" id="trainingPlanEditCategorySelect" name="category" required>
+	                  <option value="">请选择类别</option>
+	                  <option value="消防安全">消防安全</option>
+	                  <option value="设备安全">设备安全</option>
+	                  <option value="专项安全">专项安全</option>
+	                  <option value="通用安全">通用安全</option>
+	                  <option value="应急响应">应急响应</option>
+	                  <option value="管理层培训">管理层培训</option>
+	                  <option value="安全教育">安全教育</option>
+	                </select>
+	              </div>
+
+	              <div class="form-group">
+	                <label class="required">开始日期</label>
+	                <input type="date" class="form-control" id="trainingPlanEditStartDateInput" name="startDate" value="${escapeHtml(dates.start)}" required>
+	              </div>
+
+	              <div class="form-group">
+	                <label class="required">结束日期</label>
+	                <input type="date" class="form-control" id="trainingPlanEditEndDateInput" name="endDate" value="${escapeHtml(dates.end)}" required>
+	              </div>
+
+		              <div class="form-group full-width">
+		                <label>目标对象</label>
+		                <div class="dispatch-scope-grid">
+		                  <div class="form-group">
+		                    <label>南/中/北部（可选筛选）</label>
+		                    <select class="form-control" id="trainingPlanEditTargetRegionSelect">
+		                      <option value="">全网</option>
+		                      <option value="南部">南部</option>
+		                      <option value="中部">中部</option>
+		                      <option value="北部">北部</option>
+		                    </select>
+		                  </div>
+		                  <div class="form-group">
+		                    <label>省区（可多选）</label>
+		                    <select class="form-control" id="trainingPlanEditTargetProvinceSelect" multiple size="8" disabled></select>
+		                  </div>
+		                  <div class="form-group">
+		                    <label>中心（可多选）</label>
+		                    <select class="form-control" id="trainingPlanEditTargetCenterSelect" multiple size="8" disabled></select>
+		                  </div>
+		                </div>
+		                <div class="form-help">不选择则默认“全网”。如需精细下发，可先选择南北部，再选择省区/中心（均可多选）。</div>
+		                <input type="hidden" id="trainingPlanEditTargetInput" name="target" value="${escapeHtml(target)}">
+		              </div>
+
+		              <div class="form-group">
+		                <label>当前状态</label>
+		                <select class="form-control" id="trainingPlanEditStatusSelect" name="status">
+	                  <option value="planned">计划中</option>
+	                  <option value="ongoing">进行中</option>
+	                  <option value="completed">已完成</option>
+	                  <option value="delayed">已延期</option>
+	                </select>
+	              </div>
+
+	              <div class="form-group">
+	                <label>执行进度（0-100）</label>
+	                <input type="number" class="form-control" id="trainingPlanEditProgressInput" name="progress" min="0" max="100" step="1" value="${Number.isFinite(progress) ? progress : 0}">
+	              </div>
+
+	              <div class="form-group full-width">
+	                <label>需要学习的课程（可多选）</label>
+	                <div class="multi-select" id="trainingPlanEditCoursesMulti">
+	                  <button type="button" class="form-control multi-select-trigger" id="trainingPlanEditCoursesTrigger" aria-haspopup="listbox" aria-expanded="false">
+	                    <span class="multi-select-trigger-text" id="trainingPlanEditCoursesTriggerText">请选择课程（可多选）</span>
+	                    <span class="multi-select-trigger-count" id="trainingPlanEditCoursesTriggerCount">0</span>
+	                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+	                  </button>
+	                  <div class="multi-select-panel" id="trainingPlanEditCoursesPanel" style="display:none;">
+	                    <div class="multi-select-search">
+	                      <input type="text" class="form-control" id="trainingPlanEditCoursesSearchInput" placeholder="搜索课程名称...">
+	                    </div>
+	                    <div class="multi-select-options" id="trainingPlanEditCoursesOptions" role="listbox" aria-multiselectable="true"></div>
+	                    <div class="multi-select-footer">
+	                      <button type="button" class="multi-select-clear" id="trainingPlanEditCoursesClearBtn">清空已选</button>
+	                      <span class="multi-select-hint">课程来自“课程库”（包含你新建并保存的课程）</span>
+	                    </div>
+	                  </div>
+	                  <input type="hidden" id="trainingPlanEditCourseIdsInput" name="courseIds" value="">
+	                </div>
+	              </div>
+	            </div>
+
+	            <div class="course-create-footer">
+	              <button type="button" class="btn btn-outline" id="cancelTrainingPlanEditBtn">取消</button>
+	              <button type="submit" class="btn btn-primary">保存修改</button>
+	            </div>
+	          </form>
+	        </div>
+	      </div>
+	    `;
+	  }
+
+		  function initEditTrainingPlanPage() {
+		    const form = document.getElementById('editTrainingPlanPageForm');
+		    const backBtn = document.getElementById('backToTrainingPlanFromEditBtn');
+		    const cancelBtn = document.getElementById('cancelTrainingPlanEditBtn');
+	    const topSubmitBtn = document.getElementById('submitTrainingPlanEditTopBtn');
+	    if (backBtn) backBtn.addEventListener('click', function () { navigateTo('training-plan'); });
+	    if (cancelBtn) cancelBtn.addEventListener('click', function () { navigateTo('training-plan'); });
+	    if (topSubmitBtn && form) topSubmitBtn.addEventListener('click', function () { form.requestSubmit(); });
+	    if (!form) return;
+
+	    const id = form.dataset.id;
+	    const plan = getTrainingPlanById(id) || {};
+
+	    const nameInput = document.getElementById('trainingPlanEditNameInput');
+	    const categorySelect = document.getElementById('trainingPlanEditCategorySelect');
+		    const startDateInput = document.getElementById('trainingPlanEditStartDateInput');
+		    const endDateInput = document.getElementById('trainingPlanEditEndDateInput');
+		    const targetInput = document.getElementById('trainingPlanEditTargetInput');
+		    const statusSelect = document.getElementById('trainingPlanEditStatusSelect');
+		    const progressInput = document.getElementById('trainingPlanEditProgressInput');
+
+		    if (categorySelect) categorySelect.value = String(plan.category || '');
+		    if (statusSelect) statusSelect.value = String(plan.status || 'planned');
+
+		    // 目标对象：全网 / 南北部 + 省区/中心（多选）
+		    const targetRegionSelect = document.getElementById('trainingPlanEditTargetRegionSelect');
+		    const targetProvinceSelect = document.getElementById('trainingPlanEditTargetProvinceSelect');
+		    const targetCenterSelect = document.getElementById('trainingPlanEditTargetCenterSelect');
+
+		    function normalizeProvinceDisplayName(name) {
+		      return String(name || '').replace(/(省公司|大区)$/g, '');
+		    }
+
+		    function getCenterDisplayName(center) {
+		      const shortName = center && center.shortName ? String(center.shortName) : '';
+		      if (shortName) return shortName + '中心';
+		      const full = String((center && center.name) || '');
+		      if (!full) return '';
+		      if (full.indexOf('转运中心') >= 0) return full.replace('转运中心', '中心');
+		      if (full.indexOf('中心') >= 0) return full;
+		      return full + '中心';
+		    }
+
+		    function getSelectedValues(selectEl) {
+		      if (!selectEl) return [];
+		      return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.value; }).filter(Boolean);
+		    }
+
+		    function getSelectedLabels(selectEl) {
+		      if (!selectEl) return [];
+		      return Array.from(selectEl.selectedOptions || []).map(function (opt) { return opt.textContent; }).filter(Boolean);
+		    }
+
+		    function setSelectOptions(selectEl, items, selectedValues) {
+		      if (!selectEl) return;
+		      const current = new Set(Array.isArray(selectedValues) ? selectedValues : getSelectedValues(selectEl));
+		      selectEl.innerHTML = (items || []).map(function (item) {
+		        const selected = current.has(item.value) ? ' selected' : '';
+		        return '<option value="' + item.value + '"' + selected + '>' + escapeHtml(item.label) + '</option>';
+		      }).join('');
+		    }
+
+		    function enableClickMultiSelect(selectEl) {
+		      if (!selectEl || !selectEl.multiple) return;
+		      selectEl.addEventListener('mousedown', function (e) {
+		        const target = e && e.target;
+		        if (!target || target.tagName !== 'OPTION') return;
+		        e.preventDefault();
+		        target.selected = !target.selected;
+		        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+		      });
+		    }
+
+		    function parseTargetScopeFromText(text) {
+		      const raw = String(text || '').trim();
+		      if (!raw || raw === '全网') return { region: '', provinces: [], centers: [] };
+		      const region = (raw.indexOf('南部') === 0) ? '南部' : ((raw.indexOf('中部') === 0) ? '中部' : ((raw.indexOf('北部') === 0) ? '北部' : ''));
+
+		      let provincesText = '';
+		      let centersText = '';
+		      if (raw.indexOf('省区:') >= 0) {
+		        provincesText = raw.split('省区:')[1] || '';
+		        if (provincesText.indexOf('中心:') >= 0) provincesText = provincesText.split('中心:')[0] || '';
+		      }
+		      if (raw.indexOf('中心:') >= 0) {
+		        centersText = raw.split('中心:')[1] || '';
+		      }
+		      const provinces = String(provincesText || '').split(/[、，,\\s]+/g).map(function (s) { return String(s || '').trim(); }).filter(Boolean);
+		      const centers = String(centersText || '').split(/[、，,\\s]+/g).map(function (s) { return String(s || '').trim(); }).filter(Boolean);
+		      return { region: region, provinces: provinces, centers: centers };
+		    }
+
+		    function mapProvinceLabelsToCodes(labels) {
+		      const out = [];
+		      (labels || []).forEach(function (label) {
+		        const name = String(label || '').trim();
+		        if (!name) return;
+		        const province = (provincesData || []).find(function (p) {
+		          return p && normalizeProvinceDisplayName(p.name) === name;
+		        });
+		        if (province && province.code) out.push(province.code);
+		      });
+		      return out;
+		    }
+
+		    function mapCenterLabelsToCodes(labels) {
+		      const out = [];
+		      (labels || []).forEach(function (label) {
+		        const name = String(label || '').trim();
+		        if (!name) return;
+		        const center = (centersData || []).find(function (c) {
+		          return c && (getCenterDisplayName(c) === name || String(c.name || '').trim() === name);
+		        });
+		        if (center && center.code) out.push(center.code);
+		      });
+		      return out;
+		    }
+
+		    function getInitialTargetScope() {
+		      const region = plan && plan.targetRegion ? String(plan.targetRegion || '').trim() : '';
+		      const provinceCodes = Array.isArray(plan && plan.targetProvinceCodes) ? plan.targetProvinceCodes.map(function (x) { return String(x); }).filter(Boolean) : [];
+		      const centerCodes = Array.isArray(plan && plan.targetCenterCodes) ? plan.targetCenterCodes.map(function (x) { return String(x); }).filter(Boolean) : [];
+		      if (region || provinceCodes.length || centerCodes.length) {
+		        return { region: region, provinceCodes: provinceCodes, centerCodes: centerCodes };
+		      }
+		      const parsed = parseTargetScopeFromText(plan && plan.target);
+		      return {
+		        region: parsed.region,
+		        provinceCodes: mapProvinceLabelsToCodes(parsed.provinces),
+		        centerCodes: mapCenterLabelsToCodes(parsed.centers)
+		      };
+		    }
+
+		    function syncTargetHiddenInput() {
+		      if (!targetInput) return;
+		      const region = targetRegionSelect ? String(targetRegionSelect.value || '').trim() : '';
+		      if (!region) {
+		        targetInput.value = '全网';
+		        return;
+		      }
+		      const provLabels = getSelectedLabels(targetProvinceSelect);
+		      const centerLabels = getSelectedLabels(targetCenterSelect);
+		      let text = region;
+		      if (provLabels.length) text += ' 省区:' + provLabels.join('、');
+		      if (centerLabels.length) text += ' 中心:' + centerLabels.join('、');
+		      targetInput.value = text || '全网';
+		    }
+
+		    function resetTargetScopeFilters() {
+		      if (targetProvinceSelect) {
+		        targetProvinceSelect.innerHTML = '';
+		        targetProvinceSelect.disabled = true;
+		      }
+		      if (targetCenterSelect) {
+		        targetCenterSelect.innerHTML = '';
+		        targetCenterSelect.disabled = true;
+		      }
+		      syncTargetHiddenInput();
+		    }
+
+		    function updateTargetProvinceAndCenterOptions(nextProvinceCodes, nextCenterCodes) {
+		      if (!targetRegionSelect || !targetProvinceSelect || !targetCenterSelect) return;
+		      const region = String(targetRegionSelect.value || '').trim();
+		      if (!region) {
+		        resetTargetScopeFilters();
+		        return;
+		      }
+
+		      const provinces = (provincesData || []).filter(function (p) { return p && p.northSouth === region; });
+		      const provinceItems = provinces.map(function (p) {
+		        return { value: p.code, label: normalizeProvinceDisplayName(p.name) };
+		      });
+		      provinceItems.sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
+
+		      targetProvinceSelect.disabled = false;
+		      setSelectOptions(targetProvinceSelect, provinceItems, nextProvinceCodes);
+
+		      const selectedProvinceCodes = new Set(Array.isArray(nextProvinceCodes) ? nextProvinceCodes : getSelectedValues(targetProvinceSelect));
+		      const allowedProvinceCodes = new Set(provinces.map(function (p) { return p.code; }));
+
+		      const centerCandidates = (centersData || []).filter(function (c) { return c && allowedProvinceCodes.has(c.provinceCode); });
+		      const centers = selectedProvinceCodes.size
+		        ? centerCandidates.filter(function (c) { return selectedProvinceCodes.has(c.provinceCode); })
+		        : centerCandidates;
+
+		      const centerItems = centers.map(function (c) {
+		        return { value: c.code, label: getCenterDisplayName(c) };
+		      });
+		      centerItems.sort(function (a, b) { return (a.label || '').localeCompare(b.label || ''); });
+
+		      targetCenterSelect.disabled = !centerItems.length;
+		      setSelectOptions(targetCenterSelect, centerItems, nextCenterCodes);
+		      syncTargetHiddenInput();
+		    }
+
+		    if (targetRegionSelect || targetProvinceSelect || targetCenterSelect) {
+		      fetchLocationsData().then(function () {
+		        const init = getInitialTargetScope();
+		        if (targetRegionSelect) targetRegionSelect.value = init.region || '';
+		        updateTargetProvinceAndCenterOptions(init.provinceCodes, init.centerCodes);
+		        syncTargetHiddenInput();
+		      }).catch(function () {
+		        resetTargetScopeFilters();
+		      });
+		    }
+
+		    if (targetRegionSelect) {
+		      targetRegionSelect.addEventListener('change', function () {
+		        updateTargetProvinceAndCenterOptions([], []);
+		      });
+		    }
+		    if (targetProvinceSelect) {
+		      targetProvinceSelect.addEventListener('change', function () {
+		        const provinceCodes = getSelectedValues(targetProvinceSelect);
+		        const centerCodes = getSelectedValues(targetCenterSelect);
+		        updateTargetProvinceAndCenterOptions(provinceCodes, centerCodes);
+		      });
+		      enableClickMultiSelect(targetProvinceSelect);
+		    }
+		    if (targetCenterSelect) {
+		      targetCenterSelect.addEventListener('change', function () {
+		        syncTargetHiddenInput();
+		      });
+		      enableClickMultiSelect(targetCenterSelect);
+		    }
+
+		    const trigger = document.getElementById('trainingPlanEditCoursesTrigger');
+		    const triggerText = document.getElementById('trainingPlanEditCoursesTriggerText');
+		    const triggerCount = document.getElementById('trainingPlanEditCoursesTriggerCount');
+		    const panel = document.getElementById('trainingPlanEditCoursesPanel');
+	    const searchInput = document.getElementById('trainingPlanEditCoursesSearchInput');
+	    const optionsEl = document.getElementById('trainingPlanEditCoursesOptions');
+	    const clearBtn = document.getElementById('trainingPlanEditCoursesClearBtn');
+	    const hiddenCourseIdsInput = document.getElementById('trainingPlanEditCourseIdsInput');
+
+	    function getCourseEntries() {
+	      const courses = getMergedCourseLibraryCourses(getBaseCourseLibraryCourses());
+	      const byId = new Map();
+	      courses.forEach(function (c) {
+	        if (!c || !c.title) return;
+	        const cid = String(c.id);
+	        if (!byId.has(cid)) byId.set(cid, { id: cid, title: c.title, category: c.category || '' });
+	      });
+	      const entries = Array.from(byId.values());
+	      entries.sort(function (a, b) { return (a.title || '').localeCompare(b.title || ''); });
+	      return entries;
+	    }
+
+	    const selectedCourseIds = new Set();
+	    (plan.courseIds || []).forEach(function (cid) {
+	      const s = String(cid);
+	      if (s) selectedCourseIds.add(s);
+	    });
+	    let courseEntriesCache = [];
+
+	    function syncHidden() {
+	      if (hiddenCourseIdsInput) hiddenCourseIdsInput.value = Array.from(selectedCourseIds).join(',');
+	    }
+
+	    function updateTrigger() {
+	      const selectedCount = selectedCourseIds.size;
+	      if (triggerCount) triggerCount.textContent = String(selectedCount);
+	      if (!triggerText) return;
+	      if (!selectedCount) {
+	        triggerText.textContent = '请选择课程（可多选）';
+	        return;
+	      }
+	      const titles = [];
+	      courseEntriesCache.forEach(function (item) {
+	        if (selectedCourseIds.has(String(item.id))) titles.push(item.title);
+	      });
+	      const shown = titles.slice(0, 2);
+	      triggerText.textContent = shown.join('、') + (selectedCount > 2 ? (' 等' + selectedCount + '门') : '');
+	    }
+
+	    function renderOptions() {
+	      if (!optionsEl) return;
+	      courseEntriesCache = getCourseEntries();
+	      optionsEl.innerHTML = courseEntriesCache.map(function (item) {
+	        const checked = selectedCourseIds.has(String(item.id)) ? ' checked' : '';
+	        const safeTitle = String(item.title || '');
+	        const safeCategory = String(item.category || '');
+	        return `
+	          <label class="multi-select-option" data-title="${safeTitle.toLowerCase()}">
+	            <input type="checkbox" value="${item.id}"${checked}>
+	            <span class="multi-select-option-title">${safeTitle}</span>
+	            ${safeCategory ? `<span class="multi-select-option-meta">${safeCategory}</span>` : ''}
+	          </label>
+	        `;
+	      }).join('');
+	      updateTrigger();
+	      syncHidden();
+	    }
+
+	    function openPanel() {
+	      if (!panel || !trigger) return;
+	      panel.style.display = 'block';
+	      trigger.setAttribute('aria-expanded', 'true');
+	      if (searchInput) searchInput.focus();
+	    }
+
+	    function closePanel() {
+	      if (!panel || !trigger) return;
+	      panel.style.display = 'none';
+	      trigger.setAttribute('aria-expanded', 'false');
+	      if (searchInput) searchInput.value = '';
+	      if (optionsEl) {
+	        Array.from(optionsEl.querySelectorAll('.multi-select-option')).forEach(function (node) {
+	          node.style.display = '';
+	        });
+	      }
+	    }
+
+	    function togglePanel() {
+	      if (!panel) return;
+	      if (panel.style.display === 'none' || !panel.style.display) openPanel();
+	      else closePanel();
+	    }
+
+	    if (trigger) {
+	      trigger.addEventListener('click', function (e) {
+	        e.preventDefault();
+	        togglePanel();
+	      });
+	    }
+
+	    if (optionsEl) {
+	      optionsEl.addEventListener('change', function (e) {
+	        const checkbox = e.target && e.target.closest ? e.target.closest('input[type="checkbox"]') : null;
+	        if (!checkbox) return;
+	        const val = String(checkbox.value || '');
+	        if (!val) return;
+	        if (checkbox.checked) selectedCourseIds.add(val);
+	        else selectedCourseIds.delete(val);
+	        updateTrigger();
+	        syncHidden();
+	      });
+	    }
+
+	    if (searchInput) {
+	      searchInput.addEventListener('input', function () {
+	        const term = String(searchInput.value || '').trim().toLowerCase();
+	        const nodes = optionsEl ? Array.from(optionsEl.querySelectorAll('.multi-select-option')) : [];
+	        nodes.forEach(function (node) {
+	          const title = String(node.dataset.title || '');
+	          node.style.display = (!term || title.indexOf(term) >= 0) ? '' : 'none';
+	        });
+	      });
+	    }
+
+	    if (clearBtn) {
+	      clearBtn.addEventListener('click', function () {
+	        selectedCourseIds.clear();
+	        if (optionsEl) {
+	          Array.from(optionsEl.querySelectorAll('input[type="checkbox"]')).forEach(function (cb) { cb.checked = false; });
+	        }
+	        updateTrigger();
+	        syncHidden();
+	      });
+	    }
+
+	    document.addEventListener('click', function (e) {
+	      if (!panel || !trigger) return;
+	      const target = e.target;
+	      const inside = (target && target.closest) ? target.closest('#trainingPlanEditCoursesMulti') : null;
+	      if (!inside && panel.style.display === 'block') closePanel();
+	    });
+
+		    document.addEventListener('keydown', function (e) {
+		      if (e.key === 'Escape') {
+		        closePanel();
+		        // 目标对象无弹层，仅关闭课程选择面板
+		      }
+		    });
+
+		    renderOptions();
+
+		    function validateForm() {
+		      const name = String((nameInput && nameInput.value) || '').trim();
+		      const category = String((categorySelect && categorySelect.value) || '').trim();
+		      const startDate = String((startDateInput && startDateInput.value) || '').trim();
+	      const endDate = String((endDateInput && endDateInput.value) || '').trim();
+	      const progress = Number((progressInput && progressInput.value) || 0);
+	      if (!name) { alert('请填写培训计划名称。'); return false; }
+	      if (!category) { alert('请选择培训类别。'); return false; }
+	      if (!startDate || !endDate) { alert('请选择开始日期与结束日期。'); return false; }
+	      if (startDate && endDate && startDate > endDate) { alert('开始日期不能晚于结束日期。'); return false; }
+	      if (!Number.isFinite(progress) || progress < 0 || progress > 100) { alert('执行进度需为 0-100 的数字。'); return false; }
+	      return true;
+	    }
+
+	    form.addEventListener('submit', function (e) {
+	      e.preventDefault();
+	      if (!validateForm()) return;
+	      const name = String(nameInput.value || '').trim();
+	      const category = String(categorySelect.value || '').trim();
+	      const startDate = String(startDateInput.value || '').trim();
+	      const endDate = String(endDateInput.value || '').trim();
+	      const target = String((targetInput && targetInput.value) || '').trim() || '全网';
+	      const targetRegion = targetRegionSelect ? String(targetRegionSelect.value || '').trim() : '';
+	      const targetProvinceCodes = targetRegion ? getSelectedValues(targetProvinceSelect) : [];
+	      const targetCenterCodes = targetRegion ? getSelectedValues(targetCenterSelect) : [];
+	      const status = String((statusSelect && statusSelect.value) || 'planned');
+	      const progress = Number((progressInput && progressInput.value) || 0);
+	      const period = startDate + ' 至 ' + endDate;
+	      upsertCustomTrainingPlan({
+	        id: Number(id),
+	        name: name,
+	        category: category,
+	        period: period,
+	        target: target,
+	        targetRegion: targetRegion,
+	        targetProvinceCodes: targetProvinceCodes,
+	        targetCenterCodes: targetCenterCodes,
+	        status: status,
+	        progress: Number.isFinite(progress) ? progress : 0,
+	        courseIds: Array.from(selectedCourseIds)
+	      });
+	      alert('已保存修改：' + name);
+	      navigateTo('training-plan-detail');
+	    });
+
+		    updateTrigger();
+		    syncHidden();
+		    syncTargetHiddenInput();
+		  }
+
+	  function renderTrainingPlanDetailPage() {
+	    const id = getSelectedTrainingPlanId();
+	    const plan = getTrainingPlanById(id);
+	    if (!plan) {
+	      return `
+	        <div class="sub-page">
+	          <div class="page-header">
+	            <div>
+	              <div class="page-title">培训计划详情</div>
+	              <div class="page-desc">未找到该计划，请从列表重新进入</div>
+	            </div>
+	            <div class="page-actions">
+	              <button class="btn btn-outline" type="button" data-page="training-plan">
+	                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+	                返回列表
+	              </button>
+	            </div>
+	          </div>
+	        </div>
+	      `;
+	    }
+
+	    const statusLabel = { planned: '计划中', ongoing: '进行中', completed: '已完成', delayed: '已延期' };
+	    const courses = getMergedCourseLibraryCourses(getBaseCourseLibraryCourses());
+	    const courseIdSet = new Set((plan.courseIds || []).map(function (x) { return Number(x); }).filter(function (x) { return !Number.isNaN(x); }));
+	    const chosenCourses = courses.filter(function (c) { return courseIdSet.has(Number(c && c.id)); });
+	    const courseListHtml = chosenCourses.length
+	      ? chosenCourses.map(function (c) { return '<li>' + escapeHtml(c.title) + '<span class="plan-detail-sub"> · ' + escapeHtml(c.category) + '</span></li>'; }).join('')
+	      : '<li class="plan-detail-empty">未配置课程（可在“编辑”中补充）</li>';
+
+	    return `
+	      <div class="sub-page training-plan-detail">
+	        <div class="page-header">
+	          <div>
+	            <div class="page-title">培训计划详情</div>
+	            <div class="page-desc">${escapeHtml(String(plan.name || ''))}</div>
+	          </div>
+	          <div class="page-actions">
+	            <button class="btn btn-outline" type="button" id="backToTrainingPlanFromDetailBtn">
+	              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+	              返回列表
+	            </button>
+	            <button class="btn btn-primary" type="button" id="editTrainingPlanFromDetailBtn">
+	              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+	              编辑
+	            </button>
+	          </div>
+	        </div>
+
+	        <div class="plan-detail-grid">
+	          <div class="plan-detail-card">
+	            <div class="plan-detail-title">基础信息</div>
+	            <div class="plan-detail-kv">
+	              <div class="k">计划名称</div><div class="v">${escapeHtml(String(plan.name || ''))}</div>
+	              <div class="k">培训类别</div><div class="v">${escapeHtml(String(plan.category || '-'))}</div>
+	              <div class="k">计划周期</div><div class="v">${escapeHtml(String(plan.period || '-'))}</div>
+	              <div class="k">目标对象</div><div class="v">${escapeHtml(String(plan.target || '全网'))}</div>
+	            </div>
+	          </div>
+
+	          <div class="plan-detail-card">
+	            <div class="plan-detail-title">执行状态</div>
+	            <div class="plan-detail-metrics">
+	              <div class="metric">
+	                <div class="metric-label">当前状态</div>
+	                <div class="metric-value"><span class="status-badge status-${escapeHtml(String(plan.status || 'planned'))}">${statusLabel[plan.status] || '计划中'}</span></div>
+	              </div>
+	              <div class="metric">
+	                <div class="metric-label">执行进度</div>
+	                <div class="metric-value">${Number(plan.progress) || 0}%</div>
+	              </div>
+	            </div>
+	            <div class="plan-progress-mini" style="margin-top: 10px;">
+	              <div class="plan-progress-fill" style="width: ${Number(plan.progress) || 0}%"></div>
+	            </div>
+	          </div>
+
+	          <div class="plan-detail-card plan-detail-card-span2">
+	            <div class="plan-detail-title">课程配置</div>
+	            <ul class="plan-detail-course-list">${courseListHtml}</ul>
+	          </div>
+	        </div>
+	      </div>
+	    `;
+	  }
+
+	  function initTrainingPlanDetailPage() {
+	    const backBtn = document.getElementById('backToTrainingPlanFromDetailBtn');
+	    const editBtn = document.getElementById('editTrainingPlanFromDetailBtn');
+	    if (backBtn) backBtn.addEventListener('click', function () { navigateTo('training-plan'); });
+	    if (editBtn) editBtn.addEventListener('click', function () { navigateTo('training-plan-edit'); });
+	  }
+
+	  // ============ 在线考试 ============
+	  function renderOnlineExam() {
+	    const activeExams = [
       { id: 1, title: '2026年第一季度全员安全知识月度测评', category: '通用安全', duration: '30分钟', questions: 25, passing: 80, deadline: '2026-04-30' },
       { id: 2, title: '特种设备操作人员岗位安全技术考核', category: '设备安全', duration: '60分钟', questions: 50, passing: 85, deadline: '2026-04-20' },
       { id: 3, title: '转运中心消防疏散与应急响应知识测试', category: '应急响应', duration: '45分钟', questions: 40, passing: 90, deadline: '2026-05-15' }
