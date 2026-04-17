@@ -1118,6 +1118,29 @@ input {
   text-align: center;
 }
 
+/* 事故统计分析-事故清单：压缩“所属单位”列宽，保证“省区”一行显示 */
+#accidentListTable {
+  table-layout: fixed;
+}
+
+#accidentListTable th.accident-unit-col,
+#accidentListTable td.accident-unit-col {
+  width: 220px;
+  max-width: 220px;
+}
+
+#accidentListTable td.accident-unit-col {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#accidentListTable th.accident-province-col,
+#accidentListTable td.accident-province-col {
+  width: 140px;
+  white-space: nowrap;
+}
+
 /* ===== 风险评估分级表（多级表头 + 更清晰网格） ===== */
 .risk-tier-table th {
   text-transform: none !important;

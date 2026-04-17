@@ -4402,21 +4402,21 @@
               '<div class="panel-title">事故清单</div>' +
             '</div>' +
             '<div class="panel-body p-0">' +
-              '<div class="data-table-scroll">' +
-                '<table class="data-table">' +
-                  '<thead>' +
-                    '<tr>' +
-                      '<th style="width:50px">序号</th>' +
-                      '<th style="width:80px">姓名</th>' +
-                      '<th>所属单位</th>' +
-                      '<th style="width:100px">省区</th>' +
-                      '<th style="min-width:150px">事故名称</th>' +
-                      '<th style="width:110px">出险日期</th>' +
-                      '<th style="width:60px">月份</th>' +
-                      '<th style="width:70px">操作</th>' +
-                    '</tr>' +
-                  '</thead>' +
-                  '<tbody id="accidentTableBody">' +
+	              '<div class="data-table-scroll">' +
+	                '<table class="data-table accident-stats-table" id="accidentListTable">' +
+	                  '<thead>' +
+	                    '<tr>' +
+	                      '<th style="width:60px">序号</th>' +
+	                      '<th style="width:90px">姓名</th>' +
+	                      '<th class="accident-unit-col" style="width:220px;max-width:220px;">所属单位</th>' +
+	                      '<th class="accident-province-col" style="width:140px">省区</th>' +
+	                      '<th style="width:220px">事故名称</th>' +
+	                      '<th style="width:120px">出险日期</th>' +
+	                      '<th style="width:70px">月份</th>' +
+	                      '<th style="width:80px">操作</th>' +
+	                    '</tr>' +
+	                  '</thead>' +
+	                  '<tbody id="accidentTableBody">' +
                     // 数据将由 loadAccidentList 方法动态渲染
                     '<tr><td colspan="8" style="text-align: center; padding: 20px;">加载中...</td></tr>' +
                   '</tbody>' +
@@ -4651,7 +4651,7 @@
             
             var html = '';
             window._currentAccidents = res.data; // Store for detail modal
-            res.data.forEach(function(item, index) {
+	            res.data.forEach(function(item, index) {
               var dateStr = '-';
               if (item.accident_date && typeof item.accident_date === 'string') {
                   dateStr = item.accident_date.substring(0, 10);
@@ -4670,20 +4670,20 @@
               var monthStr = item.month || '-';
               if (monthStr !== '-' && !monthStr.includes('月')) monthStr += '月';
 
-              // 计算逻辑序号：(当前页-1) * 每页限额 + 当前行索引 + 1
-              var displayIndex = (res.pagination.page - 1) * res.pagination.limit + index + 1;
+	              // 计算逻辑序号：(当前页-1) * 每页限额 + 当前行索引 + 1
+	              var displayIndex = (res.pagination.page - 1) * res.pagination.limit + index + 1;
 
-              html += '<tr>' +
-                '<td>' + displayIndex + '</td>' +
-                '<td>' + (item.person_name || '-') + '</td>' +
-                '<td>' + (item.unit || '-') + '</td>' +
-                '<td>' + (item.province || '-') + '</td>' +
-                '<td><span class="badge badge-info">' + accidentName + '</span></td>' +
-                '<td style="white-space: nowrap;">' + dateStr + '</td>' +
-                '<td>' + monthStr + '</td>' +
-                '<td><span class="panel-link" onclick="window._showAccidentDetail(' + item.id + ')">详情</span></td>' +
-              '</tr>';
-            });
+	              html += '<tr>' +
+	                '<td>' + displayIndex + '</td>' +
+	                '<td>' + escapeHtml(item.person_name || '-') + '</td>' +
+	                '<td class="accident-unit-col" title="' + escapeHtml(item.unit || '-') + '">' + escapeHtml(item.unit || '-') + '</td>' +
+	                '<td class="accident-province-col" title="' + escapeHtml(item.province || '-') + '">' + escapeHtml(item.province || '-') + '</td>' +
+	                '<td><span class="badge badge-info">' + accidentName + '</span></td>' +
+	                '<td style="white-space: nowrap;">' + dateStr + '</td>' +
+	                '<td>' + escapeHtml(monthStr) + '</td>' +
+	                '<td><span class="panel-link" onclick="window._showAccidentDetail(' + item.id + ')">详情</span></td>' +
+	              '</tr>';
+	            });
             tbody.innerHTML = html;
             
             // 渲染分页组件
@@ -5604,7 +5604,6 @@
           '<div class="tab-item" data-three-education-tab="onboarding-training">入职培训</div>' +
           '<div class="tab-item" data-three-education-tab="record-query">记录查询</div>' +
         '</div>' +
-        '<div class="three-education-tab-title" id="threeEducationTabTitle">模板管理</div>' +
         '<div class="three-education-tab-body" id="threeEducationTabBody">' +
           renderThreeEducationTabBody(activeTab) +
         '</div>' +
@@ -6086,15 +6085,8 @@
 
   function initThreeEducation() {
     const tabNav = document.querySelector('.tab-nav[data-three-education-tabs]');
-    const title = document.getElementById('threeEducationTabTitle');
     const body = document.getElementById('threeEducationTabBody');
-    if (!tabNav || !title || !body) return;
-
-    const labelMap = {
-      'template-management': '模板管理',
-      'onboarding-training': '入职培训',
-      'record-query': '记录查询'
-    };
+    if (!tabNav || !body) return;
 
     tabNav.addEventListener('click', function (e) {
       const tab = e.target.closest('.tab-item[data-three-education-tab]');
@@ -6106,7 +6098,6 @@
       tab.classList.add('active');
 
       const key = tab.dataset.threeEducationTab;
-      title.textContent = labelMap[key] || '模板管理';
       body.innerHTML = renderThreeEducationTabBody(key);
       if (key === 'template-management') initThreeEducationTemplateManagement();
       if (key === 'onboarding-training') initThreeEducationOnboardingTraining();
