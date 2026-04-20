@@ -2410,11 +2410,11 @@ input {
 
 .weather-map-marker {
   cursor: pointer;
-  transition: transform var(--transition), opacity var(--transition);
+  transition: opacity var(--transition), filter var(--transition);
 }
 
 .weather-map-marker.is-active {
-  transform: scale(1.08);
+  filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.22));
 }
 
 .weather-map-marker-pulse {
