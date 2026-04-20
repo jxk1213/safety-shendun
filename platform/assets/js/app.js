@@ -460,7 +460,10 @@
         initEmergencyDrillPage();
         break;
       case 'personnel': mainContent.innerHTML = renderPersonnel(); break;
-      case 'facility': mainContent.innerHTML = renderFacility(); break;
+      case 'facility':
+        mainContent.innerHTML = renderFacility();
+        initFacility();
+        break;
       case 'facility-site-ledger':
         mainContent.innerHTML = renderFacilitySiteLedger();
         initFacilitySiteLedger();
@@ -7101,6 +7104,82 @@
   }
 
   // ============ 场地与设施管理 ============
+  function getFacilityFeatureGroups() {
+    return {
+      'site-info': {
+        title: '场地信息',
+        desc: '聚合场地基础档案与安全配置，便于统一维护各省区、中心与作业场地台账。',
+        cards: [
+          {
+            title: '场地信息台账',
+            desc: '全面记录各场地基础信息、面积、用途及安全设施配置',
+            bgColor: 'var(--primary-light)',
+            iconColor: 'var(--primary)',
+            stat: '进入台账管理',
+            page: 'facility-site-ledger'
+          }
+        ]
+      },
+      'equipment-safety': {
+        title: '设备设施安全',
+        desc: '围绕设备全生命周期管理巡检、维保与消防设施，集中处理设备设施安全相关工作。',
+        cards: [
+          {
+            title: '设备设施清单',
+            desc: '设备资产登记、维保计划与安全状态实时监控',
+            bgColor: 'var(--info-light)',
+            iconColor: 'var(--info)',
+            stat: '设备总量 856 台'
+          },
+          {
+            title: '设备巡检记录',
+            desc: '定期巡检任务管理与异常报修追踪',
+            bgColor: 'var(--warning-light)',
+            iconColor: 'var(--warning)',
+            stat: '待巡检 12 项'
+          },
+          {
+            title: '消防设施管理',
+            desc: '消防器材台账、检查记录与到期提醒',
+            bgColor: 'var(--danger-light)',
+            iconColor: 'var(--danger)',
+            stat: '消防器材 2,340 件'
+          },
+          {
+            title: '维保计划',
+            desc: '设备维护保养计划制定与执行跟踪',
+            bgColor: 'var(--primary-light)',
+            iconColor: 'var(--primary)',
+            stat: '本月计划 28 项'
+          }
+        ]
+      },
+      'area-planning': {
+        title: '区域划分',
+        desc: '按作业场景梳理作业区、仓储区与通行区等功能区域，明确区域安全等级与边界。',
+        cards: [
+          {
+            title: '区域安全划分',
+            desc: '作业区、仓储区、通行区等功能区域安全等级划分',
+            bgColor: 'var(--success-light)',
+            iconColor: 'var(--success)',
+            stat: '已划分 186 个区域'
+          }
+        ]
+      }
+    };
+  }
+
+  function renderFacilityFeaturePanel(activeTab) {
+    const featureGroups = getFacilityFeatureGroups();
+    const group = featureGroups[activeTab] || featureGroups['site-info'];
+    const cardsHtml = group.cards.map(function(card) {
+      return buildFeatureCard(card.title, card.desc, card.bgColor, card.iconColor, card.stat, card.page);
+    }).join('');
+
+    return '<div class="feature-grid" id="facilityFeatureGrid">' + cardsHtml + '</div>';
+  }
+
   function renderFacility() {
     return '' +
       '<div class="sub-page">' +
@@ -7118,21 +7197,31 @@
           '</div>' +
         '</div>' +
 
-        '<div class="tab-nav">' +
-          '<div class="tab-item active">场地信息</div>' +
-          '<div class="tab-item">设备设施安全</div>' +
-          '<div class="tab-item">区域划分</div>' +
+        '<div class="tab-nav" id="facilityTabNav">' +
+          '<div class="tab-item active" data-facility-tab="site-info">场地信息</div>' +
+          '<div class="tab-item" data-facility-tab="equipment-safety">设备设施安全</div>' +
+          '<div class="tab-item" data-facility-tab="area-planning">区域划分</div>' +
         '</div>' +
 
-        '<div class="feature-grid">' +
-          buildFeatureCard('场地信息台账', '全面记录各场地基础信息、面积、用途及安全设施配置', 'var(--primary-light)', 'var(--primary)', '进入台账管理', 'facility-site-ledger') +
-          buildFeatureCard('设备设施清单', '设备资产登记、维保计划与安全状态实时监控', 'var(--info-light)', 'var(--info)', '设备总量 856 台') +
-          buildFeatureCard('设备巡检记录', '定期巡检任务管理与异常报修追踪', 'var(--warning-light)', 'var(--warning)', '待巡检 12 项') +
-          buildFeatureCard('区域安全划分', '作业区、仓储区、通行区等功能区域安全等级划分', 'var(--success-light)', 'var(--success)', '已划分 186 个区域') +
-          buildFeatureCard('消防设施管理', '消防器材台账、检查记录与到期提醒', 'var(--danger-light)', 'var(--danger)', '消防器材 2,340 件') +
-          buildFeatureCard('维保计划', '设备维护保养计划制定与执行跟踪', 'var(--primary-light)', 'var(--primary)', '本月计划 28 项') +
-        '</div>' +
+        '<div id="facilityFeaturePanel">' + renderFacilityFeaturePanel('site-info') + '</div>' +
       '</div>';
+  }
+
+  function initFacility() {
+    const tabNav = document.getElementById('facilityTabNav');
+    const featurePanel = document.getElementById('facilityFeaturePanel');
+    if (!tabNav || !featurePanel) return;
+
+    tabNav.addEventListener('click', function (e) {
+      const tab = e.target.closest('.tab-item[data-facility-tab]');
+      if (!tab) return;
+
+      tabNav.querySelectorAll('.tab-item[data-facility-tab]').forEach(function (item) {
+        item.classList.remove('active');
+      });
+      tab.classList.add('active');
+      featurePanel.innerHTML = renderFacilityFeaturePanel(tab.dataset.facilityTab);
+    });
   }
 
   // ============ 场地信息台账 ============

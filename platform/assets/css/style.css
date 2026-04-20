@@ -145,6 +145,12 @@ input {
   overflow: hidden;
 }
 
+.logo-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .logo-title {
   font-size: 16px;
   font-weight: 700;
@@ -2217,49 +2223,41 @@ select {
 }
 
 .logo-area {
-  align-items: flex-start;
-  gap: 14px;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .logo-icon {
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05));
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 10px 24px rgba(15, 23, 42, 0.2);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 12px 26px rgba(15, 23, 42, 0.22);
 }
 
 .logo-text {
-  gap: 4px;
-}
-
-.sidebar-brand-badge {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(84, 122, 255, 0.14);
-  border: 1px solid rgba(137, 167, 255, 0.18);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #c8d8ff;
+  min-width: 0;
+  gap: 1px;
 }
 
 .logo-title {
-  font-size: 18px;
-  letter-spacing: 0.03em;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
 }
 
 .logo-sub {
   font-size: 11px;
-  color: rgba(214, 222, 235, 0.72);
-  letter-spacing: 0.03em;
+  color: rgba(214, 222, 235, 0.7);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .sidebar-toggle {
@@ -2344,33 +2342,6 @@ select {
   color: rgba(203, 213, 225, 0.88);
 }
 
-.sidebar-footer {
-  position: relative;
-  z-index: 1;
-  padding: 0 16px 16px;
-}
-
-.sidebar.collapsed .sidebar-status-copy {
-  display: none;
-}
-
-.sidebar.collapsed .sidebar-status-card {
-  justify-content: center;
-}
-
-.sidebar-status-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 16px 15px 14px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-}
-
-.sidebar-status-dot,
-.topbar-status-dot,
 .hero-side-status-dot {
   width: 8px;
   height: 8px;
@@ -2380,32 +2351,8 @@ select {
   flex: 0 0 auto;
 }
 
-.sidebar-status-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.sidebar-status-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #f8fafc;
-}
-
-.sidebar-status-desc {
-  font-size: 11px;
-  color: rgba(203, 213, 225, 0.72);
-  line-height: 1.4;
-}
-
 .sidebar.collapsed .nav-item::after {
   display: none;
-}
-
-.sidebar.collapsed .sidebar-footer {
-  padding-left: 12px;
-  padding-right: 12px;
 }
 
 .main-wrapper {
@@ -2475,19 +2422,6 @@ select {
 
 .topbar-right {
   gap: 12px;
-}
-
-.topbar-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(138, 153, 176, 0.16);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .topbar-search {
@@ -2964,10 +2898,6 @@ select {
 }
 
 @media (max-width: 1024px) {
-  .topbar-status {
-    display: none;
-  }
-
   .app-layout {
     padding: 12px;
     gap: 12px;
