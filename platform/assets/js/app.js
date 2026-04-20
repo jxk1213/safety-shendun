@@ -543,77 +543,97 @@
   // ============ 工作台（首页） ============
   function renderDashboard() {
     return '' +
-      '<div class="page-header">' +
-        '<div class="page-title">工作台</div>' +
-        '<div class="page-desc">申通快递安全管理平台 -- 全面掌控安全态势</div>' +
-      '</div>' +
+      '<div class="dashboard-shell">' +
+        '<div class="stats-row stats-row-compact">' +
+          buildStatCard('待处理隐患', '12', '较上周 +3', 'up',
+            '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', 'orange') +
+          buildStatCard('本月安全检查', '48', '完成率 92%', 'up',
+            '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>', 'blue') +
+          buildStatCard('培训完成人数', '326', '较上月 +58', 'up',
+            '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>', 'green') +
+          buildStatCard('连续安全运营', '32', '事故 0 起', 'stable',
+            '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>', 'slate') +
+        '</div>' +
 
-      // 统计卡片
-      '<div class="stats-row">' +
-        buildStatCard('待处理隐患', '12', '较上周 +3', 'up',
-          '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', 'orange') +
-        buildStatCard('本月安全检查', '48', '完成率 92%', 'up',
-          '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>', 'blue') +
-        buildStatCard('培训完成人数', '326', '较上月 +58', 'up',
-          '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>', 'green') +
-        buildStatCard('本月事故数', '0', '连续安全运营 32 天', 'up',
-          '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>', 'red') +
-      '</div>' +
+        '<div class="dashboard-main-grid">' +
+          '<div class="dashboard-stack">' +
+            '<div class="panel focus-panel">' +
+              '<div class="panel-header">' +
+                '<div>' +
+                  '<div class="panel-title">今日重点</div>' +
+                  '<div class="panel-subtitle">先处理对安全结果影响最大的事项</div>' +
+                '</div>' +
+                '<span class="panel-link">按优先级排序</span>' +
+              '</div>' +
+              '<div class="panel-body focus-list">' +
+                buildFocusItem('P1', '华东分拨中心消防隐患待整改', '整改截止 2026-04-20 · 责任人 安全主管', 'dual-prevention', '立即处理') +
+                buildFocusItem('P1', '3 月安全生产检查报告待审批', '总部审批流最后一环 · 当前停留 6 小时', 'dual-prevention', '待审批') +
+                buildFocusItem('P2', '新员工入职安全培训第 3 批待完成', '涉及 26 人 · 完成率 81%', 'training', '继续推进') +
+                buildFocusItem('P3', '叉车年检资质即将到期', '车辆设备 4 台 · 需在本周内更新', 'facility', '本周处理') +
+              '</div>' +
+            '</div>' +
 
-      // 快捷入口
-      '<div class="section-title">快捷入口</div>' +
-      '<div class="quick-actions">' +
-        buildQuickAction('隐患上报', 'var(--warning-light)', 'var(--warning)',
-          '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', 'dual-prevention') +
-        buildQuickAction('安全检查', 'var(--primary-light)', 'var(--primary)',
-          '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>', 'dual-prevention') +
-        buildQuickAction('事故上报', 'var(--danger-light)', 'var(--danger)',
-          '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', 'accident-emergency') +
-        buildQuickAction('培训报名', 'var(--success-light)', 'var(--success)',
-          '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>', 'training') +
-        buildQuickAction('文档查询', 'var(--info-light)', 'var(--info)',
-          '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', 'document') +
-      '</div>' +
-
-      // 双列面板
-      '<div class="two-col">' +
-        // 待办事项
-        '<div class="panel">' +
-          '<div class="panel-header">' +
-            '<div class="panel-title">待办事项</div>' +
-            '<span class="panel-link">查看全部</span>' +
+            '<div class="panel activity-panel">' +
+              '<div class="panel-header">' +
+                '<div>' +
+                  '<div class="panel-title">最新动态</div>' +
+                  '<div class="panel-subtitle">预警、事故、培训与系统消息统一收口</div>' +
+                '</div>' +
+                '<span class="panel-link">最近 24 小时</span>' +
+              '</div>' +
+              '<div class="panel-body activity-list">' +
+                buildActivityItem('warn', '暴雨黄色预警', '华东区域未来 24 小时有中到大雨，建议收紧装卸区巡检频次。', '10 分钟前') +
+                buildActivityItem('risk', '轻微叉车碰撞事件', '西南转运中心已完成初步登记，等待事故复盘与责任确认。', '2 小时前') +
+                buildActivityItem('info', 'Q1 安全培训成绩已发布', '可前往申安学堂查看培训完成情况与成绩分布。', '3 小时前') +
+                buildActivityItem('system', '系统维护通知', '今晚 22:00 至 23:00 进行系统升级，期间部分数据写入可能延迟。', '5 小时前') +
+              '</div>' +
+            '</div>' +
           '</div>' +
-          '<div class="panel-body">' +
-            '<ul class="todo-list">' +
-              buildTodoItem('urgent', '华东分拨中心消防隐患待整改', '2026-03-20 截止') +
-              buildTodoItem('urgent', '3月安全生产检查报告待审批', '2026-03-19 截止') +
-              buildTodoItem('normal', '新员工入职安全培训（第3批）', '2026-03-22 截止') +
-              buildTodoItem('normal', '叉车年检资质更新', '2026-03-25 截止') +
-              buildTodoItem('low', '安全文化月活动方案确认', '2026-03-28 截止') +
-            '</ul>' +
+
+          '<div class="dashboard-stack dashboard-stack-side">' +
+            '<div class="panel quick-panel">' +
+              '<div class="panel-header">' +
+                '<div>' +
+                  '<div class="panel-title">快捷入口</div>' +
+                  '<div class="panel-subtitle">高频操作集中在一处，减少层级跳转</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="panel-body">' +
+                '<div class="quick-actions quick-actions-compact">' +
+                  buildQuickAction('隐患上报', 'var(--warning-light)', 'var(--warning)',
+                    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', 'dual-prevention') +
+                  buildQuickAction('安全检查', 'var(--primary-light)', 'var(--primary)',
+                    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>', 'dual-prevention') +
+                  buildQuickAction('事故上报', 'var(--danger-light)', 'var(--danger)',
+                    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', 'accident-emergency') +
+                  buildQuickAction('培训计划', 'var(--success-light)', 'var(--success)',
+                    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>', 'training-plan') +
+                  buildQuickAction('资料查询', 'var(--info-light)', 'var(--info)',
+                    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', 'document') +
+                  buildQuickAction('安全大屏', 'var(--primary-light)', 'var(--primary)',
+                    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>', 'safety-dashboard') +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="panel insight-panel">' +
+              '<div class="panel-header">' +
+                '<div>' +
+                  '<div class="panel-title">执行观察</div>' +
+                  '<div class="panel-subtitle">帮助管理端快速判断压力点</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="panel-body insight-list">' +
+                '<div class="insight-item"><span>整改闭环效率</span><strong>88%</strong></div>' +
+                '<div class="insight-item"><span>培训计划推进率</span><strong>76%</strong></div>' +
+                '<div class="insight-item"><span>高风险区域巡检覆盖</span><strong>94%</strong></div>' +
+              '</div>' +
+            '</div>' +
           '</div>' +
         '</div>' +
 
-        // 最新通知
-        '<div class="panel">' +
-          '<div class="panel-header">' +
-            '<div class="panel-title">最新通知</div>' +
-            '<span class="panel-link">查看全部</span>' +
-          '</div>' +
-          '<div class="panel-body">' +
-            '<ul class="notice-list">' +
-              buildNoticeItem('warn', '预警', '暴雨黄色预警：华东区域未来24小时有大到暴雨', '10 分钟前') +
-              buildNoticeItem('err', '事故', '西南转运中心发生轻微叉车碰撞事件', '2 小时前') +
-              buildNoticeItem('info', '通知', '2026年Q1安全培训考核成绩已发布', '3 小时前') +
-              buildNoticeItem('info', '系统', '系统将于今晚 22:00-23:00 进行升级维护', '5 小时前') +
-            '</ul>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-
-      // 模块总览
-      '<div class="section-title">功能模块</div>' +
-      '<div class="module-grid">' +
+        '<div class="section-title">核心模块</div>' +
+        '<div class="module-grid module-grid-dashboard">' +
         buildModuleCard('dual-prevention', '双重预防机制', '建立风险分级管控和隐患排查治理双重预防体系，实现风险管理闭环。',
           ['风险分级管控', '隐患排查治理'], 'var(--primary-light)', 'var(--primary)') +
         buildModuleCard('accident-emergency', '事故与应急管理', '事故全流程管理与应急预案管理，包含天气预警、车辆预警等功能。',
@@ -634,6 +654,7 @@
           ['制度文件', '操作规程', '法规标准'], 'var(--primary-light)', 'var(--primary)') +
         buildModuleCard('system', '系统与权限管理', '系统用户权限配置，组织架构管理与操作日志审计。',
           ['用户权限', '组织架构', '日志审计'], 'var(--text-tertiary)', 'var(--text-secondary)') +
+        '</div>' +
       '</div>';
   }
 
@@ -13157,12 +13178,31 @@
   }
 
   // ============ 构建辅助函数 ============
-  function buildStatCard(label, value, colorClass, valueId) {
-    const idAttr = valueId ? ' id="' + valueId + '"' : '';
+  function buildStatCard(label, value, arg3, arg4, arg5, arg6) {
+    var toneClass = 'neutral';
+    var idAttr = '';
+    var meta = '';
+    var trendClass = 'neutral';
+    var iconSvg = '';
+
+    if (typeof arg5 === 'string' || typeof arg6 === 'string') {
+      meta = arg3 || '';
+      trendClass = arg4 || 'neutral';
+      iconSvg = arg5 || '';
+      toneClass = arg6 || 'neutral';
+    } else {
+      toneClass = arg3 || 'neutral';
+      idAttr = arg4 ? ' id="' + arg4 + '"' : '';
+    }
+
     return '' +
-      '<div class="stat-card ' + colorClass + '">' +
+      '<div class="stat-card ' + toneClass + (meta ? ' has-meta' : '') + '">' +
+        (iconSvg ? '<div class="stat-icon-wrap">' + iconSvg + '</div>' : '') +
         '<div class="stat-info">' +
-          '<div class="stat-label">' + label + '</div>' +
+          '<div class="stat-head">' +
+            '<div class="stat-label">' + label + '</div>' +
+            (meta ? '<div class="stat-meta stat-meta-' + trendClass + '">' + meta + '</div>' : '') +
+          '</div>' +
           '<div class="stat-value"' + idAttr + '>' + value + '</div>' +
         '</div>' +
       '</div>';
@@ -13173,6 +13213,29 @@
       '<div class="quick-action-item" data-page="' + page + '">' +
         '<div class="quick-action-icon" style="background:' + bgColor + ';color:' + iconColor + '">' + iconSvg + '</div>' +
         '<span class="quick-action-label">' + label + '</span>' +
+      '</div>';
+  }
+
+  function buildFocusItem(level, title, meta, page, status) {
+    return '' +
+      '<button class="focus-item" type="button" data-page="' + page + '">' +
+        '<span class="focus-level">' + level + '</span>' +
+        '<div class="focus-copy">' +
+          '<div class="focus-title">' + title + '</div>' +
+          '<div class="focus-meta">' + meta + '</div>' +
+        '</div>' +
+        '<span class="focus-status">' + status + '</span>' +
+      '</button>';
+  }
+
+  function buildActivityItem(type, title, desc, time) {
+    return '' +
+      '<div class="activity-item">' +
+        '<span class="activity-type ' + type + '">' + title + '</span>' +
+        '<div class="activity-copy">' +
+          '<div class="activity-desc">' + desc + '</div>' +
+          '<div class="activity-time">' + time + '</div>' +
+        '</div>' +
       '</div>';
   }
 
