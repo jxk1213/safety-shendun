@@ -632,30 +632,6 @@
             '</div>' +
           '</div>' +
         '</div>' +
-
-        '<div class="section-title">核心模块</div>' +
-        '<div class="module-grid module-grid-dashboard">' +
-        buildModuleCard('dual-prevention', '双重预防机制', '建立风险分级管控和隐患排查治理双重预防体系，实现风险管理闭环。',
-          ['风险分级管控', '隐患排查治理'], 'var(--primary-light)', 'var(--primary)') +
-        buildModuleCard('accident-emergency', '事故与应急管理', '事故全流程管理与应急预案管理，包含天气预警、车辆预警等功能。',
-          ['事故管理', '应急预案', '预警中心'], 'var(--danger-light)', 'var(--danger)') +
-        buildModuleCard('personnel', '人员安全管理', '管理全员安全档案，特种作业人员资质跟踪及外来人员安全管控。',
-          ['人员档案', '特种作业', '外来人员'], 'var(--success-light)', 'var(--success)') +
-        buildModuleCard('facility', '场地与设施管理', '场地信息台账管理，设备设施安全状态监控及区域划分管理。',
-          ['场地信息', '设备安全', '区域划分'], 'var(--info-light)', 'var(--info)') +
-        buildModuleCard('park', '园区综合管理', '园区整体运营安全管理，支持多场地协同与安防系统联动。',
-          ['运营安全', '多场地协同', '安防联动'], 'var(--primary-light)', 'var(--primary)') +
-        buildModuleCard('delivery-safety', '寄递安全管理', '保障寄递物品安全，实名登记管理及危险品识别检查。',
-          ['安全检查', '实名登记', '危险品识别'], 'var(--warning-light)', 'var(--warning)') +
-        buildModuleCard('training', '申安学堂', '安全培训课程管理，宣传资料分发及在线考试考核系统。',
-          ['安全培训', '宣传资料', '考试考核'], 'var(--success-light)', 'var(--success)') +
-        buildModuleCard('data-center', '数据与分析中心', '多维度统计报表与数据可视化，风险趋势分析与KPI考核。',
-          ['统计报表', '风险趋势', 'KPI'], 'var(--info-light)', 'var(--info)') +
-        buildModuleCard('document', '制度与文档管理', '安全管理制度文件统一管理，操作规程与法规标准库。',
-          ['制度文件', '操作规程', '法规标准'], 'var(--primary-light)', 'var(--primary)') +
-        buildModuleCard('system', '系统与权限管理', '系统用户权限配置，组织架构管理与操作日志审计。',
-          ['用户权限', '组织架构', '日志审计'], 'var(--text-tertiary)', 'var(--text-secondary)') +
-        '</div>' +
       '</div>';
   }
 
@@ -13420,20 +13396,72 @@
       '</div>';
   }
 
+  function getFeatureCardIcon(title) {
+    if (/事故上报/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3.5V12c0 4.4-2.9 8.42-7 9.6C7.9 20.42 5 16.4 5 12V6.5L12 3z"/><path d="M12 8v6"/><path d="M9 11h6"/></svg>';
+    }
+    if (/事故调查/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l4 4v11a3 3 0 0 1-3 3H9a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4z"/><path d="M15 3v4h4"/><circle cx="10.5" cy="13.5" r="2.5"/><path d="M12.3 15.3l1.7 1.7"/></svg>';
+    }
+    if (/事故统计|趋势分析|统计分析|综合报表|数据统计|KPI/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M7 16V9"/><path d="M12 16V5"/><path d="M17 16v-7"/></svg>';
+    }
+    if (/应急预案/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V9z"/><path d="M14 3v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>';
+    }
+    if (/应急处置/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 4.7-2.8 8.55-7 9.8-4.2-1.25-7-5.1-7-9.8V7l7-4z"/><path d="M9 12l2 2 4-4"/></svg>';
+    }
+    if (/应急演练|演练/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0-9-9"/><path d="M12 12l6-6"/><circle cx="12" cy="12" r="2.5"/></svg>';
+    }
+    if (/天气预警/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 1 1 .8-7.92A5.5 5.5 0 0 1 18 12.5 3.5 3.5 0 0 1 17.5 19H7z"/><path d="M12 12l-1 3h2l-1 3"/></svg>';
+    }
+    if (/车辆预警/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11l3 4h4v5h-2"/><path d="M3 7v9h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M17 8v3"/><path d="M15.5 9.5h3"/></svg>';
+    }
+    if (/消防/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3s1 2 1 4-1 3-1 3 4 1.5 4 5a6 6 0 0 1-12 0c0-4 3-5.5 5-7 1.5-1.2 2-2.5 2-5z"/><path d="M10.5 16.5c0 1 .7 1.8 1.5 2.5.8-.7 1.5-1.5 1.5-2.5 0-1.2-.9-2-1.5-2.8-.6.8-1.5 1.6-1.5 2.8z"/></svg>';
+    }
+    if (/设备|维保/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4l2 2-6 6-2-2z"/><path d="M14 6l4-4 4 4-4 4"/><path d="M12 8l4 4"/><path d="M7 13l4 4"/><path d="M5 19l3-3 3 3-3 3z"/></svg>';
+    }
+    if (/台账|文档|资料/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V9z"/><path d="M14 3v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/></svg>';
+    }
+    if (/课程|培训|学堂|考试|证书|教育/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l9-3 9 3-9 3-9-3z"/><path d="M7 9.5v4.5c0 1.7 2.2 3 5 3s5-1.3 5-3V9.5"/><path d="M21 9v5"/></svg>';
+    }
+    if (/园区|场地|区域|环境/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6"/><path d="M4 10h16"/></svg>';
+    }
+    if (/安防|出入口/.test(title)) {
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M10 12h4"/><circle cx="16" cy="12" r="0.8" fill="currentColor" stroke="none"/></svg>';
+    }
+    return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/></svg>';
+  }
+
   function buildFeatureCard(title, desc, bgColor, iconColor, stat, page) {
     const dataPage = page ? ' data-page="' + page + '"' : '';
+    const icon = getFeatureCardIcon(title);
     return '' +
-      '<div class="feature-card"' + dataPage + '>' +
-        '<div class="feature-card-header">' +
+      '<div class="feature-card"' + dataPage + ' style="--feature-soft:' + bgColor + ';--feature-accent:' + iconColor + ';">' +
+        '<div class="feature-card-body">' +
           '<div class="feature-card-icon" style="background:' + bgColor + ';color:' + iconColor + '">' +
-            '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/></svg>' +
+            icon +
           '</div>' +
-          '<div class="feature-card-title">' + title + '</div>' +
+          '<div class="feature-card-copy">' +
+            '<div class="feature-card-title">' + title + '</div>' +
+            '<div class="feature-card-desc">' + desc + '</div>' +
+          '</div>' +
         '</div>' +
-        '<div class="feature-card-desc">' + desc + '</div>' +
         '<div class="feature-card-footer">' +
           '<span class="feature-stat">' + stat + '</span>' +
-          '<span class="feature-link">进入 &rarr;</span>' +
+          '<span class="feature-link">' +
+            '<span>进入</span>' +
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M13 5l7 7-7 7"/></svg>' +
+          '</span>' +
         '</div>' +
       '</div>';
   }
