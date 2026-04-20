@@ -401,6 +401,7 @@
       item.classList.toggle('active', item.dataset.page === page);
     });
 
+    mainContent.classList.toggle('main-content-fullbleed', page === 'safety-dashboard');
     updateBreadcrumb(page);
     renderPage(page);
 
@@ -533,7 +534,7 @@
   // ============ 安全大屏 ============
   function renderSafetyDashboard() {
     return '' +
-      '<div style="margin: -24px; height: 100vh; width: calc(100% + 48px); display:flex; flex-direction:column; overflow:hidden;">' +
+      '<div style="height:100%; width:100%; display:flex; flex-direction:column; overflow:hidden;">' +
         '<div style="flex:1; width:100%; position:relative;">' +
           '<iframe src="safety-dashboard/index.html" style="width:100%; height:100%; border:none; background:#000; position:absolute; top:0; left:0;"></iframe>' +
         '</div>' +
