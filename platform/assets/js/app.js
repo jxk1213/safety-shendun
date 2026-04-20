@@ -128,6 +128,10 @@
       title: '事故上报',
       breadcrumb: ['首页', '核心业务', '事故与应急管理', '事故上报']
     },
+    'emergency-plan': {
+      title: '应急预案',
+      breadcrumb: ['首页', '核心业务', '事故与应急管理', '应急预案']
+    },
     personnel: {
       title: '人员安全管理',
       breadcrumb: ['首页', '基础要素', '人员安全管理']
@@ -436,6 +440,10 @@
       case 'accident-emergency':
         mainContent.innerHTML = renderAccidentEmergency();
         initAccidentEmergencyTab();
+        break;
+      case 'emergency-plan':
+        mainContent.innerHTML = renderEmergencyPlanPage();
+        initEmergencyPlanPage();
         break;
       case 'personnel': mainContent.innerHTML = renderPersonnel(); break;
       case 'facility': mainContent.innerHTML = renderFacility(); break;
@@ -4217,7 +4225,7 @@
               '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
               '事故上报' +
             '</button>' +
-            '<button class="btn btn-outline">预案管理</button>' +
+            '<button class="btn btn-outline" data-page="emergency-plan">预案管理</button>' +
           '</div>' +
         '</div>' +
 
@@ -4238,7 +4246,7 @@
 
         '<div id="emergencyPanel" class="accident-emergency-panel" style="display:none;">' +
           '<div class="feature-grid">' +
-            buildFeatureCard('应急预案', '各类应急预案编制、审核与发布管理', 'var(--primary-light)', 'var(--primary)', '生效预案 15 个') +
+            buildFeatureCard('应急预案', '各类应急预案编制、审核与发布管理', 'var(--primary-light)', 'var(--primary)', '生效预案 15 个', 'emergency-plan') +
             buildFeatureCard('应急处置', '应急响应流程指导与资源调度协调', 'var(--danger-light)', 'var(--danger)', '本月处置 1 次') +
           '</div>' +
         '</div>' +
@@ -4256,6 +4264,666 @@
           '</div>' +
         '</div>' +
       '</div>';
+  }
+
+  // ============ 应急预案（轻量版） ============
+  function renderEmergencyPlanPage() {
+    return '' +
+      '<div class="sub-page">' +
+        '<div class="page-header">' +
+          '<div>' +
+            '<div class="page-title">应急预案</div>' +
+            '<div class="page-desc">轻量化预案台账：检索、版本、状态与快速维护</div>' +
+          '</div>' +
+          '<div class="page-actions">' +
+            '<button class="btn btn-outline" data-page="accident-emergency">返回</button>' +
+            '<button class="btn btn-primary" id="epCreateBtn" type="button">' +
+              '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+              '新建预案' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="stats-row" style="margin-bottom:16px;" id="epKpiRow">' +
+          buildStatCard('生效预案', '-', 'green', 'epKpiActive') +
+          buildStatCard('草稿', '-', 'orange', 'epKpiDraft') +
+          buildStatCard('待审核', '-', 'blue', 'epKpiReview') +
+          buildStatCard('停用', '-', 'red', 'epKpiDisabled') +
+        '</div>' +
+
+        '<div class="data-table-wrapper">' +
+          '<div class="table-toolbar">' +
+            '<div class="table-toolbar-left">' +
+              '<div class="table-filter">' +
+                '<span>状态：</span>' +
+                '<select id="epStatusFilter">' +
+                  '<option value="">全部</option>' +
+                  '<option value="生效">生效</option>' +
+                  '<option value="草稿">草稿</option>' +
+                  '<option value="待审核">待审核</option>' +
+                  '<option value="停用">停用</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="table-filter">' +
+                '<span>类别：</span>' +
+                '<select id="epTypeFilter">' +
+                  '<option value="">全部</option>' +
+                  '<option value="火灾爆炸">火灾爆炸</option>' +
+                  '<option value="极端天气">极端天气</option>' +
+                  '<option value="交通事故">交通事故</option>' +
+                  '<option value="公共卫生">公共卫生</option>' +
+                  '<option value="综合">综合</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="table-filter">' +
+                '<span>等级：</span>' +
+                '<select id="epLevelFilter">' +
+                  '<option value="">全部</option>' +
+                  '<option value="Ⅰ级">Ⅰ级</option>' +
+                  '<option value="Ⅱ级">Ⅱ级</option>' +
+                  '<option value="Ⅲ级">Ⅲ级</option>' +
+                  '<option value="Ⅳ级">Ⅳ级</option>' +
+                '</select>' +
+              '</div>' +
+            '</div>' +
+            '<div class="table-search" style="min-width: 260px;">' +
+              '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+              '<input type="text" id="epSearchInput" placeholder="搜索预案名称/版本/范围...">' +
+            '</div>' +
+          '</div>' +
+          '<div class="data-table-scroll">' +
+            '<table class="data-table" id="epTable">' +
+              '<thead><tr>' +
+                '<th style="width:84px;">编号</th>' +
+                '<th>预案名称</th>' +
+                '<th style="width:110px;">类别</th>' +
+                '<th style="width:90px;">等级</th>' +
+                '<th>适用范围</th>' +
+                '<th style="width:90px;">版本</th>' +
+                '<th style="width:100px;">状态</th>' +
+                '<th style="width:150px;">更新日期</th>' +
+                '<th style="width:220px;">操作</th>' +
+              '</tr></thead>' +
+              '<tbody id="epTbody">' +
+                '<tr><td colspan="9" style="padding: 24px; color: var(--text-tertiary); text-align:center;">加载中...</td></tr>' +
+              '</tbody>' +
+            '</table>' +
+          '</div>' +
+          '<div class="table-pagination" style="border-top: 1px solid var(--border);">' +
+            '<span id="epTotalText">共 0 条记录</span>' +
+            '<div class="pagination-btns" id="epPager"></div>' +
+          '</div>' +
+        '</div>' +
+
+        // 新建/编辑弹窗
+        '<div class="modal-overlay" id="epEditModalOverlay" style="display:none;">' +
+          '<div class="modal" style="max-width: 760px;">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title" id="epEditModalTitle">新建预案</div>' +
+              '<button class="modal-close" id="epEditModalClose">' +
+                '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+              '<div class="form-grid">' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label required">预案名称</label>' +
+                  '<input id="epFormName" type="text" placeholder="例如：转运中心火灾应急预案">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label required">类别</label>' +
+                  '<select id="epFormType">' +
+                    '<option value="火灾爆炸">火灾爆炸</option>' +
+                    '<option value="极端天气">极端天气</option>' +
+                    '<option value="交通事故">交通事故</option>' +
+                    '<option value="公共卫生">公共卫生</option>' +
+                    '<option value="综合">综合</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label required">等级</label>' +
+                  '<select id="epFormLevel">' +
+                    '<option value="Ⅲ级">Ⅲ级</option>' +
+                    '<option value="Ⅱ级">Ⅱ级</option>' +
+                    '<option value="Ⅰ级">Ⅰ级</option>' +
+                    '<option value="Ⅳ级">Ⅳ级</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label required">适用范围</label>' +
+                  '<input id="epFormScope" type="text" placeholder="例如：华东区域 / 上海青浦转运中心">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">版本</label>' +
+                  '<input id="epFormVersion" type="text" placeholder="v1.0">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label required">状态</label>' +
+                  '<select id="epFormStatus">' +
+                    '<option value="草稿">草稿</option>' +
+                    '<option value="待审核">待审核</option>' +
+                    '<option value="生效">生效</option>' +
+                    '<option value="停用">停用</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">责任人</label>' +
+                  '<input id="epFormOwner" type="text" placeholder="例如：安全主管">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">生效日期</label>' +
+                  '<input id="epFormEffectiveAt" type="date">' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">备注</label>' +
+                  '<textarea id="epFormRemark" rows="3" placeholder="可填写关键联系方式、重点动作卡等说明"></textarea>' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">预案文件</label>' +
+                  '<input id="epFormFile" type="file" style="padding: 10px 12px;" />' +
+                  '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:6px;">' +
+                    '<div id="epFormFileInfo" style="font-size:12px; color: var(--text-tertiary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">未选择文件</div>' +
+                    '<button class="btn btn-outline btn-sm" id="epFormFileClear" type="button" style="display:none;">清除</button>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<input id="epFormId" type="hidden" value="">' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-outline" id="epEditModalCancel" type="button">取消</button>' +
+              '<button class="btn btn-primary" id="epEditModalSave" type="button">保存</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        // 详情弹窗
+        '<div class="modal-overlay" id="epDetailModalOverlay" style="display:none;">' +
+          '<div class="modal" style="max-width: 760px;">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title">预案详情</div>' +
+              '<button class="modal-close" id="epDetailModalClose">' +
+                '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '</button>' +
+            '</div>' +
+            '<div class="modal-body" id="epDetailBody">' +
+              '<div style="color: var(--text-tertiary); text-align:center; padding: 20px 0;">加载中...</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-outline" id="epDetailModalOk" type="button">关闭</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function initEmergencyPlanPage() {
+    var STORE_KEY = 'sd_emergency_plans_v1';
+    var pageSize = 8;
+    var currentPage = 1;
+    var allRows = [];
+
+    var tbody = document.getElementById('epTbody');
+    var pager = document.getElementById('epPager');
+    var totalText = document.getElementById('epTotalText');
+
+    var statusFilter = document.getElementById('epStatusFilter');
+    var typeFilter = document.getElementById('epTypeFilter');
+    var levelFilter = document.getElementById('epLevelFilter');
+    var searchInput = document.getElementById('epSearchInput');
+
+    var createBtn = document.getElementById('epCreateBtn');
+
+    var editOverlay = document.getElementById('epEditModalOverlay');
+    var editTitle = document.getElementById('epEditModalTitle');
+    var editClose = document.getElementById('epEditModalClose');
+    var editCancel = document.getElementById('epEditModalCancel');
+    var editSave = document.getElementById('epEditModalSave');
+
+    var formId = document.getElementById('epFormId');
+    var formName = document.getElementById('epFormName');
+    var formType = document.getElementById('epFormType');
+    var formLevel = document.getElementById('epFormLevel');
+    var formScope = document.getElementById('epFormScope');
+    var formVersion = document.getElementById('epFormVersion');
+    var formStatus = document.getElementById('epFormStatus');
+    var formOwner = document.getElementById('epFormOwner');
+    var formEffectiveAt = document.getElementById('epFormEffectiveAt');
+    var formRemark = document.getElementById('epFormRemark');
+    var formFile = document.getElementById('epFormFile');
+    var formFileInfo = document.getElementById('epFormFileInfo');
+    var formFileClear = document.getElementById('epFormFileClear');
+
+    var detailOverlay = document.getElementById('epDetailModalOverlay');
+    var detailBody = document.getElementById('epDetailBody');
+    var detailClose = document.getElementById('epDetailModalClose');
+    var detailOk = document.getElementById('epDetailModalOk');
+
+    var pendingFileMeta = null; // { name, type, size, dataUrl, uploadedAt }
+    var keepExistingFile = null;
+    var fileReading = false;
+
+    function safeJsonParse(text) {
+      try { return JSON.parse(text); } catch (e) { return null; }
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function humanFileSize(bytes) {
+      if (!bytes && bytes !== 0) return '-';
+      var n = Number(bytes);
+      if (isNaN(n) || n < 0) return '-';
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+      if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
+      return (n / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+    }
+
+    function setFileInfoText(text) {
+      if (formFileInfo) formFileInfo.textContent = text || '';
+    }
+
+    function setFileClearVisible(visible) {
+      if (!formFileClear) return;
+      formFileClear.style.display = visible ? 'inline-flex' : 'none';
+    }
+
+    function resetFileState() {
+      pendingFileMeta = null;
+      keepExistingFile = null;
+      fileReading = false;
+      if (formFile) formFile.value = '';
+      setFileInfoText('未选择文件');
+      setFileClearVisible(false);
+    }
+
+    function formatTime(ts) {
+      if (!ts) return '-';
+      try {
+        var d = new Date(ts);
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+      } catch (e) {
+        return '-';
+      }
+    }
+
+    function getSeedRows() {
+      var now = Date.now();
+      return [
+        { id: 'EP-202601-001', name: '转运中心火灾应急预案', type: '火灾爆炸', level: 'Ⅱ级', scope: '华东区域 / 上海青浦转运中心', version: 'v1.2', status: '生效', owner: '安全主管', effectiveAt: '2026-01-15', remark: '重点：夜班值守、疏散集合点、消防水源', updatedAt: now - 86400000 * 12 },
+        { id: 'EP-202602-002', name: '强对流天气应急预案', type: '极端天气', level: 'Ⅲ级', scope: '华中区域 / 多中心通用', version: 'v1.0', status: '生效', owner: '应急专员', effectiveAt: '2026-02-06', remark: '关注雷暴大风、短时强降雨', updatedAt: now - 86400000 * 8 },
+        { id: 'EP-202603-003', name: '车辆事故应急预案（干线）', type: '交通事故', level: 'Ⅲ级', scope: '干线运输 / 全国通用', version: 'v1.1', status: '待审核', owner: '运输经理', effectiveAt: '', remark: '事故上报链路、现场处置与联络机制', updatedAt: now - 86400000 * 5 },
+        { id: 'EP-202603-004', name: '公共卫生突发事件应急预案', type: '公共卫生', level: 'Ⅳ级', scope: '办公区 / 现场作业区', version: 'v1.0', status: '草稿', owner: '行政', effectiveAt: '', remark: '隔离区、消杀、人员健康监测', updatedAt: now - 86400000 * 3 },
+        { id: 'EP-202512-005', name: '综合应急预案（公司级）', type: '综合', level: 'Ⅰ级', scope: '公司级 / 全区域', version: 'v2.0', status: '生效', owner: '安委办', effectiveAt: '2025-12-20', remark: '统一指挥体系与信息报送口径', updatedAt: now - 86400000 * 40 },
+        { id: 'EP-202411-006', name: '仓储区火灾应急预案（旧版）', type: '火灾爆炸', level: 'Ⅲ级', scope: '华南区域 / 广州花都转运中心', version: 'v0.9', status: '停用', owner: '安全员', effectiveAt: '2024-11-02', remark: '已被新版替代', updatedAt: now - 86400000 * 120 }
+      ];
+    }
+
+    function loadRows() {
+      var raw = localStorage.getItem(STORE_KEY);
+      var parsed = raw ? safeJsonParse(raw) : null;
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        allRows = getSeedRows();
+        localStorage.setItem(STORE_KEY, JSON.stringify(allRows));
+        return;
+      }
+      allRows = parsed;
+    }
+
+    function saveRows() {
+      localStorage.setItem(STORE_KEY, JSON.stringify(allRows));
+    }
+
+    function statusBadge(status) {
+      var cls = 'status-badge info';
+      if (status === '生效') cls = 'status-badge success';
+      else if (status === '草稿') cls = 'status-badge warning';
+      else if (status === '待审核') cls = 'status-badge info';
+      else if (status === '停用') cls = 'status-badge danger';
+      return '<span class="' + cls + '">' + escapeHtml(status) + '</span>';
+    }
+
+    function calcCounts(rows) {
+      var counts = { '生效': 0, '草稿': 0, '待审核': 0, '停用': 0 };
+      rows.forEach(function (r) {
+        if (counts.hasOwnProperty(r.status)) counts[r.status] += 1;
+      });
+      return counts;
+    }
+
+    function updateKpis(counts) {
+      var a = document.getElementById('epKpiActive');
+      var d = document.getElementById('epKpiDraft');
+      var r = document.getElementById('epKpiReview');
+      var x = document.getElementById('epKpiDisabled');
+      if (a) a.textContent = String(counts['生效'] || 0);
+      if (d) d.textContent = String(counts['草稿'] || 0);
+      if (r) r.textContent = String(counts['待审核'] || 0);
+      if (x) x.textContent = String(counts['停用'] || 0);
+    }
+
+    function getFilters() {
+      var s = (statusFilter && statusFilter.value) ? statusFilter.value : '';
+      var t = (typeFilter && typeFilter.value) ? typeFilter.value : '';
+      var l = (levelFilter && levelFilter.value) ? levelFilter.value : '';
+      var q = (searchInput && searchInput.value) ? String(searchInput.value).trim().toLowerCase() : '';
+      return { status: s, type: t, level: l, q: q };
+    }
+
+    function matches(row, f) {
+      if (f.status && row.status !== f.status) return false;
+      if (f.type && row.type !== f.type) return false;
+      if (f.level && row.level !== f.level) return false;
+      if (f.q) {
+        var hay = [row.id, row.name, row.scope, row.version, row.owner].join(' ').toLowerCase();
+        if (hay.indexOf(f.q) === -1) return false;
+      }
+      return true;
+    }
+
+    function renderPager(total) {
+      if (!pager) return;
+      var totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      var html = '';
+      function btn(label, page, active, disabled) {
+        return '<button class="pagination-btn' + (active ? ' active' : '') + '" data-page="' + page + '" ' + (disabled ? 'disabled' : '') + '>' + label + '</button>';
+      }
+      html += btn('&lt;', currentPage - 1, false, currentPage <= 1);
+      var start = Math.max(1, currentPage - 2);
+      var end = Math.min(totalPages, start + 4);
+      start = Math.max(1, end - 4);
+      for (var p = start; p <= end; p++) html += btn(String(p), p, p === currentPage, false);
+      html += btn('&gt;', currentPage + 1, false, currentPage >= totalPages);
+      pager.innerHTML = html;
+    }
+
+    function renderTable() {
+      loadRows();
+      var f = getFilters();
+      var filtered = allRows.filter(function (r) { return matches(r, f); });
+      var total = filtered.length;
+      var counts = calcCounts(allRows);
+      updateKpis(counts);
+
+      if (totalText) totalText.textContent = '共 ' + total + ' 条记录';
+      renderPager(total);
+
+      var startIdx = (currentPage - 1) * pageSize;
+      var pageRows = filtered.slice(startIdx, startIdx + pageSize);
+      if (!tbody) return;
+
+      if (pageRows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="padding: 24px; color: var(--text-tertiary); text-align:center;">暂无数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pageRows.map(function (r) {
+        var canDownload = !!(r && r.file && r.file.dataUrl);
+        return '' +
+          '<tr data-id="' + escapeHtml(r.id) + '">' +
+            '<td>' + escapeHtml(r.id) + '</td>' +
+            '<td style="min-width:220px;">' + escapeHtml(r.name) + '</td>' +
+            '<td>' + escapeHtml(r.type) + '</td>' +
+            '<td>' + escapeHtml(r.level) + '</td>' +
+            '<td style="min-width:240px;">' + escapeHtml(r.scope) + '</td>' +
+            '<td>' + escapeHtml(r.version || '-') + '</td>' +
+            '<td>' + statusBadge(r.status) + '</td>' +
+            '<td>' + escapeHtml(formatTime(r.updatedAt)) + '</td>' +
+            '<td style="white-space:nowrap;">' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="view">查看</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="edit" style="margin-left:6px;">编辑</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="download" style="margin-left:6px;" ' + (canDownload ? '' : 'disabled') + '>下载</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="delete" style="margin-left:6px;">删除</button>' +
+            '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function openEditModal(mode, row) {
+      if (!editOverlay) return;
+      editTitle.textContent = mode === 'edit' ? '编辑预案' : '新建预案';
+      formId.value = row ? (row.id || '') : '';
+      formName.value = row ? (row.name || '') : '';
+      formType.value = row ? (row.type || '火灾爆炸') : '火灾爆炸';
+      formLevel.value = row ? (row.level || 'Ⅲ级') : 'Ⅲ级';
+      formScope.value = row ? (row.scope || '') : '';
+      formVersion.value = row ? (row.version || '') : 'v1.0';
+      formStatus.value = row ? (row.status || '草稿') : '草稿';
+      formOwner.value = row ? (row.owner || '') : '';
+      formEffectiveAt.value = row ? (row.effectiveAt || '') : '';
+      formRemark.value = row ? (row.remark || '') : '';
+      pendingFileMeta = null;
+      keepExistingFile = (row && row.file) ? row.file : null;
+      fileReading = false;
+      if (formFile) formFile.value = '';
+      if (keepExistingFile && keepExistingFile.name) {
+        setFileInfoText('已上传：' + keepExistingFile.name + (keepExistingFile.size ? ('（' + humanFileSize(keepExistingFile.size) + '）') : ''));
+        setFileClearVisible(true);
+      } else {
+        setFileInfoText('未选择文件');
+        setFileClearVisible(false);
+      }
+      editOverlay.style.display = 'flex';
+      setTimeout(function () { try { formName.focus(); } catch (e) {} }, 0);
+    }
+
+    function closeEditModal() {
+      if (editOverlay) editOverlay.style.display = 'none';
+    }
+
+    function openDetailModal(row) {
+      if (!detailOverlay || !detailBody) return;
+      var html = '' +
+        '<div class="panel" style="margin:0;">' +
+          '<div class="panel-body">' +
+            '<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">' +
+              '<div>' +
+                '<div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">' + escapeHtml(row.name) + '</div>' +
+                '<div style="font-size:12.5px;color:var(--text-tertiary);">编号：' + escapeHtml(row.id) + ' · 版本：' + escapeHtml(row.version || '-') + '</div>' +
+              '</div>' +
+              '<div>' + statusBadge(row.status) + '</div>' +
+            '</div>' +
+            '<div style="margin-top:14px;" class="form-grid">' +
+              '<div class="form-field"><div class="form-label">类别</div><div>' + escapeHtml(row.type) + '</div></div>' +
+              '<div class="form-field"><div class="form-label">等级</div><div>' + escapeHtml(row.level) + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">适用范围</div><div>' + escapeHtml(row.scope) + '</div></div>' +
+              '<div class="form-field"><div class="form-label">责任人</div><div>' + escapeHtml(row.owner || '-') + '</div></div>' +
+              '<div class="form-field"><div class="form-label">生效日期</div><div>' + escapeHtml(row.effectiveAt || '-') + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">备注</div><div style="white-space:pre-wrap; color: var(--text-secondary);">' + escapeHtml(row.remark || '-') + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">最近更新</div><div>' + escapeHtml(formatTime(row.updatedAt)) + '</div></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      detailBody.innerHTML = html;
+      detailOverlay.style.display = 'flex';
+    }
+
+    function closeDetailModal() {
+      if (detailOverlay) detailOverlay.style.display = 'none';
+    }
+
+    function ensureRequired() {
+      if (!String(formName.value || '').trim()) return '请填写预案名称';
+      if (!String(formScope.value || '').trim()) return '请填写适用范围';
+      return '';
+    }
+
+    function makeId() {
+      var d = new Date();
+      var y = d.getFullYear();
+      var m = pad2(d.getMonth() + 1);
+      var suffix = String(Math.floor(Math.random() * 900) + 100);
+      return 'EP-' + y + m + '-' + suffix;
+    }
+
+    function saveForm() {
+      var err = ensureRequired();
+      if (err) { alert(err); return; }
+      if (fileReading) { alert('文件读取中，请稍候再保存'); return; }
+      loadRows();
+      var id = String(formId.value || '').trim();
+      var now = Date.now();
+      var fileToSave = pendingFileMeta ? pendingFileMeta : keepExistingFile;
+      var payload = {
+        id: id || makeId(),
+        name: String(formName.value || '').trim(),
+        type: String(formType.value || '').trim(),
+        level: String(formLevel.value || '').trim(),
+        scope: String(formScope.value || '').trim(),
+        version: String(formVersion.value || '').trim(),
+        status: String(formStatus.value || '').trim(),
+        owner: String(formOwner.value || '').trim(),
+        effectiveAt: String(formEffectiveAt.value || '').trim(),
+        remark: String(formRemark.value || '').trim(),
+        file: fileToSave || null,
+        updatedAt: now
+      };
+      var idx = allRows.findIndex(function (r) { return String(r.id) === String(payload.id); });
+      if (idx >= 0) allRows[idx] = payload;
+      else allRows.unshift(payload);
+      saveRows();
+      closeEditModal();
+      renderTable();
+    }
+
+    function handleTableAction(action, id) {
+      loadRows();
+      var row = allRows.find(function (r) { return String(r.id) === String(id); });
+      if (!row) return;
+      if (action === 'view') openDetailModal(row);
+      else if (action === 'edit') openEditModal('edit', row);
+      else if (action === 'download') {
+        if (!row.file || !row.file.dataUrl) { alert('该预案未上传文件'); return; }
+        var a = document.createElement('a');
+        a.href = row.file.dataUrl;
+        a.download = row.file.name || (row.name ? (row.name + '.file') : '预案文件');
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        try { a.click(); } finally { setTimeout(function () { try { document.body.removeChild(a); } catch (e) {} }, 0); }
+      }
+      else if (action === 'delete') {
+        if (!confirm('确认删除：' + row.name + ' ?')) return;
+        allRows = allRows.filter(function (r) { return String(r.id) !== String(id); });
+        saveRows();
+        renderTable();
+      }
+    }
+
+    // 事件绑定
+    if (createBtn) createBtn.addEventListener('click', function () { openEditModal('add', null); });
+    [statusFilter, typeFilter, levelFilter].forEach(function (el) {
+      if (!el) return;
+      el.addEventListener('change', function () { currentPage = 1; renderTable(); });
+    });
+    if (searchInput) {
+      var timer = null;
+      searchInput.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () { currentPage = 1; renderTable(); }, 150);
+      });
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { currentPage = 1; renderTable(); }
+      });
+    }
+    if (pager) {
+      pager.addEventListener('click', function (e) {
+        var btn = e.target.closest('button.pagination-btn');
+        if (!btn || btn.disabled) return;
+        var p = parseInt(btn.dataset.page, 10);
+        if (!isNaN(p) && p >= 1) {
+          currentPage = p;
+          renderTable();
+        }
+      });
+    }
+    if (tbody) {
+      tbody.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        var tr = e.target.closest('tr[data-id]');
+        if (!tr) return;
+        var id = tr.getAttribute('data-id');
+        var action = btn.getAttribute('data-action');
+        handleTableAction(action, id);
+      });
+    }
+
+    if (editClose) editClose.addEventListener('click', closeEditModal);
+    if (editCancel) editCancel.addEventListener('click', closeEditModal);
+    if (editOverlay) editOverlay.addEventListener('click', function (e) { if (e.target === editOverlay) closeEditModal(); });
+    if (editSave) editSave.addEventListener('click', saveForm);
+    if (formFile) {
+      formFile.addEventListener('change', function () {
+        var f = (formFile.files && formFile.files[0]) ? formFile.files[0] : null;
+        if (!f) {
+          pendingFileMeta = null;
+          fileReading = false;
+          if (keepExistingFile && keepExistingFile.name) {
+            setFileInfoText('已上传：' + keepExistingFile.name + (keepExistingFile.size ? ('（' + humanFileSize(keepExistingFile.size) + '）') : ''));
+            setFileClearVisible(true);
+          } else {
+            setFileInfoText('未选择文件');
+            setFileClearVisible(false);
+          }
+          return;
+        }
+        fileReading = true;
+        pendingFileMeta = null;
+        setFileInfoText('读取中：' + f.name);
+        setFileClearVisible(true);
+        var reader = new FileReader();
+        reader.onload = function () {
+          fileReading = false;
+          keepExistingFile = null;
+          pendingFileMeta = {
+            name: f.name,
+            type: f.type || 'application/octet-stream',
+            size: f.size,
+            dataUrl: reader.result,
+            uploadedAt: Date.now()
+          };
+          setFileInfoText('已选择：' + f.name + '（' + humanFileSize(f.size) + '）');
+        };
+        reader.onerror = function () {
+          fileReading = false;
+          pendingFileMeta = null;
+          alert('文件读取失败，请重试');
+          if (formFile) formFile.value = '';
+          if (keepExistingFile && keepExistingFile.name) {
+            setFileInfoText('已上传：' + keepExistingFile.name + (keepExistingFile.size ? ('（' + humanFileSize(keepExistingFile.size) + '）') : ''));
+            setFileClearVisible(true);
+          } else {
+            setFileInfoText('未选择文件');
+            setFileClearVisible(false);
+          }
+        };
+        try { reader.readAsDataURL(f); } catch (e) {
+          fileReading = false;
+          pendingFileMeta = null;
+          alert('文件读取失败，请重试');
+          if (formFile) formFile.value = '';
+          setFileInfoText('未选择文件');
+          setFileClearVisible(false);
+        }
+      });
+    }
+    if (formFileClear) {
+      formFileClear.addEventListener('click', function () {
+        pendingFileMeta = null;
+        keepExistingFile = null;
+        fileReading = false;
+        if (formFile) formFile.value = '';
+        setFileInfoText('未选择文件');
+        setFileClearVisible(false);
+      });
+    }
+
+    if (detailClose) detailClose.addEventListener('click', closeDetailModal);
+    if (detailOk) detailOk.addEventListener('click', closeDetailModal);
+    if (detailOverlay) detailOverlay.addEventListener('click', function (e) { if (e.target === detailOverlay) closeDetailModal(); });
+
+    // 首次渲染
+    renderTable();
   }
 
   function renderAccidentStatistics() {
