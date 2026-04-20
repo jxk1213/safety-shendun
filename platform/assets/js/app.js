@@ -128,6 +128,10 @@
       title: '事故上报',
       breadcrumb: ['首页', '核心业务', '事故与应急管理', '事故上报']
     },
+    'accident-investigation': {
+      title: '事故调查',
+      breadcrumb: ['首页', '核心业务', '事故与应急管理', '事故调查']
+    },
     'emergency-plan': {
       title: '应急预案',
       breadcrumb: ['首页', '核心业务', '事故与应急管理', '应急预案']
@@ -230,6 +234,7 @@
     '双重预防机制': 'dual-prevention',
     '事故与应急管理': 'accident-emergency',
     '事故上报': 'accident-report',
+    '事故调查': 'accident-investigation',
     '人员安全管理': 'personnel',
     '场地与设施管理': 'facility',
     '场地信息台账': 'facility-site-ledger',
@@ -464,6 +469,10 @@
       case 'accident-report':
         mainContent.innerHTML = renderAccidentReport();
         initAccidentReport();
+        break;
+      case 'accident-investigation':
+        mainContent.innerHTML = renderAccidentInvestigationPage();
+        initAccidentInvestigationPage();
         break;
       case 'training':
         mainContent.innerHTML = renderTraining();
@@ -4247,7 +4256,7 @@
         '<div id="accidentPanel" class="accident-emergency-panel">' +
           '<div class="feature-grid">' +
             buildFeatureCard('事故上报', '快速上报安全事故，支持拍照取证与定位', 'var(--danger-light)', 'var(--danger)', '本月上报 2 起', 'accident-report') +
-            buildFeatureCard('事故调查', '事故原因分析、责任认定与整改跟踪', 'var(--warning-light)', 'var(--warning)', '进行中 1 项') +
+            buildFeatureCard('事故调查', '事故原因分析、责任认定与整改跟踪', 'var(--warning-light)', 'var(--warning)', '进行中 1 项', 'accident-investigation') +
             buildFeatureCard('事故统计', '多维度事故数据统计与趋势分析', 'var(--info-light)', 'var(--info)', '累计 23 起', 'accident-statistics') +
           '</div>' +
         '</div>' +
@@ -4641,6 +4650,188 @@
             '</div>' +
             '<div class="modal-footer">' +
               '<button class="btn btn-outline" id="edDetailModalOk" type="button">关闭</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // ============ 事故调查（轻量版） ============
+  function renderAccidentInvestigationPage() {
+    return '' +
+      '<div class="sub-page">' +
+        '<div class="page-header">' +
+          '<div>' +
+            '<div class="page-title">事故调查</div>' +
+            '<div class="page-desc">轻量化调查台账：根因分析、责任认定、整改闭环与资料留痕</div>' +
+          '</div>' +
+          '<div class="page-actions">' +
+            '<button class="btn btn-outline" data-page="accident-emergency">返回</button>' +
+            '<button class="btn btn-primary" id="aiCreateBtn" type="button">' +
+              '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+              '新建调查' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="stats-row" style="margin-bottom:16px;" id="aiKpiRow">' +
+          buildStatCard('进行中', '-', 'orange', 'aiKpiOpen') +
+          buildStatCard('待复核', '-', 'blue', 'aiKpiReview') +
+          buildStatCard('已结案', '-', 'green', 'aiKpiClosed') +
+          buildStatCard('超期', '-', 'red', 'aiKpiOverdue') +
+        '</div>' +
+
+        '<div class="data-table-wrapper">' +
+          '<div class="table-toolbar">' +
+            '<div class="table-toolbar-left">' +
+              '<div class="table-filter">' +
+                '<span>状态：</span>' +
+                '<select id="aiStatusFilter">' +
+                  '<option value="">全部</option>' +
+                  '<option value="调查中">调查中</option>' +
+                  '<option value="待复核">待复核</option>' +
+                  '<option value="已结案">已结案</option>' +
+                  '<option value="已挂起">已挂起</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="table-filter">' +
+                '<span>等级：</span>' +
+                '<select id="aiLevelFilter">' +
+                  '<option value="">全部</option>' +
+                  '<option value="一般">一般</option>' +
+                  '<option value="较大">较大</option>' +
+                  '<option value="重大">重大</option>' +
+                '</select>' +
+              '</div>' +
+            '</div>' +
+            '<div class="table-search" style="min-width: 280px;">' +
+              '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+              '<input type="text" id="aiSearchInput" placeholder="搜索调查主题/编号/责任单位/事故类型...">' +
+            '</div>' +
+          '</div>' +
+          '<div class="data-table-scroll">' +
+            '<table class="data-table" id="aiTable">' +
+              '<thead><tr>' +
+                '<th style="width:92px;">编号</th>' +
+                '<th>调查主题</th>' +
+                '<th style="width:110px;">事故类型</th>' +
+                '<th style="width:120px;">责任单位</th>' +
+                '<th style="width:100px;">状态</th>' +
+                '<th style="width:110px;">截止日期</th>' +
+                '<th style="width:150px;">更新日期</th>' +
+                '<th style="width:260px;">操作</th>' +
+              '</tr></thead>' +
+              '<tbody id="aiTbody">' +
+                '<tr><td colspan="8" style="padding: 24px; color: var(--text-tertiary); text-align:center;">加载中...</td></tr>' +
+              '</tbody>' +
+            '</table>' +
+          '</div>' +
+          '<div class="table-pagination" style="border-top: 1px solid var(--border);">' +
+            '<span id="aiTotalText">共 0 条记录</span>' +
+            '<div class="pagination-btns" id="aiPager"></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="modal-overlay" id="aiEditModalOverlay" style="display:none;">' +
+          '<div class="modal" style="max-width: 860px;">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title" id="aiEditModalTitle">新建调查</div>' +
+              '<button class="modal-close" id="aiEditModalClose">' +
+                '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+              '<div class="form-grid">' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label required">调查主题</label>' +
+                  '<input id="aiFormTitle" type="text" placeholder="例如：上海青浦转运中心叉车刮碰事故调查">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label required">事故类型</label>' +
+                  '<select id="aiFormCategory">' +
+                    '<option value="人员伤害">人员伤害</option>' +
+                    '<option value="设备事故">设备事故</option>' +
+                    '<option value="车辆事故">车辆事故</option>' +
+                    '<option value="消防事件">消防事件</option>' +
+                    '<option value="其他">其他</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label required">事故等级</label>' +
+                  '<select id="aiFormLevel">' +
+                    '<option value="一般">一般</option>' +
+                    '<option value="较大">较大</option>' +
+                    '<option value="重大">重大</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">责任单位</label>' +
+                  '<input id="aiFormDept" type="text" placeholder="例如：上海青浦转运中心">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">调查负责人</label>' +
+                  '<input id="aiFormOwner" type="text" placeholder="例如：安全经理">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label required">状态</label>' +
+                  '<select id="aiFormStatus">' +
+                    '<option value="调查中">调查中</option>' +
+                    '<option value="待复核">待复核</option>' +
+                    '<option value="已结案">已结案</option>' +
+                    '<option value="已挂起">已挂起</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">截止日期</label>' +
+                  '<input id="aiFormDueDate" type="date">' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">事故经过</label>' +
+                  '<textarea id="aiFormSummary" rows="3" placeholder="简要记录事故经过、时间、地点和关键人员"></textarea>' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">原因分析</label>' +
+                  '<textarea id="aiFormCause" rows="3" placeholder="可填写直接原因、间接原因、管理原因等"></textarea>' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">责任认定</label>' +
+                  '<textarea id="aiFormResponsibility" rows="3" placeholder="可填写主体责任、管理责任及处理建议"></textarea>' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">整改措施</label>' +
+                  '<textarea id="aiFormAction" rows="3" placeholder="例如：设备加装防护、重新培训、限时整改等"></textarea>' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">调查附件</label>' +
+                  '<input id="aiFormFile" type="file" style="padding: 10px 12px;" />' +
+                  '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:6px;">' +
+                    '<div id="aiFormFileInfo" style="font-size:12px; color: var(--text-tertiary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">未选择文件</div>' +
+                    '<button class="btn btn-outline btn-sm" id="aiFormFileClear" type="button" style="display:none;">清除</button>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<input id="aiFormId" type="hidden" value="">' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-outline" id="aiEditModalCancel" type="button">取消</button>' +
+              '<button class="btn btn-primary" id="aiEditModalSave" type="button">保存</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="modal-overlay" id="aiDetailModalOverlay" style="display:none;">' +
+          '<div class="modal" style="max-width: 860px;">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title">调查详情</div>' +
+              '<button class="modal-close" id="aiDetailModalClose">' +
+                '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '</button>' +
+            '</div>' +
+            '<div class="modal-body" id="aiDetailBody">' +
+              '<div style="color: var(--text-tertiary); text-align:center; padding: 20px 0;">加载中...</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-outline" id="aiDetailModalOk" type="button">关闭</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -5681,6 +5872,535 @@
     if (detailOverlay) detailOverlay.addEventListener('click', function (e) { if (e.target === detailOverlay) closeDetailModal(); });
 
     // 首次渲染
+    renderTable();
+  }
+
+  function initAccidentInvestigationPage() {
+    var STORE_KEY = 'sd_accident_investigations_v1';
+    var pageSize = 8;
+    var currentPage = 1;
+    var allRows = [];
+
+    var createBtn = document.getElementById('aiCreateBtn');
+    var statusFilter = document.getElementById('aiStatusFilter');
+    var levelFilter = document.getElementById('aiLevelFilter');
+    var searchInput = document.getElementById('aiSearchInput');
+    var tbody = document.getElementById('aiTbody');
+    var pager = document.getElementById('aiPager');
+    var totalText = document.getElementById('aiTotalText');
+
+    var editOverlay = document.getElementById('aiEditModalOverlay');
+    var editTitle = document.getElementById('aiEditModalTitle');
+    var editClose = document.getElementById('aiEditModalClose');
+    var editCancel = document.getElementById('aiEditModalCancel');
+    var editSave = document.getElementById('aiEditModalSave');
+
+    var formId = document.getElementById('aiFormId');
+    var formTitle = document.getElementById('aiFormTitle');
+    var formCategory = document.getElementById('aiFormCategory');
+    var formLevel = document.getElementById('aiFormLevel');
+    var formDept = document.getElementById('aiFormDept');
+    var formOwner = document.getElementById('aiFormOwner');
+    var formStatus = document.getElementById('aiFormStatus');
+    var formDueDate = document.getElementById('aiFormDueDate');
+    var formSummary = document.getElementById('aiFormSummary');
+    var formCause = document.getElementById('aiFormCause');
+    var formResponsibility = document.getElementById('aiFormResponsibility');
+    var formAction = document.getElementById('aiFormAction');
+    var formFile = document.getElementById('aiFormFile');
+    var formFileInfo = document.getElementById('aiFormFileInfo');
+    var formFileClear = document.getElementById('aiFormFileClear');
+
+    var detailOverlay = document.getElementById('aiDetailModalOverlay');
+    var detailBody = document.getElementById('aiDetailBody');
+    var detailClose = document.getElementById('aiDetailModalClose');
+    var detailOk = document.getElementById('aiDetailModalOk');
+
+    var pendingFileMeta = null;
+    var keepExistingFile = null;
+    var fileReading = false;
+
+    function safeJsonParse(text) {
+      try { return JSON.parse(text); } catch (e) { return null; }
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function formatTime(ts) {
+      if (!ts) return '-';
+      try {
+        var d = new Date(ts);
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+      } catch (e) {
+        return '-';
+      }
+    }
+
+    function ymdToDate(ymd) {
+      if (!ymd) return null;
+      var d = new Date(String(ymd) + 'T00:00:00');
+      if (isNaN(d.getTime())) return null;
+      return d;
+    }
+
+    function humanFileSize(bytes) {
+      if (!bytes && bytes !== 0) return '-';
+      var n = Number(bytes);
+      if (isNaN(n) || n < 0) return '-';
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+      if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
+      return (n / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+    }
+
+    function setFileInfoText(text) {
+      if (formFileInfo) formFileInfo.textContent = text || '';
+    }
+
+    function setFileClearVisible(visible) {
+      if (formFileClear) formFileClear.style.display = visible ? 'inline-flex' : 'none';
+    }
+
+    function resetFileState() {
+      pendingFileMeta = null;
+      keepExistingFile = null;
+      fileReading = false;
+      if (formFile) formFile.value = '';
+      setFileInfoText('未选择文件');
+      setFileClearVisible(false);
+    }
+
+    function getSeedRows() {
+      var now = Date.now();
+      var today = new Date();
+      function offset(days) {
+        var d = new Date(today.getTime() + days * 86400000);
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }
+      return [
+        {
+          id: 'AI-202604-001',
+          title: '青浦转运中心叉车刮碰事故调查',
+          category: '设备事故',
+          level: '一般',
+          dept: '上海青浦转运中心',
+          owner: '安全经理',
+          status: '调查中',
+          dueDate: offset(3),
+          summary: '夜班叉车转弯时与护栏刮碰，造成轻微设备损坏。',
+          cause: '现场照度不足，叉车司机转弯未充分观察。',
+          responsibility: '属现场管理与当班司机双重责任。',
+          action: '补充反光标识，优化夜班巡检并组织再培训。',
+          file: null,
+          updatedAt: now - 86400000 * 2
+        },
+        {
+          id: 'AI-202604-002',
+          title: '干线车辆追尾事故责任复核',
+          category: '车辆事故',
+          level: '较大',
+          dept: '干线运输中心',
+          owner: '运输安全专员',
+          status: '待复核',
+          dueDate: offset(1),
+          summary: '高速路段追尾，司机轻伤，车辆受损。',
+          cause: '疲劳驾驶风险识别不足，跟车距离控制不当。',
+          responsibility: '驾驶员直接责任，排班审核存在管理责任。',
+          action: '压降连续驾驶时长，复盘班次排布并开展专项培训。',
+          file: null,
+          updatedAt: now - 86400000
+        },
+        {
+          id: 'AI-202603-003',
+          title: '仓储区烟感误报事件结案调查',
+          category: '消防事件',
+          level: '一般',
+          dept: '广州花都转运中心',
+          owner: '消防主管',
+          status: '已结案',
+          dueDate: offset(-5),
+          summary: '烟感受粉尘干扰触发误报，无人员伤亡。',
+          cause: '设备维护不到位，仓储扬尘控制不足。',
+          responsibility: '设备维保单位与现场管理均有改进空间。',
+          action: '完成清洗校准，新增月度保养与粉尘管控检查。',
+          file: null,
+          updatedAt: now - 86400000 * 6
+        }
+      ];
+    }
+
+    function loadRows() {
+      var raw = localStorage.getItem(STORE_KEY);
+      var parsed = raw ? safeJsonParse(raw) : null;
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        allRows = getSeedRows();
+        localStorage.setItem(STORE_KEY, JSON.stringify(allRows));
+        return;
+      }
+      allRows = parsed;
+    }
+
+    function saveRows() {
+      localStorage.setItem(STORE_KEY, JSON.stringify(allRows));
+    }
+
+    function statusBadge(status) {
+      var cls = 'status-badge info';
+      if (status === '调查中') cls = 'status-badge warning';
+      else if (status === '待复核') cls = 'status-badge info';
+      else if (status === '已结案') cls = 'status-badge success';
+      else if (status === '已挂起') cls = 'status-badge danger';
+      return '<span class="' + cls + '">' + escapeHtml(status || '-') + '</span>';
+    }
+
+    function updateKpis(rows) {
+      var openEl = document.getElementById('aiKpiOpen');
+      var reviewEl = document.getElementById('aiKpiReview');
+      var closedEl = document.getElementById('aiKpiClosed');
+      var overdueEl = document.getElementById('aiKpiOverdue');
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var counts = { open: 0, review: 0, closed: 0, overdue: 0 };
+
+      rows.forEach(function (row) {
+        if (row.status === '调查中') counts.open += 1;
+        if (row.status === '待复核') counts.review += 1;
+        if (row.status === '已结案') counts.closed += 1;
+        var dueDate = ymdToDate(row.dueDate);
+        if (dueDate && dueDate < today && row.status !== '已结案') counts.overdue += 1;
+      });
+
+      if (openEl) openEl.textContent = String(counts.open);
+      if (reviewEl) reviewEl.textContent = String(counts.review);
+      if (closedEl) closedEl.textContent = String(counts.closed);
+      if (overdueEl) overdueEl.textContent = String(counts.overdue);
+    }
+
+    function getFilters() {
+      var s = statusFilter && statusFilter.value ? statusFilter.value : '';
+      var l = levelFilter && levelFilter.value ? levelFilter.value : '';
+      var q = searchInput && searchInput.value ? String(searchInput.value).trim().toLowerCase() : '';
+      return { status: s, level: l, q: q };
+    }
+
+    function matches(row, filters) {
+      if (filters.status && row.status !== filters.status) return false;
+      if (filters.level && row.level !== filters.level) return false;
+      if (filters.q) {
+        var hay = [row.id, row.title, row.dept, row.category, row.owner].join(' ').toLowerCase();
+        if (hay.indexOf(filters.q) === -1) return false;
+      }
+      return true;
+    }
+
+    function renderPager(total) {
+      if (!pager) return;
+      var totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      var html = '';
+
+      function btn(label, page, active, disabled) {
+        return '<button class="pagination-btn' + (active ? ' active' : '') + '" data-page="' + page + '" ' + (disabled ? 'disabled' : '') + '>' + label + '</button>';
+      }
+
+      html += btn('&lt;', currentPage - 1, false, currentPage <= 1);
+      var start = Math.max(1, currentPage - 2);
+      var end = Math.min(totalPages, start + 4);
+      start = Math.max(1, end - 4);
+      for (var p = start; p <= end; p++) html += btn(String(p), p, p === currentPage, false);
+      html += btn('&gt;', currentPage + 1, false, currentPage >= totalPages);
+      pager.innerHTML = html;
+    }
+
+    function renderTable() {
+      loadRows();
+      updateKpis(allRows);
+      var filters = getFilters();
+      var filtered = allRows.filter(function (row) { return matches(row, filters); });
+      var total = filtered.length;
+      if (totalText) totalText.textContent = '共 ' + total + ' 条记录';
+      renderPager(total);
+
+      var startIdx = (currentPage - 1) * pageSize;
+      var pageRows = filtered.slice(startIdx, startIdx + pageSize);
+      if (!tbody) return;
+      if (pageRows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="padding:24px; color: var(--text-tertiary); text-align:center;">暂无数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pageRows.map(function (row) {
+        var canDownload = !!(row.file && row.file.dataUrl);
+        return '' +
+          '<tr data-id="' + escapeHtml(row.id) + '">' +
+            '<td>' + escapeHtml(row.id) + '</td>' +
+            '<td style="min-width:240px;">' + escapeHtml(row.title) + '</td>' +
+            '<td>' + escapeHtml(row.category || '-') + '</td>' +
+            '<td>' + escapeHtml(row.dept || '-') + '</td>' +
+            '<td>' + statusBadge(row.status) + '</td>' +
+            '<td>' + escapeHtml(row.dueDate || '-') + '</td>' +
+            '<td>' + escapeHtml(formatTime(row.updatedAt)) + '</td>' +
+            '<td style="white-space:nowrap;">' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="view">查看</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="edit" style="margin-left:6px;">编辑</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="download" style="margin-left:6px;" ' + (canDownload ? '' : 'disabled') + '>下载</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="delete" style="margin-left:6px;">删除</button>' +
+            '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function openEditModal(mode, row) {
+      if (!editOverlay) return;
+      editTitle.textContent = mode === 'edit' ? '编辑调查' : '新建调查';
+      formId.value = row ? row.id || '' : '';
+      formTitle.value = row ? row.title || '' : '';
+      formCategory.value = row ? row.category || '人员伤害' : '人员伤害';
+      formLevel.value = row ? row.level || '一般' : '一般';
+      formDept.value = row ? row.dept || '' : '';
+      formOwner.value = row ? row.owner || '' : '';
+      formStatus.value = row ? row.status || '调查中' : '调查中';
+      formDueDate.value = row ? row.dueDate || '' : '';
+      formSummary.value = row ? row.summary || '' : '';
+      formCause.value = row ? row.cause || '' : '';
+      formResponsibility.value = row ? row.responsibility || '' : '';
+      formAction.value = row ? row.action || '' : '';
+
+      pendingFileMeta = null;
+      keepExistingFile = row && row.file ? row.file : null;
+      fileReading = false;
+      if (formFile) formFile.value = '';
+      if (keepExistingFile && keepExistingFile.name) {
+        setFileInfoText('已上传：' + keepExistingFile.name + (keepExistingFile.size ? ('（' + humanFileSize(keepExistingFile.size) + '）') : ''));
+        setFileClearVisible(true);
+      } else {
+        setFileInfoText('未选择文件');
+        setFileClearVisible(false);
+      }
+
+      editOverlay.style.display = 'flex';
+      setTimeout(function () { try { formTitle.focus(); } catch (e) {} }, 0);
+    }
+
+    function closeEditModal() {
+      if (editOverlay) editOverlay.style.display = 'none';
+      resetFileState();
+    }
+
+    function openDetailModal(row) {
+      if (!detailOverlay || !detailBody) return;
+      var fileHtml = '-';
+      if (row.file && row.file.name && row.file.dataUrl) {
+        fileHtml = '<button class="btn btn-outline btn-sm" type="button" data-action="download" data-id="' + escapeHtml(row.id) + '">下载：' + escapeHtml(row.file.name) + '</button>';
+      }
+      detailBody.innerHTML = '' +
+        '<div class="panel" style="margin:0;">' +
+          '<div class="panel-body">' +
+            '<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">' +
+              '<div>' +
+                '<div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">' + escapeHtml(row.title) + '</div>' +
+                '<div style="font-size:12.5px;color:var(--text-tertiary);">编号：' + escapeHtml(row.id) + ' · 调查负责人：' + escapeHtml(row.owner || '-') + '</div>' +
+              '</div>' +
+              '<div>' + statusBadge(row.status) + '</div>' +
+            '</div>' +
+            '<div style="margin-top:14px;" class="form-grid">' +
+              '<div class="form-field"><div class="form-label">事故类型</div><div>' + escapeHtml(row.category || '-') + '</div></div>' +
+              '<div class="form-field"><div class="form-label">事故等级</div><div>' + escapeHtml(row.level || '-') + '</div></div>' +
+              '<div class="form-field"><div class="form-label">责任单位</div><div>' + escapeHtml(row.dept || '-') + '</div></div>' +
+              '<div class="form-field"><div class="form-label">截止日期</div><div>' + escapeHtml(row.dueDate || '-') + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">事故经过</div><div style="white-space:pre-wrap; color: var(--text-secondary);">' + escapeHtml(row.summary || '-') + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">原因分析</div><div style="white-space:pre-wrap; color: var(--text-secondary);">' + escapeHtml(row.cause || '-') + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">责任认定</div><div style="white-space:pre-wrap; color: var(--text-secondary);">' + escapeHtml(row.responsibility || '-') + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">整改措施</div><div style="white-space:pre-wrap; color: var(--text-secondary);">' + escapeHtml(row.action || '-') + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">调查附件</div><div>' + fileHtml + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">最近更新</div><div>' + escapeHtml(formatTime(row.updatedAt)) + '</div></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      detailOverlay.style.display = 'flex';
+    }
+
+    function closeDetailModal() {
+      if (detailOverlay) detailOverlay.style.display = 'none';
+    }
+
+    function ensureRequired() {
+      if (!String(formTitle.value || '').trim()) return '请填写调查主题';
+      return '';
+    }
+
+    function makeId() {
+      var d = new Date();
+      return 'AI-' + d.getFullYear() + pad2(d.getMonth() + 1) + '-' + String(Math.floor(Math.random() * 900) + 100);
+    }
+
+    function saveForm() {
+      var err = ensureRequired();
+      if (err) { alert(err); return; }
+      if (fileReading) { alert('文件读取中，请稍候再保存'); return; }
+
+      loadRows();
+      var id = String(formId.value || '').trim();
+      var payload = {
+        id: id || makeId(),
+        title: String(formTitle.value || '').trim(),
+        category: String(formCategory.value || '').trim(),
+        level: String(formLevel.value || '').trim(),
+        dept: String(formDept.value || '').trim(),
+        owner: String(formOwner.value || '').trim(),
+        status: String(formStatus.value || '').trim(),
+        dueDate: String(formDueDate.value || '').trim(),
+        summary: String(formSummary.value || '').trim(),
+        cause: String(formCause.value || '').trim(),
+        responsibility: String(formResponsibility.value || '').trim(),
+        action: String(formAction.value || '').trim(),
+        file: pendingFileMeta ? pendingFileMeta : keepExistingFile,
+        updatedAt: Date.now()
+      };
+
+      var idx = allRows.findIndex(function (row) { return String(row.id) === String(payload.id); });
+      if (idx >= 0) allRows[idx] = payload;
+      else allRows.unshift(payload);
+      saveRows();
+      closeEditModal();
+      renderTable();
+    }
+
+    function downloadRowFile(row) {
+      if (!row || !row.file || !row.file.dataUrl) { alert('该调查未上传附件'); return; }
+      var a = document.createElement('a');
+      a.href = row.file.dataUrl;
+      a.download = row.file.name || (row.title ? (row.title + '.file') : '调查附件');
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      try { a.click(); } finally { setTimeout(function () { try { document.body.removeChild(a); } catch (e) {} }, 0); }
+    }
+
+    function handleTableAction(action, id) {
+      loadRows();
+      var row = allRows.find(function (item) { return String(item.id) === String(id); });
+      if (!row) return;
+      if (action === 'view') openDetailModal(row);
+      else if (action === 'edit') openEditModal('edit', row);
+      else if (action === 'download') downloadRowFile(row);
+      else if (action === 'delete') {
+        if (!confirm('确认删除：' + row.title + ' ?')) return;
+        allRows = allRows.filter(function (item) { return String(item.id) !== String(id); });
+        saveRows();
+        renderTable();
+      }
+    }
+
+    if (createBtn) createBtn.addEventListener('click', function () { openEditModal('add', null); });
+    [statusFilter, levelFilter].forEach(function (el) {
+      if (!el) return;
+      el.addEventListener('change', function () { currentPage = 1; renderTable(); });
+    });
+    if (searchInput) {
+      var timer = null;
+      searchInput.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () { currentPage = 1; renderTable(); }, 150);
+      });
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { currentPage = 1; renderTable(); }
+      });
+    }
+    if (pager) {
+      pager.addEventListener('click', function (e) {
+        var btn = e.target.closest('button.pagination-btn');
+        if (!btn || btn.disabled) return;
+        var p = parseInt(btn.dataset.page, 10);
+        if (!isNaN(p) && p >= 1) {
+          currentPage = p;
+          renderTable();
+        }
+      });
+    }
+    if (tbody) {
+      tbody.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        var tr = e.target.closest('tr[data-id]');
+        if (!tr) return;
+        handleTableAction(btn.getAttribute('data-action'), tr.getAttribute('data-id'));
+      });
+    }
+    if (detailBody) {
+      detailBody.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-action="download"][data-id]');
+        if (!btn) return;
+        handleTableAction('download', btn.getAttribute('data-id'));
+      });
+    }
+
+    if (editClose) editClose.addEventListener('click', closeEditModal);
+    if (editCancel) editCancel.addEventListener('click', closeEditModal);
+    if (editOverlay) editOverlay.addEventListener('click', function (e) { if (e.target === editOverlay) closeEditModal(); });
+    if (editSave) editSave.addEventListener('click', saveForm);
+
+    if (formFile) {
+      formFile.addEventListener('change', function () {
+        var file = formFile.files && formFile.files[0] ? formFile.files[0] : null;
+        if (!file) {
+          pendingFileMeta = null;
+          fileReading = false;
+          if (keepExistingFile && keepExistingFile.name) {
+            setFileInfoText('已上传：' + keepExistingFile.name + (keepExistingFile.size ? ('（' + humanFileSize(keepExistingFile.size) + '）') : ''));
+            setFileClearVisible(true);
+          } else {
+            setFileInfoText('未选择文件');
+            setFileClearVisible(false);
+          }
+          return;
+        }
+
+        fileReading = true;
+        pendingFileMeta = null;
+        setFileInfoText('读取中：' + file.name);
+        setFileClearVisible(true);
+        var reader = new FileReader();
+        reader.onload = function () {
+          fileReading = false;
+          keepExistingFile = null;
+          pendingFileMeta = {
+            name: file.name,
+            type: file.type || 'application/octet-stream',
+            size: file.size,
+            dataUrl: reader.result,
+            uploadedAt: Date.now()
+          };
+          setFileInfoText('已选择：' + file.name + '（' + humanFileSize(file.size) + '）');
+        };
+        reader.onerror = function () {
+          fileReading = false;
+          pendingFileMeta = null;
+          if (formFile) formFile.value = '';
+          alert('文件读取失败，请重试');
+          setFileInfoText('未选择文件');
+          setFileClearVisible(false);
+        };
+        try { reader.readAsDataURL(file); } catch (e) {
+          fileReading = false;
+          pendingFileMeta = null;
+          if (formFile) formFile.value = '';
+          alert('文件读取失败，请重试');
+          setFileInfoText('未选择文件');
+          setFileClearVisible(false);
+        }
+      });
+    }
+
+    if (formFileClear) {
+      formFileClear.addEventListener('click', function () {
+        resetFileState();
+      });
+    }
+
+    if (detailClose) detailClose.addEventListener('click', closeDetailModal);
+    if (detailOk) detailOk.addEventListener('click', closeDetailModal);
+    if (detailOverlay) detailOverlay.addEventListener('click', function (e) { if (e.target === detailOverlay) closeDetailModal(); });
+
     renderTable();
   }
 
