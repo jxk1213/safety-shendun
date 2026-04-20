@@ -4,6 +4,40 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+
+  const content = fs.readFileSync(filePath, 'utf-8');
+  content.split(/\r?\n/).forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+
+    const match = trimmed.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+    if (!match) return;
+
+    const key = match[1];
+    let value = match[2].trim();
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    if (process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  });
+}
+
+[
+  path.join(__dirname, '..', '.env.local'),
+  path.join(__dirname, '..', '.env'),
+  path.join(__dirname, '.env.local'),
+  path.join(__dirname, '.env')
+].forEach(loadEnvFile);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -32,6 +66,7 @@ const checklistRoutes = require('./routes/checklists');
 const accidentRoutes = require('./routes/accidents');
 const siteLedgerRoutes = require('./routes/site_ledger');
 const onboardingTrainingRoutes = require('./routes/onboarding_trainings');
+const weatherRoutes = require('./routes/weather');
 
 app.use('/api/risks', riskRoutes);
 app.use('/api/hazards', hazardRoutes);
@@ -40,6 +75,7 @@ app.use('/api/checklists', checklistRoutes);
 app.use('/api/accidents', accidentRoutes);
 app.use('/api/site-ledger', siteLedgerRoutes);
 app.use('/api/onboarding-trainings', onboardingTrainingRoutes);
+app.use('/api/weather', weatherRoutes);
 
 // H5 join page for onboarding training QR (keep URL short)
 app.get('/ot/:token', (req, res) => {

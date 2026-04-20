@@ -2002,7 +2002,7 @@ input {
 .weather-warning-page {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .weather-warning-hero {
@@ -2110,14 +2110,19 @@ input {
 
 .weather-warning-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(280px, 320px);
-  gap: 18px;
-  min-height: 760px;
+  grid-template-columns: minmax(240px, 280px) minmax(680px, 1.85fr) minmax(240px, 280px);
+  gap: 20px;
+  min-height: 840px;
+  align-items: stretch;
 }
 
 .weather-side-column,
 .weather-map-stage {
   min-width: 0;
+}
+
+.weather-side-column {
+  display: flex;
 }
 
 .weather-side-panel,
@@ -2176,6 +2181,7 @@ input {
   gap: 12px;
   overflow-y: auto;
   padding-right: 4px;
+  min-height: 0;
 }
 
 .weather-warning-card {
@@ -2195,7 +2201,6 @@ input {
 }
 
 .weather-warning-card-top,
-.weather-warning-actions,
 .weather-warning-meta {
   display: flex;
   align-items: center;
@@ -2263,14 +2268,10 @@ input {
   font-size: 12px;
 }
 
-.weather-warning-actions {
-  margin-top: 14px;
-}
-
 .weather-map-stage {
   display: flex;
   flex-direction: column;
-  padding: 18px;
+  padding: 20px;
 }
 
 .weather-map-topbar {
@@ -2278,7 +2279,7 @@ input {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 
 .weather-map-legend {
@@ -2322,6 +2323,7 @@ input {
 .weather-map-toptext {
   font-size: 12px;
   color: var(--text-tertiary);
+  text-align: right;
 }
 
 .weather-map-shell {
@@ -2329,6 +2331,7 @@ input {
   overflow: hidden;
   flex: 1;
   min-height: 0;
+  min-height: 650px;
   border-radius: 22px;
   background:
     radial-gradient(circle at 18% 18%, rgba(14, 165, 233, 0.18), transparent 28%),
@@ -2376,11 +2379,11 @@ input {
   z-index: 1;
   width: 100%;
   height: 100%;
-  min-height: 530px;
+  min-height: 620px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  padding: 14px 10px 8px;
 }
 
 .weather-map-loading {
@@ -2389,8 +2392,9 @@ input {
 }
 
 .weather-china-map {
-  width: 100%;
-  height: 100%;
+  width: min(100%, 1080px);
+  height: auto;
+  max-height: 100%;
   filter: drop-shadow(0 24px 36px rgba(37, 99, 235, 0.08));
 }
 
@@ -2557,6 +2561,17 @@ input {
   color: var(--text-tertiary);
 }
 
+.weather-empty-state {
+  padding: 18px 16px;
+  border-radius: 16px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px dashed rgba(148, 163, 184, 0.24);
+  color: var(--text-tertiary);
+  font-size: 13px;
+  line-height: 1.7;
+  text-align: center;
+}
+
 .lite-toast {
   position: fixed;
   top: 24px;
@@ -2648,6 +2663,10 @@ input {
     height: auto;
   }
 
+  .weather-map-shell {
+    min-height: 560px;
+  }
+
   .weather-summary-centers {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -2701,6 +2720,10 @@ input {
   .weather-map-topbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .weather-map-toptext {
+    text-align: left;
   }
 
   .weather-map-host {

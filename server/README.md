@@ -31,7 +31,15 @@
    npm install
    ```
 
-4. **启动服务器**
+4. **配置天气接口 key（如需天气大屏）**
+   - 在项目根目录创建 `.env.local`
+   - 填写：
+     ```bash
+     JUHE_WEATHER_API_KEY=你的聚合天气key
+     ```
+   - 仓库已忽略 `.env.local`，提交代码时不会带上真实 key
+
+5. **启动服务器**
    - 方式一 (直接启动):
      ```bash
      npm start

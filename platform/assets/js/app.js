@@ -15,9 +15,13 @@
   var loadHazardsFromAPI = function () { };
   var weatherWarningState = {
     alerts: [],
+    centerWeather: [],
     activeProvince: '',
     dispatched: {},
-    mapReady: false
+    mapReady: false,
+    source: 'mock',
+    message: '',
+    stats: null
   };
 
   function fetchLocationsData() {
@@ -4281,7 +4285,7 @@
           '<div class="tab-item active" data-tab="accident">事故管理</div>' +
           '<div class="tab-item" data-tab="emergency">应急预案</div>' +
           '<div class="tab-item" data-tab="drill">演练记录</div>' +
-          '<div class="tab-item" data-tab="warning">预警中心</div>' +
+          '<div class="tab-item" data-tab="warning">天气预警</div>' +
         '</div>' +
 
         '<div id="accidentPanel" class="accident-emergency-panel">' +
@@ -4542,22 +4546,56 @@
     ];
   }
 
+  function applyWeatherPayload(payload) {
+    weatherWarningState.source = payload && payload.source ? payload.source : 'juhe';
+    weatherWarningState.message = payload && payload.message ? payload.message : '';
+    weatherWarningState.stats = payload && payload.stats ? payload.stats : null;
+    weatherWarningState.centerWeather = Array.isArray(payload && payload.centerWeather) ? payload.centerWeather : [];
+    weatherWarningState.alerts = Array.isArray(payload && payload.alerts) ? payload.alerts : [];
+
+    if (weatherWarningState.alerts.length) {
+      weatherWarningState.activeProvince = normalizeWeatherProvinceName(weatherWarningState.alerts[0].provinceName);
+      return;
+    }
+
+    if (weatherWarningState.centerWeather.length) {
+      weatherWarningState.activeProvince = normalizeWeatherProvinceName(weatherWarningState.centerWeather[0].provinceName);
+    }
+  }
+
+  function useMockWeatherPayload(message) {
+    weatherWarningState.source = 'mock';
+    weatherWarningState.message = message || '当前展示演示数据';
+    weatherWarningState.stats = null;
+    weatherWarningState.centerWeather = [];
+    weatherWarningState.alerts = getMockWeatherAlerts();
+    if (weatherWarningState.alerts[0]) {
+      weatherWarningState.activeProvince = normalizeWeatherProvinceName(weatherWarningState.alerts[0].provinceName);
+    }
+  }
+
+  function loadWeatherWarningData(forceRefresh) {
+    var query = forceRefresh ? '?force=1' : '';
+    return apiGet('/api/weather/dashboard' + query).then(function (payload) {
+      if (payload && (payload.source === 'juhe' || payload.source === 'cache') && Array.isArray(payload.alerts)) {
+        applyWeatherPayload(payload);
+        return payload;
+      }
+
+      useMockWeatherPayload(payload && payload.message ? payload.message : '天气接口未返回有效数据，已切换为演示数据');
+      return payload || {};
+    }).catch(function (err) {
+      useMockWeatherPayload('天气接口调用失败，已切换为演示数据');
+      return {
+        source: 'mock',
+        message: err && err.message ? err.message : '天气接口调用失败'
+      };
+    });
+  }
+
   function renderWeatherWarningPage() {
     return '' +
       '<div class="weather-warning-page" id="weatherWarningPage">' +
-        '<div class="weather-warning-hero">' +
-          '<div class="weather-warning-copy">' +
-            '<div class="weather-warning-title-row">' +
-              '<div class="page-title">天气预警中心</div>' +
-              '<span class="weather-live-pill">国家气象局数据待接入 · 当前为演示态势</span>' +
-            '</div>' +
-            '<div class="page-desc">中间联动中国地图与省区悬浮态势，左右同步展示区域/城市极端天气卡片，并支持直接下发通知预警。</div>' +
-          '</div>' +
-          '<div class="page-actions">' +
-            '<button class="btn btn-outline" id="weatherRefreshBtn" type="button">刷新态势</button>' +
-            '<button class="btn btn-primary" id="weatherDispatchAllBtn" type="button">下发重点预警</button>' +
-          '</div>' +
-        '</div>' +
         '<div class="weather-overview-grid" id="weatherOverviewGrid"></div>' +
         '<div class="weather-warning-layout">' +
           '<div class="weather-side-column" id="weatherRegionColumn"></div>' +
@@ -4569,7 +4607,7 @@
                 '<span><i class="dot caution"></i>黄色</span>' +
                 '<span><i class="dot info"></i>蓝色</span>' +
               '</div>' +
-              '<div class="weather-map-toptext">鼠标悬停省区查看所辖中心天气状况</div>' +
+              '<div class="weather-map-toptext">地图仅高亮极端天气与灾害预警，悬停可查看所辖中心态势</div>' +
             '</div>' +
             '<div class="weather-map-shell" id="weatherMapShell">' +
               '<div class="weather-map-backdrop"></div>' +
@@ -4588,11 +4626,6 @@
   function initWeatherWarningPage() {
     var root = document.getElementById('weatherWarningPage');
     if (!root) return;
-
-    weatherWarningState.alerts = getMockWeatherAlerts();
-    if (!weatherWarningState.activeProvince && weatherWarningState.alerts[0]) {
-      weatherWarningState.activeProvince = normalizeWeatherProvinceName(weatherWarningState.alerts[0].provinceName);
-    }
 
     if (!root.dataset.bound) {
       root.dataset.bound = '1';
@@ -4615,7 +4648,14 @@
           return;
         }
         if (e.target.closest('#weatherRefreshBtn')) {
-          showLiteToast('已刷新天气态势（当前为演示数据）', 'info');
+          loadWeatherWarningData(true).then(function (payload) {
+            renderWeatherWarningDashboard();
+            if (payload && (payload.source === 'juhe' || payload.source === 'cache')) {
+              showLiteToast('天气态势已刷新并同步聚合天气数据。', 'success');
+            } else {
+              showLiteToast(weatherWarningState.message || '天气接口未配置，当前展示演示数据。', 'info');
+            }
+          });
           return;
         }
         var card = e.target.closest('.weather-warning-card[data-province-name]');
@@ -4631,7 +4671,7 @@
       });
     }
 
-    Promise.all([fetchLocationsData(), fetchChinaMapData()]).then(function () {
+    Promise.all([fetchLocationsData(), fetchChinaMapData(), loadWeatherWarningData(false)]).then(function () {
       weatherWarningState.mapReady = true;
       renderWeatherWarningDashboard();
     });
@@ -4648,6 +4688,9 @@
     var cityAlerts = alerts.filter(function (item) { return item.scope === 'city'; });
     var affectedProvinceCount = Object.keys(getWeatherProvinceSummary()).length;
     var impactedCenters = {};
+    var sourceText = weatherWarningState.source === 'juhe' || weatherWarningState.source === 'cache'
+      ? ('已接入 ' + ((weatherWarningState.stats && weatherWarningState.stats.successCenters) || (weatherWarningState.centerWeather || []).length) + ' 个中心天气数据')
+      : (weatherWarningState.message || '当前展示演示数据');
 
     alerts.forEach(function (item) {
       (item.centerNames || []).forEach(function (name) {
@@ -4656,13 +4699,13 @@
     });
 
     overview.innerHTML = '' +
-      buildWeatherOverviewCard('当前预警', alerts.length + ' 条', '含区域与城市双维度联动', 'danger') +
+      buildWeatherOverviewCard('当前预警', alerts.length + ' 条', sourceText, 'danger') +
       buildWeatherOverviewCard('待下发通知', getWeatherPendingDispatchCount() + ' 条', '支持逐条或一键下发', 'warning') +
-      buildWeatherOverviewCard('影响区域', affectedProvinceCount + ' 个', '地图高亮联动显示', 'info') +
-      buildWeatherOverviewCard('影响中心', Object.keys(impactedCenters).length + ' 个', '来自直营网点中心 mock 数据', 'success');
+      buildWeatherOverviewCard('影响省区', affectedProvinceCount + ' 个', '地图仅联动高风险省区', 'info') +
+      buildWeatherOverviewCard('影响中心', ((weatherWarningState.stats && weatherWarningState.stats.impactedCenters) || Object.keys(impactedCenters).length) + ' 个', '仅统计极端天气与灾害预警中心', 'success');
 
-    regionColumn.innerHTML = buildWeatherColumn('区域预警', '重点查看省区级态势与作业影响', regionAlerts);
-    cityColumn.innerHTML = buildWeatherColumn('城市预警', '可直接向中心下发天气通知', cityAlerts);
+    regionColumn.innerHTML = buildWeatherColumn('省区预警', '只展示极端天气与灾害预警涉及的省区', regionAlerts, '当前暂无省区级极端天气或灾害预警。');
+    cityColumn.innerHTML = buildWeatherColumn('中心预警', '只展示需重点关注或下发通知的中心', cityAlerts, '当前暂无中心级极端天气或灾害预警。');
 
     renderWeatherChinaMap();
     setWeatherActiveProvince(weatherWarningState.activeProvince);
@@ -4677,7 +4720,7 @@
       '</div>';
   }
 
-  function buildWeatherColumn(title, desc, alerts) {
+  function buildWeatherColumn(title, desc, alerts, emptyText) {
     return '' +
       '<div class="weather-side-panel">' +
         '<div class="weather-side-header">' +
@@ -4688,7 +4731,9 @@
           '<span class="weather-side-count">' + alerts.length + '</span>' +
         '</div>' +
         '<div class="weather-card-list">' +
-          alerts.map(function (item) { return buildWeatherAlertCard(item); }).join('') +
+          (alerts.length
+            ? alerts.map(function (item) { return buildWeatherAlertCard(item); }).join('')
+            : '<div class="weather-empty-state">' + escapeHtml(emptyText || '当前暂无重点预警。') + '</div>') +
         '</div>' +
       '</div>';
   }
@@ -4696,14 +4741,17 @@
   function buildWeatherAlertCard(item) {
     var typeMeta = getWeatherTypeMeta(item.type);
     var levelMeta = getWeatherLevelMeta(item.level);
-    var dispatched = !!weatherWarningState.dispatched[item.id];
+    var primaryCenter = (item.centerNames && item.centerNames[0]) || item.cityName || item.provinceName;
+    var titleText = item.scope === 'region'
+      ? item.provinceName
+      : (item.provinceName + ' / ' + primaryCenter);
     return '' +
       '<div class="weather-warning-card' + (weatherWarningState.activeProvince === normalizeWeatherProvinceName(item.provinceName) ? ' is-focus' : '') + '" data-alert-id="' + escapeHtml(item.id) + '" data-province-name="' + escapeHtml(item.provinceName) + '">' +
         '<div class="weather-warning-card-top">' +
           '<span class="weather-type-chip" style="--chip-accent:' + typeMeta.accent + ';--chip-soft:' + typeMeta.soft + ';">' + typeMeta.icon + '<span>' + typeMeta.label + '</span></span>' +
           '<span class="weather-level-chip" style="background:' + levelMeta.soft + '; color:' + levelMeta.accent + ';">' + item.level + '</span>' +
         '</div>' +
-        '<div class="weather-warning-card-title">' + escapeHtml(item.provinceName + ' / ' + item.cityName) + '</div>' +
+        '<div class="weather-warning-card-title">' + escapeHtml(titleText) + '</div>' +
         '<div class="weather-warning-card-desc">' + escapeHtml(item.desc) + '</div>' +
         '<div class="weather-warning-meta">' +
           '<span>更新时间 ' + escapeHtml(item.updatedAt) + '</span>' +
@@ -4711,10 +4759,6 @@
         '</div>' +
         '<div class="weather-center-tags">' +
           (item.centerNames || []).map(function (name) { return '<span>' + escapeHtml(name) + '</span>'; }).join('') +
-        '</div>' +
-        '<div class="weather-warning-actions">' +
-          '<button class="btn btn-outline btn-sm weather-focus-btn" type="button" data-province-name="' + escapeHtml(item.provinceName) + '">地图定位</button>' +
-          '<button class="btn ' + (dispatched ? 'btn-outline' : 'btn-primary') + ' btn-sm weather-notify-btn" type="button" data-alert-id="' + escapeHtml(item.id) + '">' + (dispatched ? '已下发' : '下发通知') + '</button>' +
         '</div>' +
       '</div>';
   }
@@ -4760,6 +4804,59 @@
     });
   }
 
+  function getWeatherCenterRecordsForGeoName(geoName) {
+    return (weatherWarningState.centerWeather || []).filter(function (item) {
+      return normalizeWeatherProvinceName(item.provinceName) === geoName;
+    });
+  }
+
+  function getWeatherCenterRecord(center) {
+    var centerCode = center && center.code ? String(center.code) : '';
+    var shortName = center && center.shortName ? String(center.shortName) : '';
+    var centerName = center && center.name ? String(center.name) : '';
+
+    return (weatherWarningState.centerWeather || []).find(function (item) {
+      if (!item) return false;
+      if (centerCode && String(item.centerCode) === centerCode) return true;
+      if (shortName && (String(item.shortName || '') === shortName || String(item.city || '') === shortName || String(item.queryCity || '') === shortName)) return true;
+      if (centerName && (centerName.indexOf(String(item.shortName || '')) >= 0 || centerName.indexOf(String(item.city || '')) >= 0)) return true;
+      return false;
+    }) || null;
+  }
+
+  function buildWeatherCenterStatus(center, matchedAlert) {
+    if (matchedAlert) {
+      return getWeatherTypeMeta(matchedAlert.type).label + ' · ' + matchedAlert.level;
+    }
+
+    var record = getWeatherCenterRecord(center);
+    if (!record) return '常态监测';
+
+    var parts = [];
+    if (record.weather) parts.push(record.weather);
+    if (record.temperature) parts.push(record.temperature + '℃');
+    if (record.aqi) parts.push('AQI ' + record.aqi);
+    return parts.join(' · ') || '常态监测';
+  }
+
+  function buildWeatherTooltipCenterStatus(center, matchedAlert) {
+    var record = getWeatherCenterRecord(center);
+    var parts = [];
+
+    if (matchedAlert) {
+      parts.push(getWeatherTypeMeta(matchedAlert.type).label + ' · ' + matchedAlert.level);
+    }
+
+    if (record) {
+      if (record.weather) parts.push(record.weather);
+      if (record.temperature) parts.push(record.temperature + '℃');
+      if (record.humidity) parts.push('湿度' + record.humidity + '%');
+      if (record.aqi) parts.push('AQI ' + record.aqi);
+    }
+
+    return parts.join(' · ') || '常态监测';
+  }
+
   function getWeatherProvinceCenters(geoName) {
     var provinceCodes = [];
     Object.keys(WEATHER_GEO_TO_PROVINCE_CODE).forEach(function (name) {
@@ -4782,6 +4879,7 @@
   function buildWeatherMapSummary(provinceName) {
     var geoName = normalizeWeatherProvinceName(provinceName);
     var provinceAlerts = getWeatherAlertsForGeoName(geoName);
+    var centerRecords = getWeatherCenterRecordsForGeoName(geoName);
     var province = getWeatherBusinessProvince(provinceName);
     var centers = getWeatherProvinceCenters(geoName).slice(0, 5);
 
@@ -4791,7 +4889,13 @@
 
     return '' +
       '<div class="weather-summary-title">' + escapeHtml(geoName) + (province ? '<span>' + escapeHtml(province.name) + '</span>' : '') + '</div>' +
-      '<div class="weather-summary-desc">' + (provinceAlerts.length ? ('当前关联预警 ' + provinceAlerts.length + ' 条，建议优先关注：' + escapeHtml(provinceAlerts[0].title)) : '当前暂无异常天气预警，维持常态监测。') + '</div>' +
+      '<div class="weather-summary-desc">' + (
+        provinceAlerts.length
+          ? ('当前关联预警 ' + provinceAlerts.length + ' 条，建议优先关注：' + escapeHtml(provinceAlerts[0].title))
+          : (centerRecords.length
+              ? ('当前已接入 ' + centerRecords.length + ' 个中心天气实况，暂无异常预警。')
+              : '当前暂无异常天气预警，维持常态监测。')
+      ) + '</div>' +
       '<div class="weather-summary-centers">' +
         (centers.length
           ? centers.map(function (center) {
@@ -4800,7 +4904,7 @@
                   return center.name.indexOf(name) >= 0 || center.shortName.indexOf(name) >= 0;
                 });
               });
-              return '<div class="weather-summary-center"><strong>' + escapeHtml(center.shortName || center.name) + '</strong><span>' + escapeHtml(matchedAlert ? (getWeatherTypeMeta(matchedAlert.type).label + ' · ' + matchedAlert.level) : '常态监测') + '</span></div>';
+              return '<div class="weather-summary-center"><strong>' + escapeHtml(center.shortName || center.name) + '</strong><span>' + escapeHtml(buildWeatherCenterStatus(center, matchedAlert)) + '</span></div>';
             }).join('')
           : '<div class="weather-summary-empty">暂无该省区直属中心数据。</div>') +
       '</div>';
@@ -4890,9 +4994,9 @@
     var cosLat = Math.cos(avgLat * Math.PI / 180);
     var minX = minLon * cosLat;
     var maxX = maxLon * cosLat;
-    var width = 900;
-    var height = 640;
-    var padding = 30;
+    var width = 1040;
+    var height = 760;
+    var padding = 16;
     var scale = Math.min((width - padding * 2) / (maxX - minX), (height - padding * 2) / (maxLat - minLat));
 
     return {
@@ -4990,10 +5094,16 @@
     var businessProvince = getWeatherBusinessProvince(geoName);
     var centers = getWeatherProvinceCenters(geoName).slice(0, 4);
     var alerts = getWeatherAlertsForGeoName(geoName);
+    var centerRecords = getWeatherCenterRecordsForGeoName(geoName);
+    var firstRecord = centerRecords[0];
 
     return '' +
       '<div class="weather-tooltip-title">' + escapeHtml(geoName) + (businessProvince ? '<span>' + escapeHtml(businessProvince.name) + '</span>' : '') + '</div>' +
-      '<div class="weather-tooltip-desc">' + escapeHtml(alerts.length ? alerts[0].response : '当前暂无异常天气，维持常态监测。') + '</div>' +
+      '<div class="weather-tooltip-desc">' + escapeHtml(alerts.length
+        ? alerts[0].response
+        : (firstRecord
+            ? ('当前' + (firstRecord.weather || '天气平稳') + (firstRecord.temperature ? ('，' + firstRecord.temperature + '℃') : '') + (firstRecord.aqi ? ('，AQI ' + firstRecord.aqi) : ''))
+            : '当前暂无异常天气，维持常态监测。')) + '</div>' +
       '<div class="weather-tooltip-centers">' +
         (centers.length
           ? centers.map(function (center) {
@@ -5002,7 +5112,7 @@
                   return center.name.indexOf(name) >= 0 || center.shortName.indexOf(name) >= 0;
                 });
               });
-              return '<div class="weather-tooltip-center"><strong>' + escapeHtml(center.shortName || center.name) + '</strong><span>' + escapeHtml(centerAlert ? (getWeatherTypeMeta(centerAlert.type).label + ' · ' + centerAlert.level) : '常态') + '</span></div>';
+              return '<div class="weather-tooltip-center"><strong>' + escapeHtml(center.shortName || center.name) + '</strong><span>' + escapeHtml(buildWeatherTooltipCenterStatus(center, centerAlert)) + '</span></div>';
             }).join('')
           : '<div class="weather-tooltip-empty">暂无所辖中心数据</div>') +
       '</div>';
