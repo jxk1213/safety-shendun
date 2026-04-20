@@ -132,6 +132,10 @@
       title: '应急预案',
       breadcrumb: ['首页', '核心业务', '事故与应急管理', '应急预案']
     },
+    'emergency-drill': {
+      title: '应急演练',
+      breadcrumb: ['首页', '核心业务', '事故与应急管理', '应急演练']
+    },
     personnel: {
       title: '人员安全管理',
       breadcrumb: ['首页', '基础要素', '人员安全管理']
@@ -444,6 +448,10 @@
       case 'emergency-plan':
         mainContent.innerHTML = renderEmergencyPlanPage();
         initEmergencyPlanPage();
+        break;
+      case 'emergency-drill':
+        mainContent.innerHTML = renderEmergencyDrillPage();
+        initEmergencyDrillPage();
         break;
       case 'personnel': mainContent.innerHTML = renderPersonnel(); break;
       case 'facility': mainContent.innerHTML = renderFacility(); break;
@@ -4253,7 +4261,7 @@
 
         '<div id="drillPanel" class="accident-emergency-panel" style="display:none;">' +
           '<div class="feature-grid">' +
-            buildFeatureCard('应急演练', '演练计划制定、执行记录与效果评估', 'var(--success-light)', 'var(--success)', '本季度 3 次') +
+            buildFeatureCard('应急演练', '演练计划制定、执行记录与效果评估', 'var(--success-light)', 'var(--success)', '本季度 3 次', 'emergency-drill') +
           '</div>' +
         '</div>' +
 
@@ -4450,6 +4458,189 @@
             '</div>' +
             '<div class="modal-footer">' +
               '<button class="btn btn-outline" id="epDetailModalOk" type="button">关闭</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // ============ 应急演练（轻量版） ============
+  function renderEmergencyDrillPage() {
+    return '' +
+      '<div class="sub-page">' +
+        '<div class="page-header">' +
+          '<div>' +
+            '<div class="page-title">应急演练</div>' +
+            '<div class="page-desc">轻量化演练台账：计划、执行、复盘与资料留存</div>' +
+          '</div>' +
+          '<div class="page-actions">' +
+            '<button class="btn btn-outline" data-page="accident-emergency">返回</button>' +
+            '<button class="btn btn-primary" id="edCreateBtn" type="button">' +
+              '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+              '新建演练' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="stats-row" style="margin-bottom:16px;" id="edKpiRow">' +
+          buildStatCard('本季度演练', '-', 'green', 'edKpiQuarter') +
+          buildStatCard('已完成', '-', 'blue', 'edKpiDone') +
+          buildStatCard('待执行', '-', 'orange', 'edKpiTodo') +
+          buildStatCard('逾期', '-', 'red', 'edKpiOverdue') +
+        '</div>' +
+
+        '<div class="data-table-wrapper">' +
+          '<div class="table-toolbar">' +
+            '<div class="table-toolbar-left">' +
+              '<div class="table-filter">' +
+                '<span>状态：</span>' +
+                '<select id="edStatusFilter">' +
+                  '<option value="">全部</option>' +
+                  '<option value="计划中">计划中</option>' +
+                  '<option value="进行中">进行中</option>' +
+                  '<option value="已完成">已完成</option>' +
+                  '<option value="取消">取消</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="table-filter">' +
+                '<span>类型：</span>' +
+                '<select id="edTypeFilter">' +
+                  '<option value="">全部</option>' +
+                  '<option value="桌面推演">桌面推演</option>' +
+                  '<option value="实战演练">实战演练</option>' +
+                  '<option value="专项演练">专项演练</option>' +
+                  '<option value="综合演练">综合演练</option>' +
+                '</select>' +
+              '</div>' +
+            '</div>' +
+            '<div class="table-search" style="min-width: 260px;">' +
+              '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+              '<input type="text" id="edSearchInput" placeholder="搜索演练名称/编号/预案/范围...">' +
+            '</div>' +
+          '</div>' +
+          '<div class="data-table-scroll">' +
+            '<table class="data-table" id="edTable">' +
+              '<thead><tr>' +
+                '<th style="width:96px;">编号</th>' +
+                '<th>演练名称</th>' +
+                '<th style="width:110px;">类型</th>' +
+                '<th style="width:180px;">关联预案</th>' +
+                '<th style="width:110px;">计划日期</th>' +
+                '<th style="width:110px;">状态</th>' +
+                '<th style="width:90px;">评分</th>' +
+                '<th style="width:150px;">更新日期</th>' +
+                '<th style="width:260px;">操作</th>' +
+              '</tr></thead>' +
+              '<tbody id="edTbody">' +
+                '<tr><td colspan="9" style="padding: 24px; color: var(--text-tertiary); text-align:center;">加载中...</td></tr>' +
+              '</tbody>' +
+            '</table>' +
+          '</div>' +
+          '<div class="table-pagination" style="border-top: 1px solid var(--border);">' +
+            '<span id="edTotalText">共 0 条记录</span>' +
+            '<div class="pagination-btns" id="edPager"></div>' +
+          '</div>' +
+        '</div>' +
+
+        // 新建/编辑弹窗
+        '<div class="modal-overlay" id="edEditModalOverlay" style="display:none;">' +
+          '<div class="modal" style="max-width: 820px;">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title" id="edEditModalTitle">新建演练</div>' +
+              '<button class="modal-close" id="edEditModalClose">' +
+                '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+              '<div class="form-grid">' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label required">演练名称</label>' +
+                  '<input id="edFormName" type="text" placeholder="例如：转运中心火灾应急演练（夜班）">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label required">类型</label>' +
+                  '<select id="edFormType">' +
+                    '<option value="桌面推演">桌面推演</option>' +
+                    '<option value="实战演练">实战演练</option>' +
+                    '<option value="专项演练">专项演练</option>' +
+                    '<option value="综合演练">综合演练</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">关联预案</label>' +
+                  '<select id="edFormPlanId">' +
+                    '<option value="">不关联</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">演练范围/地点</label>' +
+                  '<input id="edFormScope" type="text" placeholder="例如：华东区域 / 上海青浦转运中心">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label required">计划日期</label>' +
+                  '<input id="edFormPlannedAt" type="date">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">实施日期</label>' +
+                  '<input id="edFormExecutedAt" type="date">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label required">状态</label>' +
+                  '<select id="edFormStatus">' +
+                    '<option value="计划中">计划中</option>' +
+                    '<option value="进行中">进行中</option>' +
+                    '<option value="已完成">已完成</option>' +
+                    '<option value="取消">取消</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">评分</label>' +
+                  '<input id="edFormScore" type="number" min="0" max="100" placeholder="0-100">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">负责人</label>' +
+                  '<input id="edFormOwner" type="text" placeholder="例如：应急专员">' +
+                '</div>' +
+                '<div class="form-field">' +
+                  '<label class="form-label">参与人员</label>' +
+                  '<input id="edFormParticipants" type="text" placeholder="例如：安保/叉车/班组长等">' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">复盘要点/改进措施</label>' +
+                  '<textarea id="edFormReview" rows="3" placeholder="关键问题、整改措施、责任与期限等"></textarea>' +
+                '</div>' +
+                '<div class="form-field span-2">' +
+                  '<label class="form-label">演练资料</label>' +
+                  '<input id="edFormFile" type="file" style="padding: 10px 12px;" />' +
+                  '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:6px;">' +
+                    '<div id="edFormFileInfo" style="font-size:12px; color: var(--text-tertiary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">未选择文件</div>' +
+                    '<button class="btn btn-outline btn-sm" id="edFormFileClear" type="button" style="display:none;">清除</button>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<input id="edFormId" type="hidden" value="">' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-outline" id="edEditModalCancel" type="button">取消</button>' +
+              '<button class="btn btn-primary" id="edEditModalSave" type="button">保存</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        // 详情弹窗
+        '<div class="modal-overlay" id="edDetailModalOverlay" style="display:none;">' +
+          '<div class="modal" style="max-width: 820px;">' +
+            '<div class="modal-header">' +
+              '<div class="modal-title">演练详情</div>' +
+              '<button class="modal-close" id="edDetailModalClose">' +
+                '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '</button>' +
+            '</div>' +
+            '<div class="modal-body" id="edDetailBody">' +
+              '<div style="color: var(--text-tertiary); text-align:center; padding: 20px 0;">加载中...</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-outline" id="edDetailModalOk" type="button">关闭</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -4852,6 +5043,573 @@
     if (editCancel) editCancel.addEventListener('click', closeEditModal);
     if (editOverlay) editOverlay.addEventListener('click', function (e) { if (e.target === editOverlay) closeEditModal(); });
     if (editSave) editSave.addEventListener('click', saveForm);
+    if (formFile) {
+      formFile.addEventListener('change', function () {
+        var f = (formFile.files && formFile.files[0]) ? formFile.files[0] : null;
+        if (!f) {
+          pendingFileMeta = null;
+          fileReading = false;
+          if (keepExistingFile && keepExistingFile.name) {
+            setFileInfoText('已上传：' + keepExistingFile.name + (keepExistingFile.size ? ('（' + humanFileSize(keepExistingFile.size) + '）') : ''));
+            setFileClearVisible(true);
+          } else {
+            setFileInfoText('未选择文件');
+            setFileClearVisible(false);
+          }
+          return;
+        }
+        fileReading = true;
+        pendingFileMeta = null;
+        setFileInfoText('读取中：' + f.name);
+        setFileClearVisible(true);
+        var reader = new FileReader();
+        reader.onload = function () {
+          fileReading = false;
+          keepExistingFile = null;
+          pendingFileMeta = {
+            name: f.name,
+            type: f.type || 'application/octet-stream',
+            size: f.size,
+            dataUrl: reader.result,
+            uploadedAt: Date.now()
+          };
+          setFileInfoText('已选择：' + f.name + '（' + humanFileSize(f.size) + '）');
+        };
+        reader.onerror = function () {
+          fileReading = false;
+          pendingFileMeta = null;
+          alert('文件读取失败，请重试');
+          if (formFile) formFile.value = '';
+          if (keepExistingFile && keepExistingFile.name) {
+            setFileInfoText('已上传：' + keepExistingFile.name + (keepExistingFile.size ? ('（' + humanFileSize(keepExistingFile.size) + '）') : ''));
+            setFileClearVisible(true);
+          } else {
+            setFileInfoText('未选择文件');
+            setFileClearVisible(false);
+          }
+        };
+        try { reader.readAsDataURL(f); } catch (e) {
+          fileReading = false;
+          pendingFileMeta = null;
+          alert('文件读取失败，请重试');
+          if (formFile) formFile.value = '';
+          setFileInfoText('未选择文件');
+          setFileClearVisible(false);
+        }
+      });
+    }
+    if (formFileClear) {
+      formFileClear.addEventListener('click', function () {
+        pendingFileMeta = null;
+        keepExistingFile = null;
+        fileReading = false;
+        if (formFile) formFile.value = '';
+        setFileInfoText('未选择文件');
+        setFileClearVisible(false);
+      });
+    }
+
+    if (detailClose) detailClose.addEventListener('click', closeDetailModal);
+    if (detailOk) detailOk.addEventListener('click', closeDetailModal);
+    if (detailOverlay) detailOverlay.addEventListener('click', function (e) { if (e.target === detailOverlay) closeDetailModal(); });
+
+    // 首次渲染
+    renderTable();
+  }
+
+  function initEmergencyDrillPage() {
+    var STORE_KEY = 'sd_emergency_drills_v1';
+    var PLAN_STORE_KEY = 'sd_emergency_plans_v1';
+    var pageSize = 8;
+    var currentPage = 1;
+    var allRows = [];
+
+    var createBtn = document.getElementById('edCreateBtn');
+    var statusFilter = document.getElementById('edStatusFilter');
+    var typeFilter = document.getElementById('edTypeFilter');
+    var searchInput = document.getElementById('edSearchInput');
+
+    var tbody = document.getElementById('edTbody');
+    var pager = document.getElementById('edPager');
+    var totalText = document.getElementById('edTotalText');
+
+    var editOverlay = document.getElementById('edEditModalOverlay');
+    var editTitle = document.getElementById('edEditModalTitle');
+    var editClose = document.getElementById('edEditModalClose');
+    var editCancel = document.getElementById('edEditModalCancel');
+    var editSave = document.getElementById('edEditModalSave');
+
+    var formId = document.getElementById('edFormId');
+    var formName = document.getElementById('edFormName');
+    var formType = document.getElementById('edFormType');
+    var formPlanId = document.getElementById('edFormPlanId');
+    var formScope = document.getElementById('edFormScope');
+    var formPlannedAt = document.getElementById('edFormPlannedAt');
+    var formExecutedAt = document.getElementById('edFormExecutedAt');
+    var formStatus = document.getElementById('edFormStatus');
+    var formScore = document.getElementById('edFormScore');
+    var formOwner = document.getElementById('edFormOwner');
+    var formParticipants = document.getElementById('edFormParticipants');
+    var formReview = document.getElementById('edFormReview');
+    var formFile = document.getElementById('edFormFile');
+    var formFileInfo = document.getElementById('edFormFileInfo');
+    var formFileClear = document.getElementById('edFormFileClear');
+
+    var detailOverlay = document.getElementById('edDetailModalOverlay');
+    var detailBody = document.getElementById('edDetailBody');
+    var detailClose = document.getElementById('edDetailModalClose');
+    var detailOk = document.getElementById('edDetailModalOk');
+
+    var pendingFileMeta = null; // { name, type, size, dataUrl, uploadedAt }
+    var keepExistingFile = null;
+    var fileReading = false;
+
+    function safeJsonParse(text) {
+      try { return JSON.parse(text); } catch (e) { return null; }
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function formatTime(ts) {
+      if (!ts) return '-';
+      try {
+        var d = new Date(ts);
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+      } catch (e) {
+        return '-';
+      }
+    }
+
+    function ymdToDate(ymd) {
+      if (!ymd) return null;
+      var s = String(ymd).trim();
+      if (!s) return null;
+      var d = new Date(s + 'T00:00:00');
+      if (isNaN(d.getTime())) return null;
+      return d;
+    }
+
+    function humanFileSize(bytes) {
+      if (!bytes && bytes !== 0) return '-';
+      var n = Number(bytes);
+      if (isNaN(n) || n < 0) return '-';
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+      if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
+      return (n / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+    }
+
+    function setFileInfoText(text) {
+      if (formFileInfo) formFileInfo.textContent = text || '';
+    }
+
+    function setFileClearVisible(visible) {
+      if (!formFileClear) return;
+      formFileClear.style.display = visible ? 'inline-flex' : 'none';
+    }
+
+    function resetFileState() {
+      pendingFileMeta = null;
+      keepExistingFile = null;
+      fileReading = false;
+      if (formFile) formFile.value = '';
+      setFileInfoText('未选择文件');
+      setFileClearVisible(false);
+    }
+
+    function getSeedRows() {
+      var now = Date.now();
+      var today = new Date();
+      var y = today.getFullYear();
+      var m = pad2(today.getMonth() + 1);
+      var d = pad2(today.getDate());
+      var todayYmd = y + '-' + m + '-' + d;
+      var lastWeek = new Date(today.getTime() - 86400000 * 7);
+      var nextWeek = new Date(today.getTime() + 86400000 * 7);
+      function fmtDate(dt) { return dt.getFullYear() + '-' + pad2(dt.getMonth() + 1) + '-' + pad2(dt.getDate()); }
+      return [
+        { id: 'ED-' + y + m + '-001', name: '转运中心火灾应急演练（夜班）', type: '实战演练', planId: '', planName: '转运中心火灾应急预案', scope: '上海青浦转运中心', plannedAt: fmtDate(nextWeek), executedAt: '', status: '计划中', score: '', owner: '应急专员', participants: '安保/叉车/班组长', review: '', file: null, updatedAt: now - 86400000 * 2 },
+        { id: 'ED-' + y + m + '-002', name: '强对流天气桌面推演', type: '桌面推演', planId: '', planName: '强对流天气应急预案', scope: '华中区域 / 多中心通用', plannedAt: todayYmd, executedAt: todayYmd, status: '已完成', score: '88', owner: '应急专员', participants: '运营/安全/值班长', review: '优化预警阈值与停运口径，补齐通讯录。', file: null, updatedAt: now - 86400000 * 1 },
+        { id: 'ED-' + y + m + '-003', name: '车辆事故专项演练（干线）', type: '专项演练', planId: '', planName: '车辆事故应急预案（干线）', scope: '干线运输 / 全国通用', plannedAt: fmtDate(lastWeek), executedAt: '', status: '计划中', score: '', owner: '运输经理', participants: '调度/司机/客服', review: '', file: null, updatedAt: now - 86400000 * 5 }
+      ];
+    }
+
+    function loadRows() {
+      var raw = localStorage.getItem(STORE_KEY);
+      var parsed = raw ? safeJsonParse(raw) : null;
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        allRows = getSeedRows();
+        localStorage.setItem(STORE_KEY, JSON.stringify(allRows));
+        return;
+      }
+      allRows = parsed;
+    }
+
+    function saveRows() {
+      localStorage.setItem(STORE_KEY, JSON.stringify(allRows));
+    }
+
+    function statusBadge(status) {
+      var cls = 'status-badge info';
+      if (status === '已完成') cls = 'status-badge success';
+      else if (status === '计划中') cls = 'status-badge warning';
+      else if (status === '进行中') cls = 'status-badge info';
+      else if (status === '取消') cls = 'status-badge danger';
+      return '<span class="' + cls + '">' + escapeHtml(status) + '</span>';
+    }
+
+    function refreshPlanOptions(selectedId) {
+      if (!formPlanId) return;
+      var raw = localStorage.getItem(PLAN_STORE_KEY);
+      var parsed = raw ? safeJsonParse(raw) : null;
+      var plans = Array.isArray(parsed) ? parsed : [];
+      var opts = '<option value="">不关联</option>';
+      plans.forEach(function (p) {
+        if (!p || !p.id) return;
+        var label = String(p.name || p.id);
+        var ver = p.version ? (' · ' + p.version) : '';
+        opts += '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(label + ver) + '</option>';
+      });
+      formPlanId.innerHTML = opts;
+      if (selectedId) formPlanId.value = String(selectedId);
+    }
+
+    function getQuarterRange(date) {
+      var d = date instanceof Date ? date : new Date();
+      var y = d.getFullYear();
+      var qStartMonth = Math.floor(d.getMonth() / 3) * 3;
+      var start = new Date(y, qStartMonth, 1);
+      var end = new Date(y, qStartMonth + 3, 0);
+      return { start: start, end: end };
+    }
+
+    function updateKpis(rows) {
+      var kQuarter = document.getElementById('edKpiQuarter');
+      var kDone = document.getElementById('edKpiDone');
+      var kTodo = document.getElementById('edKpiTodo');
+      var kOverdue = document.getElementById('edKpiOverdue');
+
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var qr = getQuarterRange(today);
+
+      var quarterTotal = 0;
+      var done = 0;
+      var todo = 0;
+      var overdue = 0;
+
+      rows.forEach(function (r) {
+        if (!r) return;
+        if (String(r.status) === '已完成') done += 1;
+        if (String(r.status) === '计划中') todo += 1;
+        var p = ymdToDate(r.plannedAt);
+        if (p && p >= qr.start && p <= qr.end) quarterTotal += 1;
+        if (String(r.status) === '计划中' && p && p < today) overdue += 1;
+      });
+
+      if (kQuarter) kQuarter.textContent = String(quarterTotal);
+      if (kDone) kDone.textContent = String(done);
+      if (kTodo) kTodo.textContent = String(todo);
+      if (kOverdue) kOverdue.textContent = String(overdue);
+    }
+
+    function getFilters() {
+      var s = (statusFilter && statusFilter.value) ? statusFilter.value : '';
+      var t = (typeFilter && typeFilter.value) ? typeFilter.value : '';
+      var q = (searchInput && searchInput.value) ? String(searchInput.value).trim().toLowerCase() : '';
+      return { status: s, type: t, q: q };
+    }
+
+    function matches(row, f) {
+      if (f.status && String(row.status) !== f.status) return false;
+      if (f.type && String(row.type) !== f.type) return false;
+      if (f.q) {
+        var hay = [row.id, row.name, row.scope, row.planName, row.owner, row.participants].join(' ').toLowerCase();
+        if (hay.indexOf(f.q) === -1) return false;
+      }
+      return true;
+    }
+
+    function renderPager(total) {
+      if (!pager) return;
+      var totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      var html = '';
+      function btn(label, page, active, disabled) {
+        return '<button class="pagination-btn' + (active ? ' active' : '') + '" data-page="' + page + '" ' + (disabled ? 'disabled' : '') + '>' + label + '</button>';
+      }
+      html += btn('&lt;', currentPage - 1, false, currentPage <= 1);
+      var start = Math.max(1, currentPage - 2);
+      var end = Math.min(totalPages, start + 4);
+      start = Math.max(1, end - 4);
+      for (var p = start; p <= end; p++) html += btn(String(p), p, p === currentPage, false);
+      html += btn('&gt;', currentPage + 1, false, currentPage >= totalPages);
+      pager.innerHTML = html;
+    }
+
+    function renderTable() {
+      loadRows();
+      updateKpis(allRows);
+      var f = getFilters();
+      var filtered = allRows.filter(function (r) { return matches(r, f); });
+      var total = filtered.length;
+      if (totalText) totalText.textContent = '共 ' + total + ' 条记录';
+      renderPager(total);
+
+      var startIdx = (currentPage - 1) * pageSize;
+      var pageRows = filtered.slice(startIdx, startIdx + pageSize);
+      if (!tbody) return;
+      if (pageRows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="padding: 24px; color: var(--text-tertiary); text-align:center;">暂无数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pageRows.map(function (r) {
+        var hasFile = !!(r && r.file && r.file.dataUrl);
+        var scoreText = (r.score == null || String(r.score).trim() === '') ? '-' : String(r.score).trim();
+        return '' +
+          '<tr data-id="' + escapeHtml(r.id) + '">' +
+            '<td>' + escapeHtml(r.id) + '</td>' +
+            '<td style="min-width:220px;">' + escapeHtml(r.name) + '</td>' +
+            '<td>' + escapeHtml(r.type || '-') + '</td>' +
+            '<td style="min-width:180px;">' + escapeHtml(r.planName || '-') + '</td>' +
+            '<td>' + escapeHtml(r.plannedAt || '-') + '</td>' +
+            '<td>' + statusBadge(r.status) + '</td>' +
+            '<td>' + escapeHtml(scoreText) + '</td>' +
+            '<td>' + escapeHtml(formatTime(r.updatedAt)) + '</td>' +
+            '<td style="white-space:nowrap;">' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="view">查看</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="edit" style="margin-left:6px;">编辑</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="download" style="margin-left:6px;" ' + (hasFile ? '' : 'disabled') + '>下载</button>' +
+              '<button class="btn btn-outline btn-sm" type="button" data-action="delete" style="margin-left:6px;">删除</button>' +
+            '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function openEditModal(mode, row) {
+      if (!editOverlay) return;
+      editTitle.textContent = mode === 'edit' ? '编辑演练' : '新建演练';
+
+      refreshPlanOptions(row ? row.planId : '');
+
+      formId.value = row ? (row.id || '') : '';
+      formName.value = row ? (row.name || '') : '';
+      formType.value = row ? (row.type || '桌面推演') : '桌面推演';
+      formScope.value = row ? (row.scope || '') : '';
+      formPlannedAt.value = row ? (row.plannedAt || '') : '';
+      formExecutedAt.value = row ? (row.executedAt || '') : '';
+      formStatus.value = row ? (row.status || '计划中') : '计划中';
+      formScore.value = row ? (row.score || '') : '';
+      formOwner.value = row ? (row.owner || '') : '';
+      formParticipants.value = row ? (row.participants || '') : '';
+      formReview.value = row ? (row.review || '') : '';
+
+      pendingFileMeta = null;
+      keepExistingFile = (row && row.file) ? row.file : null;
+      fileReading = false;
+      if (formFile) formFile.value = '';
+      if (keepExistingFile && keepExistingFile.name) {
+        setFileInfoText('已上传：' + keepExistingFile.name + (keepExistingFile.size ? ('（' + humanFileSize(keepExistingFile.size) + '）') : ''));
+        setFileClearVisible(true);
+      } else {
+        setFileInfoText('未选择文件');
+        setFileClearVisible(false);
+      }
+
+      editOverlay.style.display = 'flex';
+      setTimeout(function () { try { formName.focus(); } catch (e) {} }, 0);
+    }
+
+    function closeEditModal() {
+      if (editOverlay) editOverlay.style.display = 'none';
+      resetFileState();
+    }
+
+    function openDetailModal(row) {
+      if (!detailOverlay || !detailBody) return;
+      var fileLine = '-';
+      if (row.file && row.file.name && row.file.dataUrl) {
+        fileLine = '<button class="btn btn-outline btn-sm" type="button" data-action="download" data-id="' + escapeHtml(row.id) + '">下载：' + escapeHtml(row.file.name) + '</button>';
+      }
+      var scoreText = (row.score == null || String(row.score).trim() === '') ? '-' : String(row.score).trim();
+      var html = '' +
+        '<div class="panel" style="margin:0;">' +
+          '<div class="panel-body">' +
+            '<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">' +
+              '<div>' +
+                '<div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">' + escapeHtml(row.name) + '</div>' +
+                '<div style="font-size:12.5px;color:var(--text-tertiary);">编号：' + escapeHtml(row.id) + ' · 类型：' + escapeHtml(row.type || '-') + '</div>' +
+              '</div>' +
+              '<div>' + statusBadge(row.status) + '</div>' +
+            '</div>' +
+            '<div style="margin-top:14px;" class="form-grid">' +
+              '<div class="form-field"><div class="form-label">关联预案</div><div>' + escapeHtml(row.planName || '-') + '</div></div>' +
+              '<div class="form-field"><div class="form-label">评分</div><div>' + escapeHtml(scoreText) + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">演练范围/地点</div><div>' + escapeHtml(row.scope || '-') + '</div></div>' +
+              '<div class="form-field"><div class="form-label">计划日期</div><div>' + escapeHtml(row.plannedAt || '-') + '</div></div>' +
+              '<div class="form-field"><div class="form-label">实施日期</div><div>' + escapeHtml(row.executedAt || '-') + '</div></div>' +
+              '<div class="form-field"><div class="form-label">负责人</div><div>' + escapeHtml(row.owner || '-') + '</div></div>' +
+              '<div class="form-field"><div class="form-label">参与人员</div><div>' + escapeHtml(row.participants || '-') + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">复盘要点/改进措施</div><div style="white-space:pre-wrap; color: var(--text-secondary);">' + escapeHtml(row.review || '-') + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">演练资料</div><div>' + fileLine + '</div></div>' +
+              '<div class="form-field span-2"><div class="form-label">最近更新</div><div>' + escapeHtml(formatTime(row.updatedAt)) + '</div></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      detailBody.innerHTML = html;
+      detailOverlay.style.display = 'flex';
+    }
+
+    function closeDetailModal() {
+      if (detailOverlay) detailOverlay.style.display = 'none';
+    }
+
+    function ensureRequired() {
+      if (!String(formName.value || '').trim()) return '请填写演练名称';
+      if (!String(formPlannedAt.value || '').trim()) return '请选择计划日期';
+      return '';
+    }
+
+    function makeId() {
+      var d = new Date();
+      var y = d.getFullYear();
+      var m = pad2(d.getMonth() + 1);
+      var suffix = String(Math.floor(Math.random() * 900) + 100);
+      return 'ED-' + y + m + '-' + suffix;
+    }
+
+    function pickPlan(planId) {
+      if (!planId) return { planId: '', planName: '' };
+      var raw = localStorage.getItem(PLAN_STORE_KEY);
+      var parsed = raw ? safeJsonParse(raw) : null;
+      var plans = Array.isArray(parsed) ? parsed : [];
+      var p = plans.find(function (x) { return x && String(x.id) === String(planId); });
+      if (!p) return { planId: String(planId), planName: '' };
+      return { planId: String(p.id), planName: String(p.name || p.id) };
+    }
+
+    function saveForm() {
+      var err = ensureRequired();
+      if (err) { alert(err); return; }
+      if (fileReading) { alert('文件读取中，请稍候再保存'); return; }
+
+      loadRows();
+      var id = String(formId.value || '').trim();
+      var now = Date.now();
+      var fileToSave = pendingFileMeta ? pendingFileMeta : keepExistingFile;
+      var planSel = pickPlan(formPlanId ? formPlanId.value : '');
+      var scoreRaw = String(formScore.value || '').trim();
+      var scoreVal = scoreRaw;
+      if (scoreRaw !== '') {
+        var num = parseInt(scoreRaw, 10);
+        if (isNaN(num) || num < 0 || num > 100) { alert('评分需为 0-100'); return; }
+        scoreVal = String(num);
+      }
+
+      var payload = {
+        id: id || makeId(),
+        name: String(formName.value || '').trim(),
+        type: String(formType.value || '').trim(),
+        planId: String(planSel.planId || ''),
+        planName: String(planSel.planName || ''),
+        scope: String(formScope.value || '').trim(),
+        plannedAt: String(formPlannedAt.value || '').trim(),
+        executedAt: String(formExecutedAt.value || '').trim(),
+        status: String(formStatus.value || '').trim(),
+        score: scoreVal,
+        owner: String(formOwner.value || '').trim(),
+        participants: String(formParticipants.value || '').trim(),
+        review: String(formReview.value || '').trim(),
+        file: fileToSave || null,
+        updatedAt: now
+      };
+
+      var idx = allRows.findIndex(function (r) { return String(r.id) === String(payload.id); });
+      if (idx >= 0) allRows[idx] = payload;
+      else allRows.unshift(payload);
+      saveRows();
+      closeEditModal();
+      renderTable();
+    }
+
+    function downloadRowFile(row) {
+      if (!row || !row.file || !row.file.dataUrl) { alert('该演练未上传资料'); return; }
+      var a = document.createElement('a');
+      a.href = row.file.dataUrl;
+      a.download = row.file.name || (row.name ? (row.name + '.file') : '演练资料');
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      try { a.click(); } finally { setTimeout(function () { try { document.body.removeChild(a); } catch (e) {} }, 0); }
+    }
+
+    function handleTableAction(action, id) {
+      loadRows();
+      var row = allRows.find(function (r) { return String(r.id) === String(id); });
+      if (!row) return;
+      if (action === 'view') openDetailModal(row);
+      else if (action === 'edit') openEditModal('edit', row);
+      else if (action === 'download') downloadRowFile(row);
+      else if (action === 'delete') {
+        if (!confirm('确认删除：' + row.name + ' ?')) return;
+        allRows = allRows.filter(function (r) { return String(r.id) !== String(id); });
+        saveRows();
+        renderTable();
+      }
+    }
+
+    // 事件绑定
+    if (createBtn) createBtn.addEventListener('click', function () { openEditModal('add', null); });
+    [statusFilter, typeFilter].forEach(function (el) {
+      if (!el) return;
+      el.addEventListener('change', function () { currentPage = 1; renderTable(); });
+    });
+    if (searchInput) {
+      var timer = null;
+      searchInput.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () { currentPage = 1; renderTable(); }, 150);
+      });
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { currentPage = 1; renderTable(); }
+      });
+    }
+    if (pager) {
+      pager.addEventListener('click', function (e) {
+        var btn = e.target.closest('button.pagination-btn');
+        if (!btn || btn.disabled) return;
+        var p = parseInt(btn.dataset.page, 10);
+        if (!isNaN(p) && p >= 1) {
+          currentPage = p;
+          renderTable();
+        }
+      });
+    }
+    if (tbody) {
+      tbody.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        var tr = e.target.closest('tr[data-id]');
+        if (!tr) return;
+        var id = tr.getAttribute('data-id');
+        var action = btn.getAttribute('data-action');
+        handleTableAction(action, id);
+      });
+    }
+    if (detailBody) {
+      detailBody.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-action="download"][data-id]');
+        if (!btn) return;
+        var id = btn.getAttribute('data-id');
+        handleTableAction('download', id);
+      });
+    }
+
+    if (editClose) editClose.addEventListener('click', closeEditModal);
+    if (editCancel) editCancel.addEventListener('click', closeEditModal);
+    if (editOverlay) editOverlay.addEventListener('click', function (e) { if (e.target === editOverlay) closeEditModal(); });
+    if (editSave) editSave.addEventListener('click', saveForm);
+
     if (formFile) {
       formFile.addEventListener('change', function () {
         var f = (formFile.files && formFile.files[0]) ? formFile.files[0] : null;
