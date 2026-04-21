@@ -4547,7 +4547,7 @@
   }
 
   function applyWeatherPayload(payload) {
-    weatherWarningState.source = payload && payload.source ? payload.source : 'juhe';
+    weatherWarningState.source = payload && payload.source ? payload.source : 'uapis';
     weatherWarningState.message = payload && payload.message ? payload.message : '';
     weatherWarningState.stats = payload && payload.stats ? payload.stats : null;
     weatherWarningState.centerWeather = Array.isArray(payload && payload.centerWeather) ? payload.centerWeather : [];
@@ -4577,7 +4577,13 @@
   function loadWeatherWarningData(forceRefresh) {
     var query = forceRefresh ? '?force=1' : '';
     return apiGet('/api/weather/dashboard' + query).then(function (payload) {
-      if (payload && (payload.source === 'juhe' || payload.source === 'cache') && Array.isArray(payload.alerts)) {
+      var isLivePayload = payload
+        && payload.source !== 'mock'
+        && payload.source !== 'error'
+        && payload.source !== 'unconfigured'
+        && Array.isArray(payload.alerts)
+        && Array.isArray(payload.centerWeather);
+      if (isLivePayload) {
         applyWeatherPayload(payload);
         return payload;
       }
@@ -4650,10 +4656,10 @@
         if (e.target.closest('#weatherRefreshBtn')) {
           loadWeatherWarningData(true).then(function (payload) {
             renderWeatherWarningDashboard();
-            if (payload && (payload.source === 'juhe' || payload.source === 'cache')) {
-              showLiteToast('天气态势已刷新并同步聚合天气数据。', 'success');
+            if (payload && payload.source !== 'mock' && payload.source !== 'error' && payload.source !== 'unconfigured') {
+              showLiteToast('天气态势已刷新并同步实时天气数据。', 'success');
             } else {
-              showLiteToast(weatherWarningState.message || '天气接口未配置，当前展示演示数据。', 'info');
+              showLiteToast(weatherWarningState.message || '天气接口暂不可用，当前展示演示数据。', 'info');
             }
           });
           return;
@@ -4688,7 +4694,10 @@
     var cityAlerts = alerts.filter(function (item) { return item.scope === 'city'; });
     var affectedProvinceCount = Object.keys(getWeatherProvinceSummary()).length;
     var impactedCenters = {};
-    var sourceText = weatherWarningState.source === 'juhe' || weatherWarningState.source === 'cache'
+    var hasLiveSource = weatherWarningState.source !== 'mock'
+      && weatherWarningState.source !== 'error'
+      && weatherWarningState.source !== 'unconfigured';
+    var sourceText = hasLiveSource
       ? ('已接入 ' + ((weatherWarningState.stats && weatherWarningState.stats.successCenters) || (weatherWarningState.centerWeather || []).length) + ' 个中心天气数据')
       : (weatherWarningState.message || '当前展示演示数据');
 

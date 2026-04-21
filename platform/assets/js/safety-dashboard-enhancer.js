@@ -11,6 +11,16 @@
   var dashboardVm = null;
   var mapVm = null;
   var originalDrawChart = null;
+  var weatherLookup = {};
+  var weatherSeriesData = [];
+  var weatherCenterLookup = {};
+  var weatherLoading = false;
+  var weatherFetchError = '';
+  var weatherFetchPromise = null;
+  var weatherRefreshTimer = null;
+
+  var WEATHER_API_URL = '/api/weather/dashboard';
+  var WEATHER_REFRESH_MS = 5 * 60 * 1000;
 
   var WEATHER_LEVEL_META = {
     '红色': { value: 4, color: '#ff5b6e', glow: 'rgba(255, 91, 110, 0.34)' },
@@ -18,79 +28,6 @@
     '黄色': { value: 2, color: '#ffd84f', glow: 'rgba(255, 216, 79, 0.28)' },
     '蓝色': { value: 1, color: '#3fc7ff', glow: 'rgba(63, 199, 255, 0.28)' }
   };
-
-  var WEATHER_ALERTS = [
-    {
-      mapName: '广东',
-      label: '广东',
-      type: '高温',
-      level: '红色',
-      updatedAt: '10:20',
-      title: '粤中高温持续增强',
-      cities: ['广州', '深圳', '中山'],
-      action: '启用高温停靠与错峰作业机制'
-    },
-    {
-      mapName: '京津冀大区',
-      label: '京津冀大区',
-      type: '雾霾 / 雨雪',
-      level: '橙色',
-      updatedAt: '10:05',
-      title: '低能见度与冰冻路段叠加',
-      cities: ['北京', '石家庄', '保定'],
-      action: '下发进场慢行与防滑提醒'
-    },
-    {
-      mapName: '广西',
-      label: '广西',
-      type: '冰雹',
-      level: '橙色',
-      updatedAt: '08:55',
-      title: '桂中冰雹对流活跃',
-      cities: ['南宁', '柳州'],
-      action: '暂停室外装卸并巡检临时设施'
-    },
-    {
-      mapName: '山东',
-      label: '山东',
-      type: '雾霾',
-      level: '黄色',
-      updatedAt: '08:10',
-      title: '鲁中重污染抬升',
-      cities: ['济南', '济宁'],
-      action: '开启雾霾运输提示与慢行机制'
-    },
-    {
-      mapName: '浙江',
-      label: '浙江',
-      type: '短时强降水',
-      level: '蓝色',
-      updatedAt: '09:12',
-      title: '杭州局部短时强降水',
-      cities: ['杭州', '临平'],
-      action: '重点检查装卸坡道与防滑垫'
-    },
-    {
-      mapName: '湖南',
-      label: '湖南',
-      type: '高温',
-      level: '橙色',
-      updatedAt: '09:28',
-      title: '长沙热浪持续',
-      cities: ['长沙'],
-      action: '执行高温轮岗与补水检查'
-    },
-    {
-      mapName: '西北大区',
-      label: '西北大区',
-      type: '沙尘暴',
-      level: '蓝色',
-      updatedAt: '08:36',
-      title: '西北风沙回流',
-      cities: ['兰州', '乌鲁木齐'],
-      action: '加强场地防尘与车辆滤芯巡检'
-    }
-  ];
 
   function injectEnhancerStyles() {
     if (document.getElementById('safetyDashboardEnhancerStyle')) return;
@@ -256,29 +193,174 @@
     document.head.appendChild(style);
   }
 
-  function buildWeatherLookup() {
-    var lookup = {};
-    WEATHER_ALERTS.forEach(function (item) {
-      lookup[item.mapName] = item;
-    });
-    return lookup;
+  function normalizeText(value) {
+    return String(value || '').trim();
   }
 
-  var weatherLookup = buildWeatherLookup();
+  function normalizeProvinceName(value) {
+    return normalizeText(value)
+      .replace(/省公司|市公司|大区|省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g, '');
+  }
 
-  function buildWeatherSeriesData() {
-    return WEATHER_ALERTS.map(function (item) {
-      return {
-        name: item.mapName,
-        value: WEATHER_LEVEL_META[item.level].value,
-        weatherLevel: item.level,
-        weatherType: item.type,
-        alertTitle: item.title,
-        updatedAt: item.updatedAt,
-        cities: item.cities,
-        action: item.action
-      };
+  function getLevelValue(level) {
+    return WEATHER_LEVEL_META[level] ? WEATHER_LEVEL_META[level].value : 0;
+  }
+
+  function getAlertTypeLabel(type) {
+    switch (type) {
+      case 'rainSnow':
+        return '雨雪';
+      case 'smog':
+        return '雾霾';
+      case 'heat':
+        return '高温';
+      case 'hail':
+        return '冰雹';
+      case 'sandstorm':
+        return '沙尘';
+      default:
+        return normalizeText(type) || '天气';
+    }
+  }
+
+  function buildCenterWeatherLabel(entry) {
+    if (!entry) return '';
+    var bits = [];
+    if (entry.city || entry.shortName) bits.push(entry.city || entry.shortName);
+    if (entry.weather) bits.push(entry.weather);
+    if (entry.temperature) bits.push(entry.temperature + '℃');
+    if (entry.aqi) bits.push('AQI ' + entry.aqi);
+    return bits.join(' ');
+  }
+
+  function uniqueList(list) {
+    var seen = {};
+    return (Array.isArray(list) ? list : []).filter(function (item) {
+      var key = normalizeText(item);
+      if (!key || seen[key]) return false;
+      seen[key] = true;
+      return true;
     });
+  }
+
+  function compareAlertPriority(left, right) {
+    var levelDiff = getLevelValue(right && right.level) - getLevelValue(left && left.level);
+    if (levelDiff !== 0) return levelDiff;
+    return normalizeText(left && left.cityName).localeCompare(normalizeText(right && right.cityName), 'zh-CN');
+  }
+
+  function buildProvinceWeatherState(payload) {
+    var provinceInfo = {};
+    var alerts = Array.isArray(payload && payload.alerts) ? payload.alerts : [];
+    var centerWeather = Array.isArray(payload && payload.centerWeather) ? payload.centerWeather : [];
+
+    centerWeather.forEach(function (entry) {
+      var provinceName = normalizeProvinceName(entry.provinceName);
+      if (!provinceName) return;
+      if (!provinceInfo[provinceName]) {
+        provinceInfo[provinceName] = {
+          provinceName: provinceName,
+          alerts: [],
+          centers: []
+        };
+      }
+      provinceInfo[provinceName].centers.push(entry);
+    });
+
+    alerts.forEach(function (alert) {
+      if (alert.scope !== 'city') return;
+      var provinceName = normalizeProvinceName(alert.provinceName);
+      if (!provinceName) return;
+      if (!provinceInfo[provinceName]) {
+        provinceInfo[provinceName] = {
+          provinceName: provinceName,
+          alerts: [],
+          centers: []
+        };
+      }
+      provinceInfo[provinceName].alerts.push(alert);
+    });
+
+    weatherLookup = {};
+    weatherCenterLookup = {};
+    weatherSeriesData = [];
+
+    Object.keys(provinceInfo).forEach(function (provinceName) {
+      var info = provinceInfo[provinceName];
+      var sortedAlerts = info.alerts.slice().sort(compareAlertPriority);
+      var topAlert = sortedAlerts[0] || null;
+      var centers = info.centers.slice().sort(function (left, right) {
+        return normalizeText(left.city || left.shortName).localeCompare(normalizeText(right.city || right.shortName), 'zh-CN');
+      });
+      var cities = uniqueList(
+        sortedAlerts.map(function (item) { return item.cityName; })
+          .concat(centers.map(function (item) { return item.city || item.shortName; }))
+      );
+      var centerSummaries = uniqueList(centers.map(buildCenterWeatherLabel)).slice(0, 4);
+
+      weatherLookup[provinceName] = {
+        mapName: provinceName,
+        label: provinceName,
+        type: topAlert ? getAlertTypeLabel(topAlert.type) : '无预警',
+        level: topAlert ? topAlert.level : '',
+        updatedAt: topAlert ? topAlert.updatedAt : (centers[0] && centers[0].updatedAt) || '--:--',
+        title: topAlert ? topAlert.title : (provinceName + '天气平稳'),
+        action: topAlert ? topAlert.response : '当前暂无天气预警，维持常态监测。',
+        desc: topAlert ? topAlert.desc : (centerSummaries[0] || '当前暂无天气预警，维持常态监测。'),
+        cities: cities,
+        centerSummaries: centerSummaries
+      };
+
+      weatherCenterLookup[provinceName] = centers;
+
+      if (topAlert && WEATHER_LEVEL_META[topAlert.level]) {
+        weatherSeriesData.push({
+          name: provinceName,
+          value: WEATHER_LEVEL_META[topAlert.level].value,
+          weatherLevel: topAlert.level,
+          weatherType: getAlertTypeLabel(topAlert.type),
+          alertTitle: topAlert.title,
+          updatedAt: topAlert.updatedAt,
+          cities: cities,
+          action: topAlert.response
+        });
+      }
+    });
+  }
+
+  function fetchWeatherDashboard(forceRefresh) {
+    if (weatherFetchPromise) return weatherFetchPromise;
+
+    weatherLoading = true;
+    weatherFetchError = '';
+    var url = WEATHER_API_URL + (forceRefresh ? '?force=1' : '');
+
+    weatherFetchPromise = window.fetch(url, { cache: 'no-store' })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+        return response.json();
+      })
+      .then(function (payload) {
+        buildProvinceWeatherState(payload || {});
+        weatherLoading = false;
+        weatherFetchPromise = null;
+        if (currentMode === DASHBOARD_MODE.WEATHER) {
+          renderCurrentMode();
+        }
+        return payload;
+      })
+      .catch(function (error) {
+        weatherLoading = false;
+        weatherFetchPromise = null;
+        weatherFetchError = error && error.message ? error.message : '天气数据加载失败';
+        if (currentMode === DASHBOARD_MODE.WEATHER) {
+          renderCurrentMode();
+        }
+      });
+
+    return weatherFetchPromise;
   }
 
   function getLevelBadgeStyle(level) {
@@ -294,26 +376,38 @@
           '<div class="sd-weather-tooltip-header">' +
             '<div class="sd-weather-tooltip-title">' + escapeHtml(params.name) + '</div>' +
           '</div>' +
-          '<div class="sd-weather-tooltip-empty">当前暂无天气预警，维持常态监测。</div>' +
+          '<div class="sd-weather-tooltip-empty">' + escapeHtml(weatherLoading ? '天气数据加载中，请稍候。' : (weatherFetchError || '当前暂无天气预警，维持常态监测。')) + '</div>' +
         '</div>';
     }
+
+    var badge = info.level
+      ? '<span class="sd-weather-tooltip-badge" style="' + getLevelBadgeStyle(info.level) + '">' + escapeHtml(info.level) + '</span>'
+      : '<span class="sd-weather-tooltip-badge" style="' + getLevelBadgeStyle('蓝色') + '">平稳</span>';
+    var cityMarkup = info.cities.length
+      ? '<div class="sd-weather-tooltip-cities">' + info.cities.map(function (city) {
+          return '<span>' + escapeHtml(city) + '</span>';
+        }).join('') + '</div>'
+      : '';
+    var centerSummaryMarkup = info.centerSummaries.length
+      ? '<div class="sd-weather-tooltip-cities">' + info.centerSummaries.map(function (summary) {
+          return '<span>' + escapeHtml(summary) + '</span>';
+        }).join('') + '</div>'
+      : '';
 
     return '' +
       '<div class="sd-weather-tooltip">' +
         '<div class="sd-weather-tooltip-header">' +
           '<div class="sd-weather-tooltip-title">' + escapeHtml(info.label) + '</div>' +
-          '<span class="sd-weather-tooltip-badge" style="' + getLevelBadgeStyle(info.level) + '">' + escapeHtml(info.level) + '</span>' +
+          badge +
         '</div>' +
         '<div class="sd-weather-tooltip-subtitle">' + escapeHtml(info.type + ' · ' + info.title) + '</div>' +
         '<div class="sd-weather-tooltip-meta">' +
           '<div class="sd-weather-tooltip-item"><strong>更新时间</strong><span>' + escapeHtml(info.updatedAt) + '</span></div>' +
           '<div class="sd-weather-tooltip-item"><strong>应对措施</strong><span>' + escapeHtml(info.action) + '</span></div>' +
         '</div>' +
-        '<div class="sd-weather-tooltip-cities">' +
-          info.cities.map(function (city) {
-            return '<span>' + escapeHtml(city) + '</span>';
-          }).join('') +
-        '</div>' +
+        '<div class="sd-weather-tooltip-subtitle" style="margin-top:10px;">' + escapeHtml(info.desc) + '</div>' +
+        cityMarkup +
+        centerSummaryMarkup +
       '</div>';
   }
 
@@ -327,7 +421,6 @@
   }
 
   function createWeatherOption(chartInstance) {
-    var seriesData = buildWeatherSeriesData();
     var echarts = chartInstance.$echarts || window.echarts;
     var graphic = echarts && echarts.graphic;
     return {
@@ -385,7 +478,7 @@
           name: '天气预警',
           type: 'map',
           geoIndex: 0,
-          data: seriesData,
+          data: weatherSeriesData,
           animationDuration: 600,
           itemStyle: {
             borderColor: 'rgba(0, 0, 0, 0.22)',
@@ -439,6 +532,7 @@
   function renderCurrentMode() {
     if (!mapVm || !mapVm.chart) return;
     if (currentMode === DASHBOARD_MODE.WEATHER) {
+      fetchWeatherDashboard(false);
       mapVm.chart.clear();
       mapVm.chart.setOption(createWeatherOption(mapVm), true);
       updateToggleState();
@@ -543,6 +637,7 @@
   }
 
   function bootstrapEnhancer() {
+    fetchWeatherDashboard(false);
     var attempts = 0;
     var timer = window.setInterval(function () {
       attempts += 1;
@@ -557,6 +652,12 @@
       if (!document.querySelector('.large-screen-wrap')) return;
       ensureEnhancerMounted();
     }, 1500);
+
+    if (!weatherRefreshTimer) {
+      weatherRefreshTimer = window.setInterval(function () {
+        fetchWeatherDashboard(true);
+      }, WEATHER_REFRESH_MS);
+    }
   }
 
   if (document.readyState === 'loading') {

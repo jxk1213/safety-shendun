@@ -31,13 +31,21 @@
    npm install
    ```
 
-4. **配置天气接口 key（如需天气大屏）**
+4. **配置天气接口（如需天气大屏）**
    - 在项目根目录创建 `.env.local`
-   - 填写：
+   - 默认已接入免 key 天气接口，无需额外申请密钥；如需覆盖默认地址，可填写：
      ```bash
-     JUHE_WEATHER_API_KEY=你的聚合天气key
+     UAPIS_WEATHER_API_URL=https://uapis.cn/api/v1/misc/weather
      ```
-   - 仓库已忽略 `.env.local`，提交代码时不会带上真实 key
+   - 可选配置：
+     ```bash
+     WEATHER_FORECAST_DAYS=5
+     WEATHER_CACHE_TTL_MS=600000
+     WEATHER_REQUEST_TIMEOUT_MS=10000
+     WEATHER_REQUEST_CONCURRENCY=6
+     ```
+   - 当免 key 接口返回异常时，后端会自动回退到 `Open-Meteo` 兜底拉取天气数据
+   - 仓库已忽略 `.env.local`
 
 5. **启动服务器**
    - 方式一 (直接启动):
