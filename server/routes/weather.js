@@ -4,7 +4,6 @@ const path = require('path');
 
 const router = express.Router();
 
-const UAPIS_WEATHER_API_URL = process.env.UAPIS_WEATHER_API_URL || 'https://uapis.cn/api/v1/misc/weather';
 const OPEN_METEO_GEOCODING_URL = process.env.OPEN_METEO_GEOCODING_URL || 'https://geocoding-api.open-meteo.com/v1/search';
 const OPEN_METEO_FORECAST_URL = process.env.OPEN_METEO_FORECAST_URL || 'https://api.open-meteo.com/v1/forecast';
 const OPEN_METEO_TIMEZONE = process.env.OPEN_METEO_TIMEZONE || 'Asia/Shanghai';
@@ -87,6 +86,93 @@ const PROVINCE_CAPITAL_MAP = {
   '新疆': '乌鲁木齐',
   '云南': '昆明',
   '浙江': '杭州'
+};
+
+// Open-Meteo 地理编码对部分中国城市匹配不佳，使用硬编码坐标兜底
+const CITY_COORDINATES_FALLBACK = {
+  '北京': { latitude: 39.9042, longitude: 116.4074, name: '北京' },
+  '天津': { latitude: 39.0842, longitude: 117.2009, name: '天津' },
+  '上海': { latitude: 31.2304, longitude: 121.4737, name: '上海' },
+  '重庆': { latitude: 29.5630, longitude: 106.5516, name: '重庆' },
+  '合肥': { latitude: 31.8206, longitude: 117.2272, name: '合肥' },
+  '蚌埠': { latitude: 32.9168, longitude: 117.3616, name: '蚌埠' },
+  '芜湖': { latitude: 31.3340, longitude: 118.3762, name: '芜湖' },
+  '昆明': { latitude: 25.0389, longitude: 102.7183, name: '昆明' },
+  '拉萨': { latitude: 29.6500, longitude: 91.1000, name: '拉萨' },
+  '呼和浩特': { latitude: 40.8427, longitude: 111.7500, name: '呼和浩特' },
+  '乌鲁木齐': { latitude: 43.8256, longitude: 87.6168, name: '乌鲁木齐' },
+  '银川': { latitude: 38.4872, longitude: 106.2309, name: '银川' },
+  '西宁': { latitude: 36.6171, longitude: 101.7782, name: '西宁' },
+  '兰州': { latitude: 36.0611, longitude: 103.8343, name: '兰州' },
+  '贵阳': { latitude: 26.6470, longitude: 106.6302, name: '贵阳' },
+  '南宁': { latitude: 22.8170, longitude: 108.3665, name: '南宁' },
+  '海口': { latitude: 20.0174, longitude: 110.3492, name: '海口' },
+  '哈尔滨': { latitude: 45.8038, longitude: 126.5350, name: '哈尔滨' },
+  '长春': { latitude: 43.8171, longitude: 125.3235, name: '长春' },
+  '沈阳': { latitude: 41.8057, longitude: 123.4315, name: '沈阳' },
+  '大连': { latitude: 38.9140, longitude: 121.6147, name: '大连' },
+  '石家庄': { latitude: 38.0428, longitude: 114.5149, name: '石家庄' },
+  '太原': { latitude: 37.8706, longitude: 112.5489, name: '太原' },
+  '济南': { latitude: 36.6512, longitude: 116.9972, name: '济南' },
+  '郑州': { latitude: 34.7466, longitude: 113.6253, name: '郑州' },
+  '武汉': { latitude: 30.5928, longitude: 114.3055, name: '武汉' },
+  '长沙': { latitude: 28.2282, longitude: 112.9388, name: '长沙' },
+  '广州': { latitude: 23.1291, longitude: 113.2644, name: '广州' },
+  '深圳': { latitude: 22.5431, longitude: 114.0579, name: '深圳' },
+  '南京': { latitude: 32.0603, longitude: 118.7969, name: '南京' },
+  '杭州': { latitude: 30.2741, longitude: 120.1551, name: '杭州' },
+  '成都': { latitude: 30.5728, longitude: 104.0668, name: '成都' },
+  '西安': { latitude: 34.3416, longitude: 108.9398, name: '西安' },
+  '福州': { latitude: 26.0745, longitude: 119.2965, name: '福州' },
+  '南昌': { latitude: 28.6820, longitude: 115.8579, name: '南昌' },
+  '盘锦': { latitude: 41.1200, longitude: 122.0700, name: '盘锦' },
+  '湛江': { latitude: 21.2707, longitude: 110.3594, name: '湛江' },
+  '漳州': { latitude: 24.5128, longitude: 117.6471, name: '漳州' },
+  '泉州': { latitude: 24.8741, longitude: 118.6757, name: '泉州' },
+  '新乡': { latitude: 35.3030, longitude: 113.9268, name: '新乡' },
+  '济宁': { latitude: 35.4145, longitude: 116.5871, name: '济宁' },
+  '无锡': { latitude: 31.4912, longitude: 120.3119, name: '无锡' },
+  '金华': { latitude: 29.0790, longitude: 119.6474, name: '金华' },
+  '宁波': { latitude: 29.8683, longitude: 121.5440, name: '宁波' },
+  '温州': { latitude: 27.9939, longitude: 120.6993, name: '温州' },
+  '台州': { latitude: 28.6563, longitude: 121.4208, name: '台州' },
+  '苏州': { latitude: 31.2989, longitude: 120.5853, name: '苏州' },
+  '徐州': { latitude: 34.2618, longitude: 117.1859, name: '徐州' },
+  '淮安': { latitude: 33.6104, longitude: 119.0153, name: '淮安' },
+  '南通': { latitude: 31.9800, longitude: 120.8943, name: '南通' },
+  '常州': { latitude: 31.8106, longitude: 119.9741, name: '常州' },
+  '连云港': { latitude: 34.5966, longitude: 119.2216, name: '连云港' },
+  '泰州': { latitude: 32.4551, longitude: 119.9231, name: '泰州' },
+  '阜阳': { latitude: 32.8896, longitude: 115.8141, name: '阜阳' },
+  '南充': { latitude: 30.8373, longitude: 106.1106, name: '南充' },
+  '自贡': { latitude: 29.3393, longitude: 104.7788, name: '自贡' },
+  '邯郸': { latitude: 36.6256, longitude: 114.5391, name: '邯郸' },
+  '保定': { latitude: 38.8739, longitude: 115.4647, name: '保定' },
+  '承德': { latitude: 40.9510, longitude: 117.9633, name: '承德' },
+  '唐山': { latitude: 39.6309, longitude: 118.1802, name: '唐山' },
+  '晋城': { latitude: 35.4905, longitude: 112.8513, name: '晋城' },
+  '佳木斯': { latitude: 46.7997, longitude: 130.3186, name: '佳木斯' },
+  '烟台': { latitude: 37.4639, longitude: 121.4478, name: '烟台' },
+  '青岛': { latitude: 36.0671, longitude: 120.3826, name: '青岛' },
+  '洛阳': { latitude: 34.6198, longitude: 112.4540, name: '洛阳' },
+  '漯河': { latitude: 33.5816, longitude: 114.0168, name: '漯河' },
+  '吉安': { latitude: 27.0911, longitude: 114.9864, name: '吉安' },
+  '上饶': { latitude: 28.4520, longitude: 117.9434, name: '上饶' },
+  '衡阳': { latitude: 26.8930, longitude: 112.5720, name: '衡阳' },
+  '常德': { latitude: 29.0319, longitude: 111.6988, name: '常德' },
+  '柳州': { latitude: 24.3264, longitude: 109.4281, name: '柳州' },
+  '桂林': { latitude: 25.2741, longitude: 110.2900, name: '桂林' },
+  '东莞': { latitude: 23.0430, longitude: 113.7633, name: '东莞' },
+  '中山': { latitude: 22.5170, longitude: 113.3926, name: '中山' },
+  '揭阳': { latitude: 23.5500, longitude: 116.3728, name: '揭阳' },
+  '荆门': { latitude: 31.0354, longitude: 112.1990, name: '荆门' },
+  '简阳': { latitude: 30.4111, longitude: 104.5479, name: '简阳' },
+  '公主岭': { latitude: 43.5047, longitude: 124.8232, name: '公主岭' },
+  '晋江': { latitude: 24.7814, longitude: 118.5519, name: '晋江' },
+  '卫辉': { latitude: 35.3982, longitude: 114.0648, name: '卫辉' },
+  '吴川': { latitude: 21.4281, longitude: 110.7778, name: '吴川' },
+  '静海': { latitude: 38.9378, longitude: 116.9748, name: '静海' },
+  '兖州': { latitude: 35.5530, longitude: 116.7836, name: '兖州' },
 };
 
 const FALLBACK_PROVINCE_BY_CODE = {
@@ -485,15 +571,7 @@ function pickNestedValue(source, paths) {
   return '';
 }
 
-function pickNestedObject(source, paths) {
-  for (const path of paths) {
-    const value = getNestedValue(source, path);
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return value;
-    }
-  }
-  return null;
-}
+
 
 function pickNestedArray(source, paths) {
   for (const path of paths) {
@@ -619,14 +697,25 @@ function pickOpenMeteoLocation(results, city) {
 }
 
 async function fetchOpenMeteoWeather(city) {
-  const geoUrl = new URL(OPEN_METEO_GEOCODING_URL);
-  geoUrl.searchParams.set('name', city);
-  geoUrl.searchParams.set('count', '5');
-  geoUrl.searchParams.set('language', 'zh');
-  geoUrl.searchParams.set('countryCode', 'CN');
+  // 优先使用硬编码坐标（精确可靠）
+  let location = CITY_COORDINATES_FALLBACK[cleanCityName(city)] || null;
 
-  const geoPayload = await fetchJson(geoUrl);
-  const location = pickOpenMeteoLocation(geoPayload && geoPayload.results, city);
+  // 硬编码未命中时，尝试 Open-Meteo 地理编码
+  if (!location) {
+    try {
+      const geoUrl = new URL(OPEN_METEO_GEOCODING_URL);
+      geoUrl.searchParams.set('name', city);
+      geoUrl.searchParams.set('count', '5');
+      geoUrl.searchParams.set('language', 'zh');
+      geoUrl.searchParams.set('countryCode', 'CN');
+
+      const geoPayload = await fetchJson(geoUrl);
+      location = pickOpenMeteoLocation(geoPayload && geoPayload.results, city);
+    } catch (_) {
+      // 地理编码失败
+    }
+  }
+
   if (!location) {
     throw new Error('Open-Meteo 未匹配到城市');
   }
@@ -671,148 +760,6 @@ async function fetchOpenMeteoWeather(city) {
   };
 }
 
-function pickWeatherPayloadRoot(payload) {
-  const candidates = [
-    payload && payload.data,
-    payload && payload.result,
-    payload && (Array.isArray(payload.results) ? payload.results[0] : null),
-    payload && payload.weather,
-    payload
-  ];
-
-  for (const candidate of candidates) {
-    if (candidate && typeof candidate === 'object') {
-      return candidate;
-    }
-  }
-
-  return null;
-}
-
-function normalizeUapisDailyRecord(item) {
-  return {
-    date: normalizeText(pickNestedValue(item, ['date', 'fxDate', 'time', 'valid_date', 'day'])),
-    text_day: normalizeText(pickNestedValue(item, [
-      'text_day', 'textDay', 'day_text', 'dayText', 'day_weather', 'dayWeather', 'day.condition', 'day.text', 'condition_day'
-    ])),
-    text_night: normalizeText(pickNestedValue(item, [
-      'text_night', 'textNight', 'night_text', 'nightText', 'night_weather', 'nightWeather', 'night.condition', 'night.text', 'condition_night'
-    ])),
-    low: normalizeText(pickNestedValue(item, ['low', 'min', 'tempMin', 'temp_min', 'temperature_min', 'night.temp'])),
-    high: normalizeText(pickNestedValue(item, ['high', 'max', 'tempMax', 'temp_max', 'temperature_max', 'day.temp'])),
-    rainfall: normalizeText(pickNestedValue(item, ['rainfall', 'precip', 'precipitation', 'precip_sum', 'precipitation_sum'])),
-    wind_direction: normalizeWindDirectionValue(pickNestedValue(item, [
-      'wind_direction', 'windDirection', 'wind_dir', 'windDir', 'wind_direction_day', 'windDirDay', 'day.windDir', 'day.wind_direction'
-    ])),
-    wind_scale: normalizeWindScaleValue(pickNestedValue(item, [
-      'wind_scale', 'windScale', 'wind_level', 'windLevel', 'wind_speed', 'windSpeed', 'wind_scale_day', 'windScaleDay', 'day.windScale', 'day.wind_speed'
-    ]))
-  };
-}
-
-async function fetchUapisWeather(city) {
-  const url = new URL(UAPIS_WEATHER_API_URL);
-  url.searchParams.set('city', city);
-
-  const payload = await fetchJson(url);
-  const data = pickWeatherPayloadRoot(payload);
-  if (!data) {
-    throw new Error('UAPIS 返回结构异常');
-  }
-
-  const realtime = pickNestedObject(data, ['now', 'current', 'realtime', 'live', 'observe', 'weather.now', 'weather.current']) || data;
-  const daily = pickNestedArray(data, [
-    'daily',
-    'forecast',
-    'forecasts',
-    'future',
-    'days',
-    'weather.daily',
-    'weather.forecast',
-    'result.daily',
-    'result.forecast'
-  ]).slice(0, WEATHER_FORECAST_DAYS).map(normalizeUapisDailyRecord);
-  const locationName = normalizeText(pickNestedValue(data, [
-    'location.name',
-    'city.name',
-    'city',
-    'location',
-    'area',
-    'name'
-  ])) || city;
-  const weatherText = normalizeText(pickNestedValue(realtime, [
-    'text',
-    'weather',
-    'cond_txt',
-    'condition',
-    'description',
-    'phenomena',
-    'weatherText'
-  ])) || (daily[0] && (daily[0].text_day || daily[0].text_night)) || '';
-  const temperature = normalizeText(pickNestedValue(realtime, [
-    'temperature',
-    'temp',
-    'temp_c',
-    'tempC',
-    'temperature_2m'
-  ]));
-  const humidity = normalizeText(pickNestedValue(realtime, [
-    'humidity',
-    'relative_humidity',
-    'relativeHumidity',
-    'rh',
-    'relative_humidity_2m'
-  ]));
-  const windDirection = normalizeWindDirectionValue(pickNestedValue(realtime, [
-    'wind_direction',
-    'windDirection',
-    'wind_dir',
-    'windDir',
-    'wind.direction',
-    'wind_direction_10m'
-  ]));
-  const windScale = normalizeWindScaleValue(pickNestedValue(realtime, [
-    'wind_scale',
-    'windScale',
-    'wind_level',
-    'windLevel',
-    'wind_speed',
-    'windSpeed',
-    'wind.speed',
-    'wind_speed_10m'
-  ]));
-  const air = pickNestedObject(data, ['air', 'air_now', 'airNow', 'airQuality']) || pickNestedValue(data, ['aqi']);
-
-  if (!weatherText && !temperature && !daily.length) {
-    throw new Error('UAPIS 未返回可用天气字段');
-  }
-
-  return {
-    location: {
-      name: locationName,
-      timezone: normalizeText(pickNestedValue(data, ['location.timezone', 'timezone']))
-    },
-    now: {
-      text: weatherText,
-      temperature,
-      humidity,
-      wind_direction: windDirection,
-      wind_scale: windScale
-    },
-    daily,
-    air,
-    lastUpdate: normalizeText(pickNestedValue(data, [
-      'lastUpdate',
-      'last_update',
-      'updateTime',
-      'updatedAt',
-      'obsTime',
-      'now.obsTime',
-      'current.time'
-    ]))
-  };
-}
-
 function toCenterWeatherRecord(center, weatherResult, updatedAt, queryCity, provider) {
   const realtime = weatherResult && weatherResult.now ? weatherResult.now : {};
   const air = weatherResult && weatherResult.air ? weatherResult.air : {};
@@ -838,7 +785,7 @@ function toCenterWeatherRecord(center, weatherResult, updatedAt, queryCity, prov
     provinceName: inferProvinceName(center),
     city: cleanCityName(weatherResult && weatherResult.location && weatherResult.location.name) || queryCity || inferQueryCity(center),
     queryCity: queryCity || inferQueryCity(center),
-    provider: provider || 'uapis',
+    provider: provider || 'open-meteo',
     weather: normalizeText(realtime.text) || (future[0] && future[0].weather) || '',
     temperature: normalizeText(realtime.temperature),
     humidity: normalizeText(realtime.humidity),
@@ -900,19 +847,14 @@ router.get('/dashboard', async (req, res) => {
       if (!weatherRequestCache.has(city)) {
         weatherRequestCache.set(city, (async () => {
           try {
-            const result = await fetchUapisWeather(city);
-            return { city, ok: true, result, provider: 'uapis' };
+            const result = await fetchOpenMeteoWeather(city);
+            return { city, ok: true, result, provider: 'open-meteo' };
           } catch (error) {
-            try {
-              const fallbackResult = await fetchOpenMeteoWeather(city);
-              return { city, ok: true, result: fallbackResult, provider: 'open-meteo' };
-            } catch (fallbackError) {
-              return {
-                city,
-                ok: false,
-                error: (error && error.message ? error.message : 'UAPIS 失败') + ' / ' + (fallbackError && fallbackError.message ? fallbackError.message : 'Open-Meteo 失败')
-              };
-            }
+            return {
+              city,
+              ok: false,
+              error: error && error.message ? error.message : 'Open-Meteo 获取失败'
+            };
           }
         })());
       }
@@ -964,7 +906,7 @@ router.get('/dashboard', async (req, res) => {
       centerWeather.push(toCenterWeatherRecord(item.center, item.result, recordUpdatedAt, item.queryCity, item.provider));
     });
 
-    const payload = buildDashboardPayload(centerWeather, failures, 'uapis');
+    const payload = buildDashboardPayload(centerWeather, failures, 'open-meteo');
     weatherCache = {
       expiresAt: Date.now() + WEATHER_CACHE_TTL_MS,
       payload

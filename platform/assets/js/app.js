@@ -354,6 +354,50 @@
   const topbar = document.querySelector('.topbar');
 
   let currentPage = 'dashboard';
+  let currentPageCleanup = null;
+
+  function setCurrentPageCleanup(cleanup) {
+    currentPageCleanup = typeof cleanup === 'function' ? cleanup : null;
+  }
+
+  function runCurrentPageCleanup() {
+    if (!currentPageCleanup) return;
+    try {
+      currentPageCleanup();
+    } catch (error) {
+      console.warn('page cleanup failed:', error);
+    }
+    currentPageCleanup = null;
+  }
+
+  function cleanupSafetyDashboardPage() {
+    var iframe = mainContent.querySelector('.safety-dashboard-frame');
+    if (!iframe) return;
+
+    try {
+      var frameWindow = iframe.contentWindow;
+      var enhancer = frameWindow && frameWindow.__SAFETY_DASHBOARD_ENHANCER__;
+      if (enhancer && typeof enhancer.destroy === 'function') {
+        enhancer.destroy();
+      }
+      if (frameWindow && frameWindow.location && frameWindow.location.href !== 'about:blank') {
+        frameWindow.location.replace('about:blank');
+      }
+    } catch (error) {
+      console.warn('safety dashboard iframe cleanup failed:', error);
+    }
+
+    try {
+      iframe.removeAttribute('src');
+      iframe.src = 'about:blank';
+    } catch (error) {
+      console.warn('safety dashboard iframe reset failed:', error);
+    }
+
+    if (iframe.parentNode) {
+      iframe.parentNode.removeChild(iframe);
+    }
+  }
 
   // ============ 初始化 ============
   function init() {
@@ -467,9 +511,13 @@
 
   // ============ 页面渲染 ============
   function renderPage(page) {
+    runCurrentPageCleanup();
     mainContent.scrollTop = 0;
     switch (page) {
-      case 'safety-dashboard': mainContent.innerHTML = renderSafetyDashboard(); break;
+      case 'safety-dashboard':
+        mainContent.innerHTML = renderSafetyDashboard();
+        setCurrentPageCleanup(cleanupSafetyDashboardPage);
+        break;
       case 'dashboard': mainContent.innerHTML = renderDashboard(); break;
       case 'dual-prevention':
         mainContent.innerHTML = renderDualPrevention();
@@ -571,7 +619,7 @@
     return '' +
       '<div style="height:100%; width:100%; display:flex; flex-direction:column; overflow:hidden;">' +
         '<div style="flex:1; width:100%; position:relative;">' +
-          '<iframe src="safety-dashboard/index.html" style="width:100%; height:100%; border:none; background:#000; position:absolute; top:0; left:0;"></iframe>' +
+          '<iframe class="safety-dashboard-frame" src="safety-dashboard/index.html" style="width:100%; height:100%; border:none; background:#000; position:absolute; top:0; left:0;"></iframe>' +
         '</div>' +
       '</div>';
   }
@@ -4547,7 +4595,7 @@
   }
 
   function applyWeatherPayload(payload) {
-    weatherWarningState.source = payload && payload.source ? payload.source : 'uapis';
+    weatherWarningState.source = payload && payload.source ? payload.source : 'open-meteo';
     weatherWarningState.message = payload && payload.message ? payload.message : '';
     weatherWarningState.stats = payload && payload.stats ? payload.stats : null;
     weatherWarningState.centerWeather = Array.isArray(payload && payload.centerWeather) ? payload.centerWeather : [];

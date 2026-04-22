@@ -32,19 +32,17 @@
    ```
 
 4. **配置天气接口（如需天气大屏）**
-   - 在项目根目录创建 `.env.local`
-   - 默认已接入免 key 天气接口，无需额外申请密钥；如需覆盖默认地址，可填写：
+   - 天气数据统一使用 [Open-Meteo](https://open-meteo.com/) 免费接口，无需 API Key
+   - 可选配置（在项目根目录 `.env.local` 中覆盖）：
      ```bash
-     UAPIS_WEATHER_API_URL=https://uapis.cn/api/v1/misc/weather
-     ```
-   - 可选配置：
-     ```bash
+     OPEN_METEO_GEOCODING_URL=https://geocoding-api.open-meteo.com/v1/search
+     OPEN_METEO_FORECAST_URL=https://api.open-meteo.com/v1/forecast
+     OPEN_METEO_TIMEZONE=Asia/Shanghai
      WEATHER_FORECAST_DAYS=5
      WEATHER_CACHE_TTL_MS=600000
      WEATHER_REQUEST_TIMEOUT_MS=10000
      WEATHER_REQUEST_CONCURRENCY=6
      ```
-   - 当免 key 接口返回异常时，后端会自动回退到 `Open-Meteo` 兜底拉取天气数据
    - 仓库已忽略 `.env.local`
 
 5. **启动服务器**

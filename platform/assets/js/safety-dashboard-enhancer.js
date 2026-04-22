@@ -18,6 +18,9 @@
   var weatherFetchError = '';
   var weatherFetchPromise = null;
   var weatherRefreshTimer = null;
+  var mountRetryTimer = null;
+  var enhancerWatchTimer = null;
+  var destroyRequested = false;
 
   var WEATHER_API_URL = '/api/weather/dashboard';
   var WEATHER_REFRESH_MS = 5 * 60 * 1000;
@@ -184,6 +187,59 @@
         'font-size:12px;' +
         'color:#e8fcff;' +
       '}' +
+      '.sd-weather-tooltip-section-title{' +
+        'margin-top:10px;' +
+        'font-size:12px;' +
+        'font-weight:700;' +
+        'letter-spacing:0.4px;' +
+        'color:#9fefff;' +
+      '}' +
+      '.sd-weather-tooltip-centers{' +
+        'margin-top:8px;' +
+        'display:grid;' +
+        'gap:8px;' +
+        'max-height:220px;' +
+        'overflow:auto;' +
+        'padding-right:4px;' +
+      '}' +
+      '.sd-weather-tooltip-centers::-webkit-scrollbar{' +
+        'width:6px;' +
+      '}' +
+      '.sd-weather-tooltip-centers::-webkit-scrollbar-thumb{' +
+        'background:rgba(63,199,255,0.3);' +
+        'border-radius:999px;' +
+      '}' +
+      '.sd-weather-tooltip-center{' +
+        'padding:8px 10px;' +
+        'background:rgba(255,255,255,0.06);' +
+        'border:1px solid rgba(63,199,255,0.14);' +
+      '}' +
+      '.sd-weather-tooltip-center-row{' +
+        'display:flex;' +
+        'align-items:center;' +
+        'justify-content:space-between;' +
+        'gap:8px;' +
+      '}' +
+      '.sd-weather-tooltip-center-name{' +
+        'font-size:13px;' +
+        'font-weight:700;' +
+        'color:#ffffff;' +
+      '}' +
+      '.sd-weather-tooltip-center-badge{' +
+        'display:inline-flex;' +
+        'align-items:center;' +
+        'padding:1px 6px;' +
+        'border-radius:999px;' +
+        'font-size:11px;' +
+        'font-weight:700;' +
+        'color:#0b1630;' +
+      '}' +
+      '.sd-weather-tooltip-center-meta{' +
+        'margin-top:4px;' +
+        'font-size:12px;' +
+        'line-height:1.6;' +
+        'color:#d8f8ff;' +
+      '}' +
       '.large-screen-wrap .container .content .content-middle{' +
         'min-height:0;' +
       '}' +
@@ -249,6 +305,39 @@
     return normalizeText(left && left.cityName).localeCompare(normalizeText(right && right.cityName), 'zh-CN');
   }
 
+  function matchesCenterAlert(entry, alert) {
+    var centerName = normalizeText(entry && (entry.shortName || entry.centerName || entry.city));
+    var cityName = normalizeText(entry && entry.city);
+    var centerNames = Array.isArray(alert && alert.centerNames) ? alert.centerNames : [];
+    return centerNames.some(function (name) {
+      var text = normalizeText(name);
+      if (!text) return false;
+      return (centerName && (centerName.indexOf(text) >= 0 || text.indexOf(centerName) >= 0))
+        || (cityName && (cityName.indexOf(text) >= 0 || text.indexOf(cityName) >= 0));
+    });
+  }
+
+  function buildCenterWeatherDetails(centers, alerts) {
+    return centers.map(function (entry) {
+      var matchedAlert = (alerts || []).find(function (alert) {
+        return matchesCenterAlert(entry, alert);
+      });
+      return {
+        name: normalizeText(entry.shortName || entry.centerName || entry.city) || '--',
+        weather: normalizeText(entry.weather) || '天气平稳',
+        temperature: normalizeText(entry.temperature),
+        aqi: normalizeText(entry.aqi),
+        updatedAt: normalizeText(entry.updatedAt),
+        level: matchedAlert ? matchedAlert.level : '',
+        response: matchedAlert ? matchedAlert.response : ''
+      };
+    }).sort(function (left, right) {
+      var levelDiff = getLevelValue(right.level) - getLevelValue(left.level);
+      if (levelDiff !== 0) return levelDiff;
+      return normalizeText(left.name).localeCompare(normalizeText(right.name), 'zh-CN');
+    });
+  }
+
   function buildProvinceWeatherState(payload) {
     var provinceInfo = {};
     var alerts = Array.isArray(payload && payload.alerts) ? payload.alerts : [];
@@ -296,7 +385,8 @@
         sortedAlerts.map(function (item) { return item.cityName; })
           .concat(centers.map(function (item) { return item.city || item.shortName; }))
       );
-      var centerSummaries = uniqueList(centers.map(buildCenterWeatherLabel)).slice(0, 4);
+      var centerSummaries = uniqueList(centers.map(buildCenterWeatherLabel));
+      var centerDetails = buildCenterWeatherDetails(centers, sortedAlerts);
 
       weatherLookup[provinceName] = {
         mapName: provinceName,
@@ -308,7 +398,8 @@
         action: topAlert ? topAlert.response : '当前暂无天气预警，维持常态监测。',
         desc: topAlert ? topAlert.desc : (centerSummaries[0] || '当前暂无天气预警，维持常态监测。'),
         cities: cities,
-        centerSummaries: centerSummaries
+        centerSummaries: centerSummaries,
+        centerDetails: centerDetails
       };
 
       weatherCenterLookup[provinceName] = centers;
@@ -329,6 +420,9 @@
   }
 
   function fetchWeatherDashboard(forceRefresh) {
+    if (destroyRequested) {
+      return Promise.resolve(null);
+    }
     if (weatherFetchPromise) return weatherFetchPromise;
 
     weatherLoading = true;
@@ -343,6 +437,7 @@
         return response.json();
       })
       .then(function (payload) {
+        if (destroyRequested) return payload;
         buildProvinceWeatherState(payload || {});
         weatherLoading = false;
         weatherFetchPromise = null;
@@ -352,6 +447,7 @@
         return payload;
       })
       .catch(function (error) {
+        if (destroyRequested) return null;
         weatherLoading = false;
         weatherFetchPromise = null;
         weatherFetchError = error && error.message ? error.message : '天气数据加载失败';
@@ -393,6 +489,29 @@
           return '<span>' + escapeHtml(summary) + '</span>';
         }).join('') + '</div>'
       : '';
+    var centerDetailMarkup = info.centerDetails && info.centerDetails.length
+      ? '<div class="sd-weather-tooltip-section-title">所辖中心天气</div>' +
+        '<div class="sd-weather-tooltip-centers">' + info.centerDetails.map(function (center) {
+          var centerBadge = center.level
+            ? '<span class="sd-weather-tooltip-center-badge" style="' + getLevelBadgeStyle(center.level) + '">' + escapeHtml(center.level) + '</span>'
+            : '';
+          var meta = [
+            center.weather,
+            center.temperature ? (center.temperature + '℃') : '',
+            center.aqi ? ('AQI ' + center.aqi) : '',
+            center.updatedAt ? ('更新 ' + center.updatedAt) : ''
+          ].filter(Boolean).join(' · ');
+          return '' +
+            '<div class="sd-weather-tooltip-center">' +
+              '<div class="sd-weather-tooltip-center-row">' +
+                '<span class="sd-weather-tooltip-center-name">' + escapeHtml(center.name) + '</span>' +
+                centerBadge +
+              '</div>' +
+              '<div class="sd-weather-tooltip-center-meta">' + escapeHtml(meta || '当前暂无中心天气详情') + '</div>' +
+              (center.response ? '<div class="sd-weather-tooltip-center-meta">' + escapeHtml(center.response) + '</div>' : '') +
+            '</div>';
+        }).join('') + '</div>'
+      : '';
 
     return '' +
       '<div class="sd-weather-tooltip">' +
@@ -408,6 +527,7 @@
         '<div class="sd-weather-tooltip-subtitle" style="margin-top:10px;">' + escapeHtml(info.desc) + '</div>' +
         cityMarkup +
         centerSummaryMarkup +
+        centerDetailMarkup +
       '</div>';
   }
 
@@ -623,6 +743,7 @@
   }
 
   function ensureEnhancerMounted() {
+    if (destroyRequested) return false;
     if (enhancerReady && document.getElementById('sdModeSwitch') && mapVm && mapVm.chart) return true;
     injectEnhancerStyles();
     dashboardVm = findDashboardVm();
@@ -637,18 +758,26 @@
   }
 
   function bootstrapEnhancer() {
+    destroyRequested = false;
     fetchWeatherDashboard(false);
     var attempts = 0;
-    var timer = window.setInterval(function () {
+    if (mountRetryTimer) {
+      window.clearInterval(mountRetryTimer);
+    }
+    mountRetryTimer = window.setInterval(function () {
       attempts += 1;
       ensureEnhancerMounted();
       if (attempts > 80) {
-        window.clearInterval(timer);
+        window.clearInterval(mountRetryTimer);
+        mountRetryTimer = null;
       }
     }, 500);
     ensureEnhancerMounted();
 
-    window.setInterval(function () {
+    if (enhancerWatchTimer) {
+      window.clearInterval(enhancerWatchTimer);
+    }
+    enhancerWatchTimer = window.setInterval(function () {
       if (!document.querySelector('.large-screen-wrap')) return;
       ensureEnhancerMounted();
     }, 1500);
@@ -659,6 +788,47 @@
       }, WEATHER_REFRESH_MS);
     }
   }
+
+  function destroyEnhancer() {
+    destroyRequested = true;
+    enhancerReady = false;
+    dashboardVm = null;
+
+    if (mountRetryTimer) {
+      window.clearInterval(mountRetryTimer);
+      mountRetryTimer = null;
+    }
+    if (enhancerWatchTimer) {
+      window.clearInterval(enhancerWatchTimer);
+      enhancerWatchTimer = null;
+    }
+    if (weatherRefreshTimer) {
+      window.clearInterval(weatherRefreshTimer);
+      weatherRefreshTimer = null;
+    }
+
+    var toolbar = document.getElementById('sdModeSwitch');
+    if (toolbar && toolbar.parentNode) {
+      toolbar.parentNode.removeChild(toolbar);
+    }
+
+    if (mapVm && originalDrawChart) {
+      mapVm.drawChart = originalDrawChart;
+      mapVm.__sdPatched = false;
+    }
+
+    mapVm = null;
+    originalDrawChart = null;
+    weatherFetchPromise = null;
+    window.__SAFETY_DASHBOARD_ENHANCER__ = null;
+  }
+
+  window.__SAFETY_DASHBOARD_ENHANCER__ = {
+    destroy: destroyEnhancer
+  };
+
+  window.addEventListener('pagehide', destroyEnhancer);
+  window.addEventListener('beforeunload', destroyEnhancer);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bootstrapEnhancer);
