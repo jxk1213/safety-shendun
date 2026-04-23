@@ -4938,7 +4938,7 @@
     var provinceAlerts = getWeatherAlertsForGeoName(geoName);
     var centerRecords = getWeatherCenterRecordsForGeoName(geoName);
     var province = getWeatherBusinessProvince(provinceName);
-    var centers = getWeatherProvinceCenters(geoName).slice(0, 5);
+    var centers = getWeatherProvinceCenters(geoName);
 
     if (!provinceName) {
       return '<div class="weather-summary-empty">请选择或悬停省区查看中心天气态势。</div>';
@@ -5149,7 +5149,7 @@
   function buildWeatherTooltipHtml(provinceName) {
     var geoName = normalizeWeatherProvinceName(provinceName);
     var businessProvince = getWeatherBusinessProvince(geoName);
-    var centers = getWeatherProvinceCenters(geoName).slice(0, 4);
+    var centers = getWeatherProvinceCenters(geoName);
     var alerts = getWeatherAlertsForGeoName(geoName);
     var centerRecords = getWeatherCenterRecordsForGeoName(geoName);
     var firstRecord = centerRecords[0];

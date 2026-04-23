@@ -37,31 +37,69 @@
     var style = document.createElement('style');
     style.id = 'safetyDashboardEnhancerStyle';
     style.textContent = '' +
+      /* ===== Layout overrides: narrow sides, enlarge map, shrink STO ===== */
+      '.large-screen-wrap .container .content .content-left,' +
+      '.large-screen-wrap .container .content .content-right{' +
+        'width:22% !important;' +
+      '}' +
+      /* Fix for clipped icons in side panels */
+      '.large-screen-wrap .container .content .content-left .col-icon,' +
+      '.large-screen-wrap .container .content .content-right .col-icon{' +
+        'width:48px !important;' +
+        'min-height:48px !important;' +
+        'margin-right:8px !important;' +
+        'background-size:contain !important;' +
+      '}' +
+      '.large-screen-wrap .container .content .content-left .col-num,' +
+      '.large-screen-wrap .container .content .content-right .col-num{' +
+        'font-size:30px !important;' +
+      '}' +
+      '.large-screen-wrap .container .content .content-left .col-item,' +
+      '.large-screen-wrap .container .content .content-right .col-item{' +
+        'padding:0 4px !important;' +
+      '}' +
+      '.large-screen-wrap .container .content .content-left .col-title,' +
+      '.large-screen-wrap .container .content .content-right .col-title,' +
+      '.large-screen-wrap .container .content .content-left .label,' +
+      '.large-screen-wrap .container .content .content-right .label{' +
+        'white-space:nowrap !important;' +
+        'font-size:15px !important;' +
+      '}' +
+      '.large-screen-wrap .container .content .content-middle .top-col{' +
+        'flex:0 0 auto !important;' +
+        'margin-bottom:8px !important;' +
+      '}' +
+      '.large-screen-wrap .container .content .content-middle .bottom-col{' +
+        'flex:1 1 0% !important;' +
+        'min-height:0;' +
+      '}' +
+      '.large-screen-wrap .container .content .content-middle{' +
+        'min-height:0;' +
+      '}' +
+      /* ===== Mode switch toolbar (now at bottom) ===== */
       '.sd-mode-switch{' +
         'display:flex;' +
         'align-items:center;' +
-        'justify-content:space-between;' +
+        'justify-content:center;' +
         'gap:20px;' +
-        'margin:4px 0 14px;' +
-        'padding:8px 14px 10px;' +
+        'margin:6px 0 0;' +
+        'padding:6px 14px 8px;' +
         'flex:0 0 auto;' +
-        'border:1px solid rgba(28,72,122,0.82);' +
-        'background:linear-gradient(180deg, rgba(3,20,50,0.94), rgba(6,24,58,0.82));' +
-        'box-shadow:inset 0 0 0 1px rgba(0,229,255,0.08), 0 10px 24px rgba(0,0,0,0.18);' +
       '}' +
       '.sd-mode-switch-main{' +
         'display:grid;' +
         'grid-template-columns:1fr 1fr;' +
         'gap:12px;' +
         'flex:1;' +
+        'max-width:420px;' +
       '}' +
       '.sd-mode-btn{' +
         'position:relative;' +
-        'height:42px;' +
+        'height:36px;' +
         'border:1px solid rgba(0,229,255,0.34);' +
         'background:rgba(8,48,74,0.72);' +
         'color:#7feeff;' +
-        'font-size:22px;' +
+        'font-size:18px;' +
         'font-weight:700;' +
         'letter-spacing:1px;' +
         'cursor:pointer;' +
@@ -239,12 +277,6 @@
         'font-size:12px;' +
         'line-height:1.6;' +
         'color:#d8f8ff;' +
-      '}' +
-      '.large-screen-wrap .container .content .content-middle{' +
-        'min-height:0;' +
-      '}' +
-      '.large-screen-wrap .container .content .content-middle .bottom-col{' +
-        'min-height:0;' +
       '}';
     document.head.appendChild(style);
   }
@@ -726,7 +758,7 @@
       setMode(target.getAttribute('data-mode'));
     });
 
-    middleColumn.insertBefore(toolbar, bottomCol);
+    middleColumn.appendChild(toolbar);
     updateToggleState();
     return true;
   }
