@@ -1,0 +1,562 @@
+:root {
+  --brand-blue: #1f6fff;
+  --brand-blue-deep: #1139b7;
+  --brand-blue-soft: rgba(31, 111, 255, 0.12);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-border: rgba(148, 163, 184, 0.22);
+  --line: #dbe4f0;
+  --success: #12b981;
+  --shadow-panel: 0 24px 60px rgba(15, 23, 42, 0.16);
+  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --transition: 0.24s ease;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: var(--text-primary);
+  background: #dfe9f7;
+}
+
+button,
+input,
+a {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.login-page {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(420px, 520px);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 58%, rgba(255, 255, 255, 0.18) 76%, rgba(255, 255, 255, 0.78) 100%),
+    url("../img/申盾智能登录页.png") center center / cover no-repeat;
+}
+
+.visual-panel {
+  position: relative;
+  min-height: 100dvh;
+}
+
+.auth-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 32px 32px 0;
+}
+
+.auth-shell {
+  width: min(100%, 468px);
+  padding: 40px 36px 28px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-panel);
+}
+
+.auth-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.brand-mark {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(31, 111, 255, 0.12) 0%, rgba(31, 111, 255, 0.02) 100%);
+}
+
+.brand-name {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-blue);
+}
+
+.auth-header h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.login-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 6px;
+  margin-bottom: 24px;
+  background: rgba(226, 232, 240, 0.88);
+  border-radius: 14px;
+}
+
+.switch-btn {
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+}
+
+.switch-btn.active {
+  color: var(--brand-blue-deep);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.login-pane {
+  display: none;
+}
+
+.login-pane.active {
+  display: block;
+}
+
+.login-form,
+.qrcode-pane {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-group {
+  margin-bottom: 18px;
+}
+
+.field-group label {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.field-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 0 16px 0 46px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.field-box:focus-within {
+  border-color: rgba(31, 111, 255, 0.5);
+  box-shadow: 0 0 0 4px rgba(31, 111, 255, 0.1);
+  background: #fff;
+}
+
+.field-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.field-box input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  outline: 0;
+}
+
+.field-box input::placeholder {
+  color: #94a3b8;
+}
+
+.password-toggle {
+  width: 36px;
+  height: 36px;
+  margin-right: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 10px;
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.password-toggle:hover {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-secondary);
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 22px;
+}
+
+.check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.check-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand-blue);
+}
+
+.text-link {
+  color: var(--brand-blue-deep);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.text-link-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.submit-btn,
+.secondary-btn {
+  min-height: 52px;
+  border: 0;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 700;
+  transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition), background var(--transition);
+}
+
+.submit-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #2d7fff 0%, #1248dc 100%);
+  box-shadow: 0 16px 28px rgba(18, 72, 220, 0.26);
+}
+
+.submit-btn:hover,
+.secondary-btn:hover {
+  transform: translateY(-1px);
+}
+
+.submit-btn:active,
+.secondary-btn:active {
+  transform: translateY(0);
+}
+
+.submit-btn.loading .submit-text {
+  opacity: 0.72;
+}
+
+.submit-btn.loading .submit-spinner {
+  display: inline-flex;
+}
+
+.submit-spinner {
+  display: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+.submit-message {
+  min-height: 22px;
+  margin: 14px 2px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.submit-message.success {
+  color: var(--success);
+}
+
+.dingtalk-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.dingtalk-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(135deg, #0ea5ff 0%, #2563eb 100%);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.24);
+}
+
+.dingtalk-meta h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.dingtalk-meta p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.qrcode-shell {
+  margin: 8px auto 18px;
+  padding: 16px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(242, 247, 255, 1) 100%);
+  box-shadow: inset 0 0 0 1px rgba(219, 228, 240, 0.82);
+}
+
+.qr-code {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  border-radius: 18px;
+  background:
+    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px) 0 0 / 20px 20px,
+    linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px) 0 0 / 20px 20px,
+    #fff;
+}
+
+.finder,
+.pixel {
+  position: absolute;
+  background: #111827;
+}
+
+.finder {
+  width: 52px;
+  height: 52px;
+  border: 10px solid #111827;
+  background: #fff;
+}
+
+.finder::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  background: #111827;
+}
+
+.finder-a {
+  top: 16px;
+  left: 16px;
+}
+
+.finder-b {
+  top: 16px;
+  right: 16px;
+}
+
+.finder-c {
+  bottom: 16px;
+  left: 16px;
+}
+
+.pixel {
+  width: 12px;
+  height: 12px;
+}
+
+.p1 { top: 32px; left: 102px; }
+.p2 { top: 52px; left: 118px; }
+.p3 { top: 68px; left: 142px; }
+.p4 { top: 88px; left: 92px; }
+.p5 { top: 92px; left: 126px; }
+.p6 { top: 110px; left: 154px; }
+.p7 { top: 124px; left: 94px; }
+.p8 { top: 130px; left: 116px; }
+.p9 { top: 130px; left: 138px; }
+.p10 { top: 130px; left: 160px; }
+.p11 { top: 146px; left: 84px; }
+.p12 { top: 150px; left: 112px; }
+.p13 { top: 152px; left: 176px; }
+.p14 { top: 168px; left: 98px; }
+.p15 { top: 176px; left: 136px; }
+.p16 { top: 178px; left: 156px; }
+.p17 { top: 178px; left: 176px; }
+.p18 { top: 108px; left: 182px; }
+.p19 { top: 84px; left: 176px; }
+.p20 { top: 194px; left: 116px; }
+.p21 { top: 194px; left: 154px; }
+.p22 { top: 84px; left: 156px; }
+
+.scan-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.status-pulse {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 0 rgba(18, 185, 129, 0.48);
+  animation: pulse 1.8s infinite;
+}
+
+.secondary-btn {
+  color: var(--brand-blue-deep);
+  background: var(--brand-blue-soft);
+}
+
+.auth-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(219, 228, 240, 0.86);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(18, 185, 129, 0.42);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(18, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(18, 185, 129, 0);
+  }
+}
+
+@media (max-width: 1120px) {
+  .login-page {
+    grid-template-columns: minmax(0, 1fr) minmax(380px, 460px);
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.02) 58%, rgba(255, 255, 255, 0.28) 76%, rgba(255, 255, 255, 0.82) 100%),
+      url("../img/申盾智能登录页.png") center center / cover no-repeat;
+  }
+
+  .auth-panel {
+    padding-right: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .login-page {
+    grid-template-columns: 1fr;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.04) 52%, rgba(255, 255, 255, 0.7) 76%, rgba(255, 255, 255, 0.94) 100%),
+      url("../img/申盾智能登录页.png") center center / cover no-repeat;
+  }
+
+  .visual-panel {
+    min-height: 240px;
+  }
+
+  .auth-panel {
+    padding: 0 20px 24px;
+    align-items: flex-start;
+  }
+
+  .auth-shell {
+    width: 100%;
+    margin-top: -18px;
+    border-radius: 24px 24px 20px 20px;
+  }
+}
+
+@media (max-width: 560px) {
+  .auth-panel {
+    padding: 0 12px 16px;
+  }
+
+  .auth-shell {
+    padding: 28px 20px 22px;
+  }
+
+  .auth-header {
+    align-items: flex-start;
+  }
+
+  .auth-header h1 {
+    font-size: 24px;
+  }
+
+  .form-row,
+  .auth-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .qrcode-shell {
+    padding: 12px;
+  }
+
+  .qr-code {
+    width: min(100%, 220px);
+    height: auto;
+    aspect-ratio: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

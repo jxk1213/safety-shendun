@@ -26,8 +26,8 @@ SERVER_PID=$!
 # 等待应用启动 (简单延时)
 sleep 2
 
-# 自动打开浏览器 (前端地址为 http://localhost:3000)
-open "http://localhost:3000"
+# 自动打开浏览器登录页
+open "http://localhost:3000/login.html"
 
 # 等待进程退出
 wait $SERVER_PID

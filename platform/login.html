@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>申盾智能安全平台 - 登录</title>
+  <script src="assets/js/auth.js"></script>
+  <script>
+    if (window.ShendunAuth && window.ShendunAuth.isAuthenticated()) {
+      window.location.replace(window.ShendunAuth.getRedirectTarget());
+    }
+  </script>
+  <link rel="stylesheet" href="assets/css/login.css">
+</head>
+<body>
+  <main class="login-page">
+    <section class="visual-panel" aria-label="平台形象背景">
+    </section>
+
+    <section class="auth-panel" aria-label="用户登录">
+      <div class="auth-shell">
+        <header class="auth-header">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="34" height="34">
+              <defs>
+                <linearGradient id="shieldBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#2d7fff"></stop>
+                  <stop offset="100%" stop-color="#1248dc"></stop>
+                </linearGradient>
+              </defs>
+              <path d="M32 6l20 7v16c0 13.1-7.6 23.9-20 29-12.4-5.1-20-15.9-20-29V13l20-7z" fill="url(#shieldBlue)"></path>
+              <path d="M20 24c0-4.8 3.9-8.7 8.7-8.7h11.1c1.1 0 2 .9 2 2v3.8h-13c-1.5 0-2.7 1.2-2.7 2.7s1.2 2.7 2.7 2.7H35c5 0 9 4 9 9s-4 9-9 9H22.1c-1.1 0-2-.9-2-2v-3.8H35c1.5 0 2.7-1.2 2.7-2.7S36.5 33.3 35 33.3h-6.3c-4.8 0-8.7-3.9-8.7-8.7z" fill="#fff"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="brand-name">申盾智能</p>
+            <h1>欢迎登录安全管理平台</h1>
+          </div>
+        </header>
+
+        <div class="login-switch" role="tablist" aria-label="登录方式切换">
+          <button class="switch-btn active" type="button" data-mode="password" role="tab" aria-selected="true" aria-controls="passwordPane">账号登录</button>
+          <button class="switch-btn" type="button" data-mode="qrcode" role="tab" aria-selected="false" aria-controls="qrcodePane">钉钉扫码</button>
+        </div>
+
+        <section class="login-pane active" id="passwordPane" data-pane="password">
+          <form class="login-form" id="passwordLoginForm">
+            <div class="field-group">
+              <label for="username">账号</label>
+              <div class="field-box">
+                <span class="field-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9">
+                    <path d="M20 21a8 8 0 00-16 0"></path>
+                    <circle cx="12" cy="8" r="4"></circle>
+                  </svg>
+                </span>
+                <input id="username" name="username" type="text" autocomplete="username" placeholder="请输入工号 / 邮箱 / 手机号" required>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="password">密码</label>
+              <div class="field-box">
+                <span class="field-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9">
+                    <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+                    <path d="M7 11V8a5 5 0 0110 0v3"></path>
+                  </svg>
+                </span>
+                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入登录密码" required>
+                <button class="password-toggle" id="passwordToggle" type="button" aria-label="显示密码">
+                  <svg class="icon-eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9">
+                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="check-row">
+                <input type="checkbox" checked>
+                <span>记住账号</span>
+              </label>
+              <button class="text-link text-link-btn" type="button">忘记密码</button>
+            </div>
+
+            <button class="submit-btn" type="submit" id="passwordSubmit">
+              <span class="submit-text">登录系统</span>
+              <span class="submit-spinner" aria-hidden="true"></span>
+            </button>
+
+            <p class="submit-message" id="passwordMessage" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="login-pane" id="qrcodePane" data-pane="qrcode" aria-hidden="true">
+          <div class="qrcode-pane">
+            <div class="dingtalk-meta">
+              <span class="dingtalk-icon">钉</span>
+              <div>
+                <h2>钉钉扫码登录</h2>
+                <p>打开企业钉钉，扫描二维码快速进入申盾智能平台。</p>
+              </div>
+            </div>
+
+            <div class="qrcode-shell" aria-label="钉钉扫码二维码">
+              <div class="qr-code" aria-hidden="true">
+                <span class="finder finder-a"></span>
+                <span class="finder finder-b"></span>
+                <span class="finder finder-c"></span>
+                <span class="pixel p1"></span>
+                <span class="pixel p2"></span>
+                <span class="pixel p3"></span>
+                <span class="pixel p4"></span>
+                <span class="pixel p5"></span>
+                <span class="pixel p6"></span>
+                <span class="pixel p7"></span>
+                <span class="pixel p8"></span>
+                <span class="pixel p9"></span>
+                <span class="pixel p10"></span>
+                <span class="pixel p11"></span>
+                <span class="pixel p12"></span>
+                <span class="pixel p13"></span>
+                <span class="pixel p14"></span>
+                <span class="pixel p15"></span>
+                <span class="pixel p16"></span>
+                <span class="pixel p17"></span>
+                <span class="pixel p18"></span>
+                <span class="pixel p19"></span>
+                <span class="pixel p20"></span>
+                <span class="pixel p21"></span>
+                <span class="pixel p22"></span>
+              </div>
+            </div>
+
+            <div class="scan-status">
+              <span class="status-pulse"></span>
+              <span>等待扫码确认</span>
+            </div>
+
+            <button class="secondary-btn" type="button" id="scanLoginBtn">我已完成扫码</button>
+            <p class="submit-message" id="scanMessage" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <footer class="auth-footer">
+          <span>推荐使用 Chrome / Edge 最新版本访问</span>
+          <span>Copyright © 2026 STO Express</span>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/login.js"></script>
+</body>
+</html>
