@@ -1,8 +1,10 @@
 #!/bin/bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 # 申盾智能安全平台 启动脚本
 
 # 项目根目录
-PROJECT_ROOT="/Users/jixiaokang/Desktop/申盾智能"
+PROJECT_ROOT="/Users/jixiaokang/Documents/申通文件/申盾智能开发/申盾智能"
 
 echo "========================================"
 echo "  正在启动 申盾智能安全平台..."
