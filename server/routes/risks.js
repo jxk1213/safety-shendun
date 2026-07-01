@@ -21,15 +21,35 @@ router.post('/', (req, res) => {
   });
 });
 
+router.get('/stats', (req, res) => {
+  const query = `
+    SELECT 
+      status, 
+      COUNT(*) as count 
+    FROM risks 
+    GROUP BY status
+  `;
+  db.query(query, (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    const stats = results.reduce((acc, row) => {
+      acc[row.status] = row.count;
+      return acc;
+    }, { '待评审': 0, '已评审': 0, '已驳回': 0 });
+    res.json(stats);
+  });
+});
+
 router.get('/', (req, res) => {
-  const { status } = req.query;
-  let query = `SELECT * FROM risks`;
+  const { status, domain, risk_level, risk_area, keyword } = req.query;
+  let query = `SELECT * FROM risks WHERE 1=1`;
   const params = [];
-  if (status) {
-    query += ` WHERE status = ?`;
-    params.push(status);
-  }
-  // 默认按导入/创建顺序展示（旧数据多为按 id 递增导入）
+
+  if (status) { query += ` AND status = ?`; params.push(status); }
+  if (domain) { query += ` AND domain = ?`; params.push(domain); }
+  if (risk_level) { query += ` AND risk_level = ?`; params.push(risk_level); }
+  if (risk_area) { query += ` AND risk_area = ?`; params.push(risk_area); }
+  if (keyword) { query += ` AND risk_point LIKE ?`; params.push(`%${keyword}%`); }
+
   query += ` ORDER BY id ASC`;
   db.query(query, params, (err, rows) => {
     if (err) {
