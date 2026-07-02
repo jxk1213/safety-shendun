@@ -417,6 +417,15 @@
       sidebar.classList.toggle('collapsed');
     });
 
+    const logoArea = document.querySelector('.logo-area');
+    if (logoArea) {
+      logoArea.addEventListener('click', function () {
+        if (sidebar.classList.contains('collapsed')) {
+          sidebar.classList.remove('collapsed');
+        }
+      });
+    }
+
     mobileMenuBtn.addEventListener('click', function () {
       sidebar.classList.toggle('mobile-open');
       sidebarOverlay.classList.toggle('active');
@@ -889,14 +898,14 @@
     return '' +
         '<div id="dualPreventionPanelHazard" class="dual-prevention-panel" style="display:none;">' +
           '<div class="stats-row">' +
-            buildStatCard('隐患上报', '56', '待处理隐患', 'up',
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', 'orange') +
-            buildStatCard('自查自纠', '32', '本月自查报告', 'up',
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14l2 2 4-4"/></svg>', 'blue') +
-            buildStatCard('安全稽核', '12', '季度稽核进度', 'up',
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>', 'green') +
-            buildStatCard('专项稽查', '5', '进行中专项', 'up',
-              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>', 'indigo') +
+            buildStatCard('隐患上报', '0', '待处理隐患', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', 'orange', 'statHazardReportCount') +
+            buildStatCard('自查自纠', '0', '本月自查报告', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14l2 2 4-4"/></svg>', 'blue', 'statHazardSelfCheckCount') +
+            buildStatCard('安全稽核', '0', '季度稽核进度', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>', 'green', 'statHazardAuditCount') +
+            buildStatCard('专项稽查', '0', '进行中专项', 'up',
+              '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>', 'indigo', 'statHazardSpecialCount') +
           '</div>' +
           '<div class="tab-nav hazard-sub-tab-nav" style="margin-top:20px;margin-bottom:12px;">' +
             '<div class="tab-item active" data-hazard-sub="report">隐患上报</div>' +
@@ -1439,6 +1448,28 @@
         if (hazardReportList.length > 0) {
           hazardIndex = Math.max.apply(null, hazardReportList.map(function(r) { return r.id; })) + 1;
         }
+
+        var reportCount = 0;
+        var selfCheckCount = 0;
+        var auditCount = 0;
+        var specialCount = 0;
+
+        hazardReportList.forEach(function(r) {
+          if (r.source === 'self-check') selfCheckCount++;
+          else if (r.source === 'security-audit') auditCount++;
+          else if (r.source === 'special-audit') specialCount++;
+          else reportCount++;
+        });
+
+        var elReport = document.getElementById('statHazardReportCount');
+        if (elReport) elReport.textContent = reportCount;
+        var elSelfCheck = document.getElementById('statHazardSelfCheckCount');
+        if (elSelfCheck) elSelfCheck.textContent = selfCheckCount;
+        var elAudit = document.getElementById('statHazardAuditCount');
+        if (elAudit) elAudit.textContent = auditCount;
+        var elSpecial = document.getElementById('statHazardSpecialCount');
+        if (elSpecial) elSpecial.textContent = specialCount;
+
         // 触发各级版块渲染
         if (typeof renderHazardRows === 'function') try { renderHazardRows(); } catch(e) { console.warn('renderHazardRows error:', e); }
         if (typeof renderSelfcheckRows === 'function') try { renderSelfcheckRows(); } catch(e) { console.warn('renderSelfcheckRows error:', e); }
@@ -14222,7 +14253,7 @@
   }
 
   // ============ 构建辅助函数 ============
-  function buildStatCard(label, value, arg3, arg4, arg5, arg6) {
+  function buildStatCard(label, value, arg3, arg4, arg5, arg6, arg7) {
     var toneClass = 'neutral';
     var idAttr = '';
     var meta = '';
@@ -14234,6 +14265,7 @@
       trendClass = arg4 || 'neutral';
       iconSvg = arg5 || '';
       toneClass = arg6 || 'neutral';
+      idAttr = arg7 ? ' id="' + arg7 + '"' : '';
     } else {
       toneClass = arg3 || 'neutral';
       idAttr = arg4 ? ' id="' + arg4 + '"' : '';

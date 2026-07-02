@@ -192,6 +192,10 @@ input {
   display: none;
 }
 
+.sidebar.collapsed .logo-area {
+  cursor: pointer;
+}
+
 .sidebar.collapsed .sidebar-header {
   justify-content: center;
   padding: 20px 8px 16px;
